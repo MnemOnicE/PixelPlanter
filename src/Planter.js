@@ -1,7 +1,11 @@
 import { SymmetryGenerator } from './generators/SymmetryGenerator.js';
+import { AdvancedSymmetryGenerator } from './generators/AdvancedSymmetryGenerator.js';
+import { RecursiveGrowthGenerator } from './generators/RecursiveGrowthGenerator.js';
 import { MonochromePalette } from './palettes/MonochromePalette.js';
 import { VaporwavePalette, ForestPalette } from './palettes/ColorPalettes.js';
 import { OutlineModifier } from './modifiers/OutlineModifier.js';
+import { DensityMaskModifier } from './modifiers/DensityMaskModifier.js';
+import { SeededRandom } from './utils/PRNG.js';
 
 /**
  * @class Planter
@@ -68,22 +72,30 @@ export class Planter {
     constructor(config = {}) {
         this.#config = {
             size: 16,
-            generator: 'symmetry',
+            generator: 'advanced-symmetry',
+            symmetryMode: 'vertical',
             palette: 'monochrome',
             pixelSize: 20,
             modifiers: [], // Add a default empty array for modifiers
+            seed: Date.now(), // Default to a new seed every time
             ...config,
         };
+
+        // Create a single PRNG instance for this generation process.
+        this.prng = new SeededRandom(this.#config.seed);
 
         this.#initializeCanvas();
 
         // Load default modules.
-        this.registerGenerator('symmetry', new SymmetryGenerator());
+        this.registerGenerator('simple-symmetry', new SymmetryGenerator());
+        this.registerGenerator('advanced-symmetry', new AdvancedSymmetryGenerator());
+        this.registerGenerator('recursive-growth', new RecursiveGrowthGenerator());
         this.registerPalette('monochrome', new MonochromePalette());
         this.registerPalette('vaporwave', new VaporwavePalette());
         this.registerPalette('forest', new ForestPalette());
 
         this.registerModifier('outline', new OutlineModifier());
+        this.registerModifier('density-mask', new DensityMaskModifier());
     }
 
     /**
@@ -109,7 +121,7 @@ export class Planter {
         if (!generator) {
             throw new Error(`Generator "${this.#config.generator}" not found.`);
         }
-        let dataGrid = generator.run(this.#config); // Use 'let' because we will modify this grid
+        let dataGrid = generator.run(this.#config, this.prng); // Use 'let' because we will modify this grid
 
 
         // --- 2. NEW: APPLY MODIFIER PIPELINE ---
@@ -123,7 +135,7 @@ export class Planter {
                     // Pass the current state of the dataGrid to the modifier.
                     // The modifier returns a new, altered grid which becomes
                     // the input for the next modifier in the chain.
-                    dataGrid = modifier.apply(dataGrid, modConfig);
+                    dataGrid = modifier.apply(dataGrid, modConfig, this.prng);
                 } else {
                     console.warn(`Modifier "${modConfig.name}" not found.`);
                 }

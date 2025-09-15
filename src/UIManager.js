@@ -20,6 +20,7 @@ export class UIManager {
             paletteSelect: document.getElementById('palette-select'),
             sizeInput: document.getElementById('size-input'),
             pixelSizeInput: document.getElementById('pixel-size-input'),
+            seedInput: document.getElementById('seed-input'),
             generateBtn: document.getElementById('generate-btn'),
         };
         this.#canvasContainer = document.getElementById('canvas-container');
@@ -102,12 +103,14 @@ export class UIManager {
         });
 
         // Create a `config` object to hold the current settings from the UI.
+        const seedValue = this.#controls.seedInput.value;
         const config = {
             generator: this.#controls.generatorSelect.value,
             palette: this.#controls.paletteSelect.value,
             size: parseInt(this.#controls.sizeInput.value, 10),
             pixelSize: parseInt(this.#controls.pixelSizeInput.value, 10),
             modifiers: activeModifiers,
+            seed: seedValue ? (isNaN(parseInt(seedValue, 10)) ? seedValue : parseInt(seedValue, 10)) : Date.now(),
         };
 
         // Clear the canvas container of any previous canvas.
