@@ -17,8 +17,8 @@ export class MonochromePalette {
         return dataGrid.map(row => {
             // Then iterates through each value in the current row.
             return row.map(value => {
-                // The value (0 or 1) is used as an index to pick the correct color.
-                return colors[value];
+                // If value is 0, return white. Otherwise, for any non-zero value, return black.
+                return value === 0 ? colors[0] : colors[1];
             });
         });
     }
