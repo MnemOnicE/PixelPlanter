@@ -10,7 +10,7 @@ export class SeededRandom {
      * Creates an instance of SeededRandom.
      * @param {string|number} seed - The initial seed value.
      */
-    constructor(seed) {
+    constructor(seed = Date.now()) {
         if (typeof seed === 'string') {
             this.#seed = this.#hashCode(seed);
         } else {
