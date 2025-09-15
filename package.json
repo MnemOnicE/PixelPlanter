@@ -1,0 +1,27 @@
+{
+  "name": "pixel-planter",
+  "version": "0.1.0",
+  "description": "A modular, lightweight JavaScript library for creating generative pixel art.",
+  "main": "dist/pixel-planter.js",
+  "module": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-username/pixel-planter.git"
+  },
+  "keywords": [
+    "pixel-art",
+    "generative",
+    "art",
+    "gamedev",
+    "creative-coding"
+  ],
+  "author": "Seth",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/your-username/pixel-planter/issues"
+  },
+  "homepage": "https://github.com/your-username/pixel-planter#readme"
+}
