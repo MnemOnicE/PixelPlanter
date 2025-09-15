@@ -8,6 +8,8 @@ export class UIManager {
     #controls; // An object to hold references to all the HTML input elements.
     #canvasContainer; // The HTML element where the canvas will be displayed.
     #modifiersContainer;
+    #currentCanvas;
+    #currentSeed;
 
     // CONSTRUCTOR
     // PARAMETERS: planter (an instance of the Planter class)
@@ -22,6 +24,7 @@ export class UIManager {
             pixelSizeInput: document.getElementById('pixel-size-input'),
             seedInput: document.getElementById('seed-input'),
             generateBtn: document.getElementById('generate-btn'),
+            saveBtn: document.getElementById('save-btn'),
         };
         this.#canvasContainer = document.getElementById('canvas-container');
         this.#modifiersContainer = document.getElementById('modifiers-container');
@@ -86,6 +89,7 @@ export class UIManager {
     // METHOD attachEventListeners
     #attachEventListeners() {
         this.#controls.generateBtn.addEventListener('click', () => this.handleGenerate());
+        this.#controls.saveBtn.addEventListener('click', () => this.handleSave());
     }
 
     // METHOD handleGenerate
@@ -125,7 +129,27 @@ export class UIManager {
         // Get the canvas element from the instance using `getCanvas()`.
         const canvas = newPlanter.getCanvas();
 
+        // Store a reference to the canvas and seed for the save function to use.
+        this.#currentCanvas = canvas;
+        this.#currentSeed = config.seed;
+
         // Append the new canvas to the canvas container element in the DOM.
         this.#canvasContainer.appendChild(canvas);
+    }
+
+    // METHOD handleSave
+    handleSave() {
+        if (!this.#currentCanvas) {
+            console.error('No canvas to save.');
+            return;
+        }
+
+        const link = document.createElement('a');
+        link.href = this.#currentCanvas.toDataURL('image/png');
+        link.download = `pixel-art-seed-${this.#currentSeed}.png`;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 }
