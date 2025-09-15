@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Planter Test</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        canvas {
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <script type="module">
+        import { Planter } from './src/Planter.js';
+
+        // Create a new planter instance with default settings
+        const art = new Planter();
+
+        // Generate the artwork and get the canvas element
+        const mySprite = art.generate().getCanvas();
+
+        // Add it to the body of your HTML page
+        document.body.appendChild(mySprite);
+    </script>
+</body>
+</html>
