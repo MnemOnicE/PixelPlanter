@@ -14,7 +14,7 @@ export class DensityMaskModifier {
      */
     apply(dataGrid, config = {}, prng) {
         const outputGrid = dataGrid.map(row => [...row]);
-        const density = config.density === undefined ? 0.8 : config.density;
+        const density = (config.density === undefined || config.density === null) ? 0.8 : config.density;
         const asymmetry = config.asymmetry || 'none';
         const size = dataGrid.length;
 
