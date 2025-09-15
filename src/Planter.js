@@ -177,6 +177,22 @@ export class Planter {
     }
 
     /**
+     * Returns the list of registered generator names.
+     * @returns {string[]} An array of generator names.
+     */
+    getGeneratorNames() {
+        return Array.from(this.#generatorRegistry.keys());
+    }
+
+    /**
+     * Returns the list of registered palette names.
+     * @returns {string[]} An array of palette names.
+     */
+    getPaletteNames() {
+        return Array.from(this.#paletteRegistry.keys());
+    }
+
+    /**
      * Returns the canvas element containing the generated art.
      * @returns {HTMLCanvasElement} The canvas element.
      */
