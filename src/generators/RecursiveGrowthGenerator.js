@@ -10,7 +10,7 @@ export class RecursiveGrowthGenerator {
         // --- Define the recursive function ---
         const grow = (x, y, depth) => {
             // Base cases for recursion
-            if (depth > maxDepth || x < 0 || x >= size || y < 0 || y >= size) {
+            if (depth >= maxDepth || x < 0 || x >= size || y < 0 || y >= size) {
                 return;
             }
 
