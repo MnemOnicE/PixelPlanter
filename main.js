@@ -1,17 +1,35 @@
+// IMPORT necessary classes
 import { Planter } from './src/Planter.js';
+import { UIManager } from './src/UIManager.js';
 
-// Wrap the execution code inside this event listener
+// ADD 'DOMContentLoaded' event listener to ensure the HTML is fully loaded
+// before we try to interact with it.
 document.addEventListener('DOMContentLoaded', () => {
-    // Create a new planter instance with the 'vaporwave' palette
-    const art = new Planter({
+    // --- 1. Initial Setup ---
+
+    // Create an initial or "default" configuration object.
+    // This sets the starting state of the application.
+    const initialConfig = {
         size: 32,
         palette: 'vaporwave',
+        generator: 'symmetry',
         pixelSize: 15,
-    });
+    };
 
-    // Generate the artwork and get the canvas element
-    const mySprite = art.generate().getCanvas();
+    // Create the first Planter instance using this initial configuration.
+    //  -- Note: This instance is primarily used to give the UIManager access
+    //     to the lists of registered generators and palettes.
+    const planter = new Planter(initialConfig);
 
-    // Add it to the body of your HTML page
-    document.body.appendChild(mySprite);
+    // --- 2. UI Initialization ---
+
+    // Create a new instance of the UIManager, passing it the Planter instance.
+    const uiManager = new UIManager(planter);
+
+    // --- 3. Initial Artwork Generation ---
+
+    // Call the UI manager's `handleGenerate` method once at the start.
+    // This will perform the first draw on the screen using the default values
+    // reflected in the UI, ensuring the page isn't blank on load.
+    uiManager.handleGenerate();
 });

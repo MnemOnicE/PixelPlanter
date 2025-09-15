@@ -1,6 +1,7 @@
 import { SymmetryGenerator } from './generators/SymmetryGenerator.js';
 import { MonochromePalette } from './palettes/MonochromePalette.js';
 import { VaporwavePalette, ForestPalette } from './palettes/ColorPalettes.js';
+import { OutlineModifier } from './modifiers/OutlineModifier.js';
 
 /**
  * @class Planter
@@ -51,14 +52,18 @@ export class Planter {
      */
     #paletteRegistry = new Map();
 
+    /**
+     * A registry for all available modifier modules.
+     * @private
+     * @type {Map<string, object>}
+     */
+    #modifierRegistry = new Map();
+
 
     /**
      * Creates an instance of the Planter class.
-     * @param {object} config - The configuration object for the generator.
-     * @param {number} [config.size=16] - The width and height of the pixel art in pixels.
-     * @param {string} [config.generator='symmetry'] - The name of the generator module to use.
-     * @param {string} [config.palette='monochrome'] - The name of the palette module to use.
-     * @param {number} [config.pixelSize=20] - The size to scale each "logical" pixel to for display.
+     * @param {object} config - The configuration object.
+     * @param {Array<object>} [config.modifiers=[]] - An array of modifier configs to apply.
      */
     constructor(config = {}) {
         this.#config = {
@@ -66,6 +71,7 @@ export class Planter {
             generator: 'symmetry',
             palette: 'monochrome',
             pixelSize: 20,
+            modifiers: [], // Add a default empty array for modifiers
             ...config,
         };
 
@@ -76,6 +82,8 @@ export class Planter {
         this.registerPalette('monochrome', new MonochromePalette());
         this.registerPalette('vaporwave', new VaporwavePalette());
         this.registerPalette('forest', new ForestPalette());
+
+        this.registerModifier('outline', new OutlineModifier());
     }
 
     /**
@@ -101,18 +109,37 @@ export class Planter {
         if (!generator) {
             throw new Error(`Generator "${this.#config.generator}" not found.`);
         }
-        const dataGrid = generator.run(this.#config);
+        let dataGrid = generator.run(this.#config); // Use 'let' because we will modify this grid
 
 
-        // --- 2. Select and Run the Palette Module ---
+        // --- 2. NEW: APPLY MODIFIER PIPELINE ---
+        // Check if there are any modifiers in the config to apply.
+        if (this.#config.modifiers && this.#config.modifiers.length > 0) {
+            // Loop through each modifier config in the array.
+            // This allows them to be chained in a specific order.
+            for (const modConfig of this.#config.modifiers) {
+                const modifier = this.#modifierRegistry.get(modConfig.name);
+                if (modifier) {
+                    // Pass the current state of the dataGrid to the modifier.
+                    // The modifier returns a new, altered grid which becomes
+                    // the input for the next modifier in the chain.
+                    dataGrid = modifier.apply(dataGrid, modConfig);
+                } else {
+                    console.warn(`Modifier "${modConfig.name}" not found.`);
+                }
+            }
+        }
+
+
+        // --- 3. Select and Run the Palette Module ---
         const palette = this.#paletteRegistry.get(this.#config.palette);
         if (!palette) {
             throw new Error(`Palette "${this.#config.palette}" not found.`);
         }
-        const colorGrid = palette.map(dataGrid);
+        const colorGrid = palette.map(dataGrid); // Use the final, modified grid
 
 
-        // --- 3. Draw the Final Output to the Canvas ---
+        // --- 4. Draw the Final Output to the Canvas ---
         this.#draw(colorGrid);
 
 
@@ -174,6 +201,39 @@ export class Planter {
      */
     registerPalette(name, paletteInstance) {
         this.#paletteRegistry.set(name, paletteInstance);
+    }
+
+    /**
+     * Returns the list of registered generator names.
+     * @returns {string[]} An array of generator names.
+     */
+    getGeneratorNames() {
+        return Array.from(this.#generatorRegistry.keys());
+    }
+
+    /**
+     * Returns the list of registered palette names.
+     * @returns {string[]} An array of palette names.
+     */
+    getPaletteNames() {
+        return Array.from(this.#paletteRegistry.keys());
+    }
+
+    /**
+     * Registers a new modifier module.
+     * @param {string} name - The name to identify the modifier by.
+     * @param {object} modifierInstance - An instance of a modifier class.
+     */
+    registerModifier(name, modifierInstance) {
+        this.#modifierRegistry.set(name, modifierInstance);
+    }
+
+    /**
+     * Public getter for modifier names, for the UI.
+     * @returns {string[]}
+     */
+    getModifierNames() {
+        return Array.from(this.#modifierRegistry.keys());
     }
 
     /**
