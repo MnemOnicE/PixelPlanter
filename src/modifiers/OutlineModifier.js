@@ -33,8 +33,8 @@ export class OutlineModifier {
                         x < width - 1 && dataGrid[y][x + 1]    // Right
                     ];
 
-                    // IF any neighbor has a value of 1 (it's part of the shape):
-                    if (neighbors.some(neighborValue => neighborValue === 1)) {
+                    // IF any neighbor has a value > 0 (it's part of the shape):
+                    if (neighbors.some(neighborValue => neighborValue > 0)) {
                         // This empty cell is on the border of the shape.
                         // In the `outputGrid` at position (y, x), set the value to `outlineValue`.
                         outputGrid[y][x] = outlineValue;
