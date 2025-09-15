@@ -1,5 +1,6 @@
 import { SymmetryGenerator } from './generators/SymmetryGenerator.js';
 import { MonochromePalette } from './palettes/MonochromePalette.js';
+import { VaporwavePalette, ForestPalette } from './palettes/ColorPalettes.js';
 
 /**
  * @class Planter
@@ -73,6 +74,8 @@ export class Planter {
         // Load default modules.
         this.registerGenerator('symmetry', new SymmetryGenerator());
         this.registerPalette('monochrome', new MonochromePalette());
+        this.registerPalette('vaporwave', new VaporwavePalette());
+        this.registerPalette('forest', new ForestPalette());
     }
 
     /**

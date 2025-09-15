@@ -22,8 +22,12 @@
     <script type="module">
         import { Planter } from './src/Planter.js';
 
-        // Create a new planter instance with default settings
-        const art = new Planter();
+        // Create a new planter instance with the 'vaporwave' palette
+        const art = new Planter({
+            size: 32,
+            palette: 'vaporwave',
+            pixelSize: 15,
+        });
 
         // Generate the artwork and get the canvas element
         const mySprite = art.generate().getCanvas();

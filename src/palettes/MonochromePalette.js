@@ -1,24 +1,24 @@
 /**
  * @class MonochromePalette
- * A simple palette that maps binary data (0 or 1) to two colors.
- * In this case, 0 is treated as transparent and 1 is black.
+ * Maps a 2D data grid to a simple black and white color scheme.
  */
 export class MonochromePalette {
     /**
-     * Maps a 2D data grid of numbers to a 2D grid of color strings.
-     * @param {number[][]} dataGrid - The input grid from a generator.
-     * @returns {Array<Array<(string|null)>>} A 2D array of color strings or nulls.
+     * Maps the abstract data grid to a color grid.
+     * @param {number[][]} dataGrid - The grid from the generator (containing 0s and 1s).
+     * @returns {string[][]} A 2D array of color strings.
      */
     map(dataGrid) {
-        // Use the Array.prototype.map function for a concise transformation.
+        // Define the colors. The first color corresponds to a value of 0, the second to 1, etc.
+        const colors = ['#FFFFFF', '#000000']; // 0 = White, 1 = Black
+
+        // Use the .map() array method for a clean transformation.
+        // This iterates through each row of the dataGrid.
         return dataGrid.map(row => {
+            // Then iterates through each value in the current row.
             return row.map(value => {
-                // If the value is 1, return black.
-                if (value === 1) {
-                    return '#000000'; // Black
-                }
-                // Otherwise, return null for transparency.
-                return null;
+                // The value (0 or 1) is used as an index to pick the correct color.
+                return colors[value];
             });
         });
     }
