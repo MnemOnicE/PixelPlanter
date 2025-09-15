@@ -19,21 +19,6 @@
     </style>
 </head>
 <body>
-    <script type="module">
-        import { Planter } from './src/Planter.js';
-
-        // Create a new planter instance with the 'vaporwave' palette
-        const art = new Planter({
-            size: 32,
-            palette: 'vaporwave',
-            pixelSize: 15,
-        });
-
-        // Generate the artwork and get the canvas element
-        const mySprite = art.generate().getCanvas();
-
-        // Add it to the body of your HTML page
-        document.body.appendChild(mySprite);
-    </script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>
