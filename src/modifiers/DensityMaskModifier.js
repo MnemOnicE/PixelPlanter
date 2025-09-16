@@ -3,6 +3,24 @@
 // CLASS DensityMaskModifier
 // Removes pixels based on a probability mask or a "density" value.
 export class DensityMaskModifier {
+    // --- NEW: PARAMETER DEFINITIONS ---
+    static params = {
+        density: {
+            label: 'Density',
+            type: 'slider',
+            min: 0.1,
+            max: 1.0,
+            step: 0.05,
+            defaultValue: 0.8,
+        },
+        asymmetry: {
+            label: 'Asymmetry',
+            type: 'select',
+            options: ['none', 'left-heavy', 'right-heavy', 'top-heavy', 'bottom-heavy'],
+            defaultValue: 'none',
+        }
+    };
+
     /**
      * Applies the modifier to the data grid.
      * @param {number[][]} dataGrid - The incoming 2D array.
