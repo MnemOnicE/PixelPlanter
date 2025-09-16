@@ -1,4 +1,5 @@
 import { Planter } from './Planter.js';
+import { Pattern } from './patterns/Pattern.js';
 
 const TOOLTIP_TEXTS = {
     'generator-select': 'The core algorithm used to create the pattern.',
@@ -13,57 +14,194 @@ const TOOLTIP_TEXTS = {
 // Manages the interaction between the HTML controls and the Planter instance.
 export class UIManager {
     // PRIVATE PROPERTIES
-    #planterInstance; // A reference to the main Planter object.
-    #controls; // An object to hold references to all the HTML input elements.
-    #canvasContainer; // The HTML element where the canvas will be displayed.
+    #planterInstance;
+    #controls = {};
+    #canvasContainer;
     #modifiersContainer;
     #generatorParamsContainer;
     #modifierParamsContainer;
+    #patternEditorModal;
+    #patternGridContainer;
     #currentCanvas;
     #currentSeed;
+    #activeTool = 'generate'; // 'generate', 'stamp', 'brush'
+    #isBrushing = false;
 
     // CONSTRUCTOR
     constructor(planter) {
         this.#planterInstance = planter;
+        this.#bindDOM();
+        this.#initializeUI();
+        this.#attachEventListeners();
+    }
 
-        // Find and store all necessary DOM elements
-        this.#controls = {
-            generatorSelect: document.getElementById('generator-select'),
-            paletteSelect: document.getElementById('palette-select'),
-            sizeInput: document.getElementById('size-input'),
-            pixelSizeInput: document.getElementById('pixel-size-input'),
-            seedInput: document.getElementById('seed-input'),
-            generateBtn: document.getElementById('generate-btn'),
-            saveBtn: document.getElementById('save-btn'),
-        };
+    #bindDOM() {
+        const C = this.#controls; // Shorthand
+        C.generatorSelect = document.getElementById('generator-select');
+        C.paletteSelect = document.getElementById('palette-select');
+        C.sizeInput = document.getElementById('size-input');
+        C.pixelSizeInput = document.getElementById('pixel-size-input');
+        C.seedInput = document.getElementById('seed-input');
+        C.generateBtn = document.getElementById('generate-btn');
+        C.saveBtn = document.getElementById('save-btn');
+        C.editPatternsBtn = document.getElementById('edit-patterns-btn');
+        C.savePatternBtn = document.getElementById('save-pattern-btn');
+        C.patternNameInput = document.getElementById('pattern-name-input');
+        C.closePatternEditorBtn = document.querySelector('.close-button');
+        C.stampToolBtn = document.getElementById('stamp-tool-btn');
+        C.brushToolBtn = document.getElementById('brush-tool-btn');
+
         this.#canvasContainer = document.getElementById('canvas-container');
         this.#modifiersContainer = document.getElementById('modifiers-container');
         this.#generatorParamsContainer = document.getElementById('generator-params');
         this.#modifierParamsContainer = document.getElementById('modifier-params');
+        this.#patternEditorModal = document.getElementById('pattern-editor-modal');
+        this.#patternGridContainer = document.getElementById('pattern-grid-container');
+    }
 
-        // Initialize the UI state
+    #initializeUI() {
         this.#populateGeneratorOptions();
         this.#populatePaletteOptions();
         this.#populateModifierOptions();
         this.#addTooltips();
-        this.#updateGeneratorParamsUI(); // Initial call for the default generator
-
-        // Attach all the necessary event listeners
-        this.#attachEventListeners();
+        this.#updateGeneratorParamsUI();
+        this.#initializePatternEditorGrid();
+        this.#setActiveTool('generate'); // Set initial tool
     }
+
+    #attachEventListeners() {
+        // Main controls
+        this.#controls.generateBtn.addEventListener('click', () => {
+            this.#setActiveTool('generate');
+            this.handleGenerate();
+        });
+        this.#controls.saveBtn.addEventListener('click', () => this.handleSave());
+        this.#controls.generatorSelect.addEventListener('change', () => this.#updateGeneratorParamsUI());
+        this.#modifiersContainer.addEventListener('change', (e) => { if (e.target.type === 'checkbox') this.#updateModifierParamsUI(); });
+
+        // Pattern Editor
+        this.#controls.editPatternsBtn.addEventListener('click', () => this.#openPatternEditor());
+        this.#controls.closePatternEditorBtn.addEventListener('click', () => this.#closePatternEditor());
+        this.#controls.savePatternBtn.addEventListener('click', () => this.#handleSavePattern());
+        window.addEventListener('click', (e) => { if (e.target === this.#patternEditorModal) this.#closePatternEditor(); });
+        this.#patternGridContainer.addEventListener('click', (e) => { if (e.target.classList.contains('pattern-cell')) e.target.classList.toggle('active'); });
+
+        // Canvas tools
+        this.#controls.stampToolBtn.addEventListener('click', () => this.#setActiveTool('stamp'));
+        this.#controls.brushToolBtn.addEventListener('click', () => this.#setActiveTool('brush'));
+        this.#canvasContainer.addEventListener('mousedown', (e) => this.#handleCanvasMouseDown(e));
+        this.#canvasContainer.addEventListener('mousemove', (e) => this.#handleCanvasMouseMove(e));
+        this.#canvasContainer.addEventListener('mouseup', () => this.#isBrushing = false);
+        this.#canvasContainer.addEventListener('mouseleave', () => this.#isBrushing = false);
+    }
+
+    // --- Tooling Methods ---
+
+    #setActiveTool(toolName) {
+        this.#activeTool = toolName;
+        // Add visual feedback for active tool
+        this.#controls.stampToolBtn.style.fontWeight = toolName === 'stamp' ? 'bold' : 'normal';
+        this.#controls.brushToolBtn.style.fontWeight = toolName === 'brush' ? 'bold' : 'normal';
+        this.#controls.generateBtn.style.fontWeight = toolName === 'generate' ? 'bold' : 'normal';
+        this.#canvasContainer.style.cursor = (toolName === 'stamp' || toolName === 'brush') ? 'crosshair' : 'default';
+    }
+
+    #handleCanvasMouseDown(event) {
+        if (this.#activeTool === 'stamp') {
+            this.#handleStamp(event);
+        } else if (this.#activeTool === 'brush') {
+            this.#isBrushing = true;
+            this.#handleStamp(event); // Stamp once on initial click
+        }
+    }
+
+    #handleCanvasMouseMove(event) {
+        if (this.#isBrushing) {
+            this.#handleStamp(event);
+        }
+    }
+
+    #handleStamp(event) {
+        if (!this.#currentCanvas) {
+            alert('Please generate an image first to define the canvas area.');
+            return;
+        }
+
+        if (this.#controls.generatorSelect.value !== 'pattern') {
+            alert("Please select the 'pattern' generator from the dropdown to use the Stamp/Brush tools.");
+            this.#setActiveTool('generate');
+            return;
+        }
+
+        const patternNameInput = this.#generatorParamsContainer.querySelector('select[data-param-name="patternName"]');
+        const patternName = patternNameInput?.value;
+
+        if (!patternName || this.#planterInstance.getPatternNames().length === 0) {
+             alert("Please create and save a pattern first, then select it from the 'Pattern' dropdown.");
+             return;
+        }
+
+        const pattern = this.#planterInstance.getPattern(patternName);
+        if (!pattern) {
+            alert(`Pattern "${patternName}" not found!`);
+            return;
+        }
+
+        const rect = this.#currentCanvas.getBoundingClientRect();
+        const scaleX = this.#currentCanvas.width / rect.width;
+        const scaleY = this.#currentCanvas.height / rect.height;
+        const canvasX = (event.clientX - rect.left) * scaleX;
+        const canvasY = (event.clientY - rect.top) * scaleY;
+
+        const xPercent = (canvasX / this.#currentCanvas.width) * 100;
+        const yPercent = (canvasY / this.#currentCanvas.height) * 100;
+
+        this.#planterInstance.stamp(patternName, xPercent, yPercent);
+    }
+
+    // --- Pattern Editor Methods ---
+
+    #openPatternEditor() { this.#patternEditorModal.style.display = 'block'; }
+    #closePatternEditor() { this.#patternEditorModal.style.display = 'none'; }
+
+    #initializePatternEditorGrid(size = 8) {
+        this.#patternGridContainer.innerHTML = '';
+        this.#patternGridContainer.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+        for (let i = 0; i < size * size; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('pattern-cell');
+            this.#patternGridContainer.appendChild(cell);
+        }
+    }
+
+    #handleSavePattern() {
+        const name = this.#controls.patternNameInput.value.trim();
+        if (!name) { alert('Please enter a name for the pattern.'); return; }
+
+        const gridSize = Math.sqrt(this.#patternGridContainer.children.length);
+        const dataGrid = Array.from({ length: gridSize }, () => Array(gridSize).fill(0));
+        const cells = this.#patternGridContainer.children;
+        for (let i = 0; i < cells.length; i++) {
+            const row = Math.floor(i / gridSize);
+            const col = i % gridSize;
+            if (cells[i].classList.contains('active')) dataGrid[row][col] = 1;
+        }
+        const newPattern = new Pattern(name, dataGrid);
+        this.#planterInstance.registerPattern(name, newPattern);
+        alert(`Pattern "${name}" saved!`);
+        this.#closePatternEditor();
+        this.#updateGeneratorParamsUI(); // Refresh UI in case the pattern generator is selected
+    }
+
+    // --- Core UI Methods ---
 
     #addTooltips() {
         for (const controlId in TOOLTIP_TEXTS) {
             const controlElement = document.getElementById(controlId);
             if (!controlElement) continue;
-
-            let label;
-            if (controlId === 'modifiers-container') {
-                label = controlElement.previousElementSibling;
-            } else {
-                label = document.querySelector(`label[for="${controlId}"]`);
-            }
-
+            let label = (controlId === 'modifiers-container')
+                ? controlElement.previousElementSibling
+                : document.querySelector(`label[for="${controlId}"]`);
             if (label) {
                 label.classList.add('tooltip');
                 const tooltipText = document.createElement('span');
@@ -114,17 +252,6 @@ export class UIManager {
         });
     }
 
-    #attachEventListeners() {
-        this.#controls.generateBtn.addEventListener('click', () => this.handleGenerate());
-        this.#controls.saveBtn.addEventListener('click', () => this.handleSave());
-        this.#controls.generatorSelect.addEventListener('change', () => this.#updateGeneratorParamsUI());
-        this.#modifiersContainer.addEventListener('change', (event) => {
-            if (event.target.type === 'checkbox') {
-                this.#updateModifierParamsUI();
-            }
-        });
-    }
-
     #updateGeneratorParamsUI() {
         const generatorName = this.#controls.generatorSelect.value;
         const generatorClass = this.#planterInstance.getGenerator(generatorName);
@@ -169,7 +296,19 @@ export class UIManager {
                 input.value = paramConfig.defaultValue;
             } else if (paramConfig.type === 'select') {
                 input = document.createElement('select');
-                paramConfig.options.forEach(opt => {
+                let options = [];
+                if (paramConfig.optionsSource === 'patterns') {
+                    options = this.#planterInstance.getPatternNames();
+                    if (options.length === 0) {
+                        const option = document.createElement('option');
+                        option.textContent = 'No patterns saved';
+                        option.disabled = true;
+                        input.appendChild(option);
+                    }
+                } else {
+                    options = paramConfig.options || [];
+                }
+                options.forEach(opt => {
                     const option = document.createElement('option');
                     option.value = opt;
                     option.textContent = opt;
@@ -190,8 +329,8 @@ export class UIManager {
         }
     }
 
-    handleGenerate() {
-        const config = {
+    handleGenerate(overrideConfig = {}) {
+        const baseConfig = {
             generator: this.#controls.generatorSelect.value,
             palette: this.#controls.paletteSelect.value,
             size: parseInt(this.#controls.sizeInput.value, 10),
@@ -200,15 +339,13 @@ export class UIManager {
             modifiers: []
         };
 
-        // Gather generator params
         const genParamsInputs = this.#generatorParamsContainer.querySelectorAll('[data-param-name]');
         genParamsInputs.forEach(input => {
             const key = input.dataset.paramName;
             const value = input.type === 'range' ? parseFloat(input.value) : input.value;
-            config[key] = value;
+            baseConfig[key] = value;
         });
 
-        // Gather modifier params
         const modifierCheckboxes = this.#modifiersContainer.querySelectorAll('input[type="checkbox"]:checked');
         modifierCheckboxes.forEach(checkbox => {
             const modName = checkbox.dataset.modifierName;
@@ -219,16 +356,22 @@ export class UIManager {
                 const value = input.type === 'range' ? parseFloat(input.value) : input.value;
                 modConfig[key] = value;
             });
-            config.modifiers.push(modConfig);
+            baseConfig.modifiers.push(modConfig);
         });
 
-        // --- Generation ---
+        const finalConfig = { ...baseConfig, ...overrideConfig };
+
+        // When stamping, we don't want a new random seed
+        if (overrideConfig.generator === 'pattern') {
+            finalConfig.seed = this.#currentSeed || finalConfig.seed;
+        }
+
         this.#canvasContainer.innerHTML = '';
-        const newPlanter = new Planter(config);
+        const newPlanter = new Planter(finalConfig);
         newPlanter.generate();
         const canvas = newPlanter.getCanvas();
         this.#currentCanvas = canvas;
-        this.#currentSeed = config.seed;
+        this.#currentSeed = finalConfig.seed;
         this.#canvasContainer.appendChild(canvas);
     }
 

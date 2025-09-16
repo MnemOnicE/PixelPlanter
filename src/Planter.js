@@ -1,6 +1,7 @@
 import { SymmetryGenerator } from './generators/SymmetryGenerator.js';
 import { AdvancedSymmetryGenerator } from './generators/AdvancedSymmetryGenerator.js';
 import { RecursiveGrowthGenerator } from './generators/RecursiveGrowthGenerator.js';
+import { PatternGenerator } from './generators/PatternGenerator.js';
 import { MonochromePalette } from './palettes/MonochromePalette.js';
 import { VaporwavePalette, ForestPalette } from './palettes/ColorPalettes.js';
 import { OutlineModifier } from './modifiers/OutlineModifier.js';
@@ -63,6 +64,13 @@ export class Planter {
      */
     #modifierRegistry = new Map();
 
+    /**
+     * A registry for all available pattern modules.
+     * @private
+     * @type {Map<string, object>}
+     */
+    #patternRegistry = new Map();
+
 
     /**
      * Creates an instance of the Planter class.
@@ -90,6 +98,7 @@ export class Planter {
         this.registerGenerator('simple-symmetry', new SymmetryGenerator());
         this.registerGenerator('advanced-symmetry', new AdvancedSymmetryGenerator());
         this.registerGenerator('recursive-growth', new RecursiveGrowthGenerator());
+        this.registerGenerator('pattern', new PatternGenerator());
         this.registerPalette('monochrome', new MonochromePalette());
         this.registerPalette('vaporwave', new VaporwavePalette());
         this.registerPalette('forest', new ForestPalette());
@@ -271,10 +280,95 @@ export class Planter {
     }
 
     /**
+     * Registers a new pattern, making it available for use.
+     * @param {string} name - The name to identify the pattern by.
+     * @param {Pattern} patternInstance - An instance of the Pattern class.
+     */
+    registerPattern(name, patternInstance) {
+        this.#patternRegistry.set(name, patternInstance);
+    }
+
+    /**
+     * Retrieves a registered pattern by its name.
+     * @param {string} name - The name of the pattern.
+     * @returns {Pattern|null} The Pattern object or null if not found.
+     */
+    getPattern(name) {
+        return this.#patternRegistry.get(name) || null;
+    }
+
+    /**
+     * Returns the list of registered pattern names.
+     * @returns {string[]} An array of pattern names.
+     */
+    getPatternNames() {
+        return Array.from(this.#patternRegistry.keys());
+    }
+
+    /**
      * Returns the canvas element containing the generated art.
      * @returns {HTMLCanvasElement} The canvas element.
      */
     getCanvas() {
         return this.#canvas;
+    }
+
+    /**
+     * Renders a color grid onto the canvas WITHOUT clearing it first.
+     * Used for stamping/brushing.
+     * @private
+     * @param {string[][]} colorGrid - A 2D array of color strings.
+     */
+    #drawOverlay(colorGrid) {
+        const { size, pixelSize } = this.#config;
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                const color = colorGrid[y][x];
+                if (!color) continue;
+                this.#context.fillStyle = color;
+                const canvasX = x * pixelSize;
+                const canvasY = y * pixelSize;
+                this.#context.fillRect(canvasX, canvasY, pixelSize, pixelSize);
+            }
+        }
+    }
+
+    /**
+     * Stamps a pattern onto the current canvas.
+     * @param {string} patternName - The name of the pattern to stamp.
+     * @param {number} x - The x-coordinate percentage (0-100) for the stamp center.
+     * @param {number} y - The y-coordinate percentage (0-100) for the stamp center.
+     */
+    stamp(patternName, x, y) {
+        const pattern = this.getPattern(patternName);
+        if (!pattern) {
+            console.error(`Attempted to stamp with non-existent pattern: ${patternName}`);
+            return;
+        }
+
+        const generator = this.#generatorRegistry.get('pattern');
+        if (!generator) {
+            console.error('PatternGenerator not registered.');
+            return;
+        }
+
+        const stampConfig = {
+            ...this.#config,
+            patternData: pattern.dataGrid,
+            x: x,
+            y: y,
+        };
+
+        // We don't want a new seed for the stamp itself, but the generator might use it.
+        const stampPrng = new SeededRandom(this.#config.seed);
+        const dataGrid = generator.run(stampConfig, stampPrng);
+
+        const palette = this.#paletteRegistry.get(this.#config.palette);
+        if (!palette) {
+            throw new Error(`Palette "${this.#config.palette}" not found.`);
+        }
+        const colorGrid = palette.map(dataGrid);
+
+        this.#drawOverlay(colorGrid);
     }
 }
