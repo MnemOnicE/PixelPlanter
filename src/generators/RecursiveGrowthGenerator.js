@@ -2,6 +2,26 @@
 
 // CLASS RecursiveGrowthGenerator
 export class RecursiveGrowthGenerator {
+    // --- NEW: PARAMETER DEFINITIONS ---
+    static params = {
+        startPoints: {
+            label: 'Start Points',
+            type: 'slider',
+            min: 1,
+            max: 10,
+            step: 1,
+            defaultValue: 2,
+        },
+        maxDepth: {
+            label: 'Growth Depth',
+            type: 'slider',
+            min: 1,
+            max: 15,
+            step: 1,
+            defaultValue: 5,
+        }
+    };
+
     // METHOD run
     // PARAMETERS: config, prng
     run({ size, startPoints = 1, maxDepth = 5 }, prng) {

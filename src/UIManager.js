@@ -17,11 +17,12 @@ export class UIManager {
     #controls; // An object to hold references to all the HTML input elements.
     #canvasContainer; // The HTML element where the canvas will be displayed.
     #modifiersContainer;
+    #generatorParamsContainer;
+    #modifierParamsContainer;
     #currentCanvas;
     #currentSeed;
 
     // CONSTRUCTOR
-    // PARAMETERS: planter (an instance of the Planter class)
     constructor(planter) {
         this.#planterInstance = planter;
 
@@ -37,13 +38,15 @@ export class UIManager {
         };
         this.#canvasContainer = document.getElementById('canvas-container');
         this.#modifiersContainer = document.getElementById('modifiers-container');
+        this.#generatorParamsContainer = document.getElementById('generator-params');
+        this.#modifierParamsContainer = document.getElementById('modifier-params');
 
         // Initialize the UI state
         this.#populateGeneratorOptions();
         this.#populatePaletteOptions();
         this.#populateModifierOptions();
         this.#addTooltips();
-
+        this.#updateGeneratorParamsUI(); // Initial call for the default generator
 
         // Attach all the necessary event listeners
         this.#attachEventListeners();
@@ -55,11 +58,9 @@ export class UIManager {
             if (!controlElement) continue;
 
             let label;
-            // The 'modifiers-container' has a generic label as a sibling
             if (controlId === 'modifiers-container') {
                 label = controlElement.previousElementSibling;
             } else {
-                // Other controls have a label linked by the 'for' attribute
                 label = document.querySelector(`label[for="${controlId}"]`);
             }
 
@@ -73,11 +74,9 @@ export class UIManager {
         }
     }
 
-    // METHOD populateGeneratorOptions
     #populateGeneratorOptions() {
         const generatorNames = this.#planterInstance.getGeneratorNames();
-        this.#controls.generatorSelect.innerHTML = ''; // Clear existing options
-
+        this.#controls.generatorSelect.innerHTML = '';
         generatorNames.forEach(name => {
             const option = document.createElement('option');
             option.value = name;
@@ -86,11 +85,9 @@ export class UIManager {
         });
     }
 
-    // METHOD populatePaletteOptions
     #populatePaletteOptions() {
         const paletteNames = this.#planterInstance.getPaletteNames();
-        this.#controls.paletteSelect.innerHTML = ''; // Clear existing options
-
+        this.#controls.paletteSelect.innerHTML = '';
         paletteNames.forEach(name => {
             const option = document.createElement('option');
             option.value = name;
@@ -99,90 +96,150 @@ export class UIManager {
         });
     }
 
-    // METHOD populateModifierOptions
     #populateModifierOptions() {
         const modifierNames = this.#planterInstance.getModifierNames();
-        this.#modifiersContainer.innerHTML = ''; // Clear existing options
-
+        this.#modifiersContainer.innerHTML = '';
         modifierNames.forEach(name => {
             const div = document.createElement('div');
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.id = `mod-${name}`;
             checkbox.dataset.modifierName = name;
-
             const label = document.createElement('label');
             label.htmlFor = `mod-${name}`;
             label.textContent = name;
-
             div.appendChild(checkbox);
             div.appendChild(label);
             this.#modifiersContainer.appendChild(div);
         });
     }
 
-    // METHOD attachEventListeners
     #attachEventListeners() {
         this.#controls.generateBtn.addEventListener('click', () => this.handleGenerate());
         this.#controls.saveBtn.addEventListener('click', () => this.handleSave());
-    }
-
-    // METHOD handleGenerate
-    // This is the core method that orchestrates the regeneration process.
-    handleGenerate() {
-        // --- NEW LOGIC for gathering active modifiers ---
-        const activeModifiers = [];
-        const modifierCheckboxes = this.#modifiersContainer.querySelectorAll('input[type="checkbox"]');
-        modifierCheckboxes.forEach(checkbox => {
-            if (checkbox.checked) {
-                activeModifiers.push({
-                    name: checkbox.dataset.modifierName,
-                });
+        this.#controls.generatorSelect.addEventListener('change', () => this.#updateGeneratorParamsUI());
+        this.#modifiersContainer.addEventListener('change', (event) => {
+            if (event.target.type === 'checkbox') {
+                this.#updateModifierParamsUI();
             }
         });
+    }
 
-        // Create a `config` object to hold the current settings from the UI.
-        const seedValue = this.#controls.seedInput.value;
+    #updateGeneratorParamsUI() {
+        const generatorName = this.#controls.generatorSelect.value;
+        const generatorClass = this.#planterInstance.getGenerator(generatorName);
+        this.#generatorParamsContainer.innerHTML = '';
+        if (generatorClass && generatorClass.params) {
+            this.#buildControls(this.#generatorParamsContainer, generatorClass.params, generatorName);
+        }
+    }
+
+    #updateModifierParamsUI() {
+        this.#modifierParamsContainer.innerHTML = '';
+        const modifierCheckboxes = this.#modifiersContainer.querySelectorAll('input[type="checkbox"]:checked');
+        modifierCheckboxes.forEach(checkbox => {
+            const modifierName = checkbox.dataset.modifierName;
+            const modifierClass = this.#planterInstance.getModifier(modifierName);
+            if (modifierClass && modifierClass.params) {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'modifier-param-group';
+                const groupLabel = document.createElement('h4');
+                groupLabel.textContent = `${modifierName} Settings`;
+                groupDiv.appendChild(groupLabel);
+                this.#buildControls(groupDiv, modifierClass.params, modifierName);
+                this.#modifierParamsContainer.appendChild(groupDiv);
+            }
+        });
+    }
+
+    #buildControls(container, paramsObject, ownerName) {
+        for (const key in paramsObject) {
+            const paramConfig = paramsObject[key];
+            const controlDiv = document.createElement('div');
+            const label = document.createElement('label');
+            label.textContent = paramConfig.label;
+
+            let input;
+            if (paramConfig.type === 'slider') {
+                input = document.createElement('input');
+                input.type = 'range';
+                input.min = paramConfig.min;
+                input.max = paramConfig.max;
+                input.step = paramConfig.step;
+                input.value = paramConfig.defaultValue;
+            } else if (paramConfig.type === 'select') {
+                input = document.createElement('select');
+                paramConfig.options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.textContent = opt;
+                    input.appendChild(option);
+                });
+                input.value = paramConfig.defaultValue;
+            }
+
+            if (input) {
+                input.dataset.paramOwner = ownerName;
+                input.dataset.paramName = key;
+                label.htmlFor = `${ownerName}-${key}`;
+                input.id = `${ownerName}-${key}`;
+                controlDiv.appendChild(label);
+                controlDiv.appendChild(input);
+                container.appendChild(controlDiv);
+            }
+        }
+    }
+
+    handleGenerate() {
         const config = {
             generator: this.#controls.generatorSelect.value,
             palette: this.#controls.paletteSelect.value,
             size: parseInt(this.#controls.sizeInput.value, 10),
             pixelSize: parseInt(this.#controls.pixelSizeInput.value, 10),
-            modifiers: activeModifiers,
-            seed: seedValue ? (isNaN(parseInt(seedValue, 10)) ? seedValue : parseInt(seedValue, 10)) : Date.now(),
+            seed: this.#controls.seedInput.value || Date.now(),
+            modifiers: []
         };
 
-        // Clear the canvas container of any previous canvas.
+        // Gather generator params
+        const genParamsInputs = this.#generatorParamsContainer.querySelectorAll('[data-param-name]');
+        genParamsInputs.forEach(input => {
+            const key = input.dataset.paramName;
+            const value = input.type === 'range' ? parseFloat(input.value) : input.value;
+            config[key] = value;
+        });
+
+        // Gather modifier params
+        const modifierCheckboxes = this.#modifiersContainer.querySelectorAll('input[type="checkbox"]:checked');
+        modifierCheckboxes.forEach(checkbox => {
+            const modName = checkbox.dataset.modifierName;
+            const modConfig = { name: modName };
+            const modParamsInputs = this.#modifierParamsContainer.querySelectorAll(`[data-param-owner="${modName}"]`);
+            modParamsInputs.forEach(input => {
+                const key = input.dataset.paramName;
+                const value = input.type === 'range' ? parseFloat(input.value) : input.value;
+                modConfig[key] = value;
+            });
+            config.modifiers.push(modConfig);
+        });
+
+        // --- Generation ---
         this.#canvasContainer.innerHTML = '';
-
-        // Create a NEW Planter instance using the `config` object from the UI.
         const newPlanter = new Planter(config);
-
-        // Call the `generate()` method on the new Planter instance.
         newPlanter.generate();
-
-        // Get the canvas element from the instance using `getCanvas()`.
         const canvas = newPlanter.getCanvas();
-
-        // Store a reference to the canvas and seed for the save function to use.
         this.#currentCanvas = canvas;
         this.#currentSeed = config.seed;
-
-        // Append the new canvas to the canvas container element in the DOM.
         this.#canvasContainer.appendChild(canvas);
     }
 
-    // METHOD handleSave
     handleSave() {
         if (!this.#currentCanvas) {
             console.error('No canvas to save.');
             return;
         }
-
         const link = document.createElement('a');
         link.href = this.#currentCanvas.toDataURL('image/png');
         link.download = `pixel-art-seed-${this.#currentSeed}.png`;
-
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

@@ -249,6 +249,28 @@ export class Planter {
     }
 
     /**
+     * Retrieves the class constructor for a given generator.
+     * This is used by the UI to access static parameter definitions.
+     * @param {string} name - The name of the generator.
+     * @returns {Function|null} The generator's class constructor or null if not found.
+     */
+    getGenerator(name) {
+        const instance = this.#generatorRegistry.get(name);
+        return instance ? instance.constructor : null;
+    }
+
+    /**
+     * Retrieves the class constructor for a given modifier.
+     * This is used by the UI to access static parameter definitions.
+     * @param {string} name - The name of the modifier.
+     * @returns {Function|null} The modifier's class constructor or null if not found.
+     */
+    getModifier(name) {
+        const instance = this.#modifierRegistry.get(name);
+        return instance ? instance.constructor : null;
+    }
+
+    /**
      * Returns the canvas element containing the generated art.
      * @returns {HTMLCanvasElement} The canvas element.
      */
