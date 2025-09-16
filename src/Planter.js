@@ -63,6 +63,13 @@ export class Planter {
      */
     #modifierRegistry = new Map();
 
+    /**
+     * A registry for all available pattern modules.
+     * @private
+     * @type {Map<string, object>}
+     */
+    #patternRegistry = new Map();
+
 
     /**
      * Creates an instance of the Planter class.
@@ -268,6 +275,32 @@ export class Planter {
     getModifier(name) {
         const instance = this.#modifierRegistry.get(name);
         return instance ? instance.constructor : null;
+    }
+
+    /**
+     * Registers a new pattern, making it available for use.
+     * @param {string} name - The name to identify the pattern by.
+     * @param {Pattern} patternInstance - An instance of the Pattern class.
+     */
+    registerPattern(name, patternInstance) {
+        this.#patternRegistry.set(name, patternInstance);
+    }
+
+    /**
+     * Retrieves a registered pattern by its name.
+     * @param {string} name - The name of the pattern.
+     * @returns {Pattern|null} The Pattern object or null if not found.
+     */
+    getPattern(name) {
+        return this.#patternRegistry.get(name) || null;
+    }
+
+    /**
+     * Returns the list of registered pattern names.
+     * @returns {string[]} An array of pattern names.
+     */
+    getPatternNames() {
+        return Array.from(this.#patternRegistry.keys());
     }
 
     /**

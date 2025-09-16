@@ -1,4 +1,5 @@
 import { Planter } from './Planter.js';
+import { Pattern } from './patterns/Pattern.js';
 
 const TOOLTIP_TEXTS = {
     'generator-select': 'The core algorithm used to create the pattern.',
@@ -13,57 +14,134 @@ const TOOLTIP_TEXTS = {
 // Manages the interaction between the HTML controls and the Planter instance.
 export class UIManager {
     // PRIVATE PROPERTIES
-    #planterInstance; // A reference to the main Planter object.
-    #controls; // An object to hold references to all the HTML input elements.
-    #canvasContainer; // The HTML element where the canvas will be displayed.
+    #planterInstance;
+    #controls = {};
+    #canvasContainer;
     #modifiersContainer;
     #generatorParamsContainer;
     #modifierParamsContainer;
+    #patternEditorModal;
+    #patternGridContainer;
     #currentCanvas;
     #currentSeed;
 
     // CONSTRUCTOR
     constructor(planter) {
         this.#planterInstance = planter;
+        this.#bindDOM();
+        this.#initializeUI();
+        this.#attachEventListeners();
+    }
 
-        // Find and store all necessary DOM elements
-        this.#controls = {
-            generatorSelect: document.getElementById('generator-select'),
-            paletteSelect: document.getElementById('palette-select'),
-            sizeInput: document.getElementById('size-input'),
-            pixelSizeInput: document.getElementById('pixel-size-input'),
-            seedInput: document.getElementById('seed-input'),
-            generateBtn: document.getElementById('generate-btn'),
-            saveBtn: document.getElementById('save-btn'),
-        };
+    #bindDOM() {
+        const C = this.#controls; // Shorthand
+        C.generatorSelect = document.getElementById('generator-select');
+        C.paletteSelect = document.getElementById('palette-select');
+        C.sizeInput = document.getElementById('size-input');
+        C.pixelSizeInput = document.getElementById('pixel-size-input');
+        C.seedInput = document.getElementById('seed-input');
+        C.generateBtn = document.getElementById('generate-btn');
+        C.saveBtn = document.getElementById('save-btn');
+        C.editPatternsBtn = document.getElementById('edit-patterns-btn');
+        C.savePatternBtn = document.getElementById('save-pattern-btn');
+        C.patternNameInput = document.getElementById('pattern-name-input');
+        C.closePatternEditorBtn = document.querySelector('.close-button');
+
         this.#canvasContainer = document.getElementById('canvas-container');
         this.#modifiersContainer = document.getElementById('modifiers-container');
         this.#generatorParamsContainer = document.getElementById('generator-params');
         this.#modifierParamsContainer = document.getElementById('modifier-params');
+        this.#patternEditorModal = document.getElementById('pattern-editor-modal');
+        this.#patternGridContainer = document.getElementById('pattern-grid-container');
+    }
 
-        // Initialize the UI state
+    #initializeUI() {
         this.#populateGeneratorOptions();
         this.#populatePaletteOptions();
         this.#populateModifierOptions();
         this.#addTooltips();
-        this.#updateGeneratorParamsUI(); // Initial call for the default generator
-
-        // Attach all the necessary event listeners
-        this.#attachEventListeners();
+        this.#updateGeneratorParamsUI(); // Initial call
+        this.#initializePatternEditorGrid();
     }
+
+    #attachEventListeners() {
+        this.#controls.generateBtn.addEventListener('click', () => this.handleGenerate());
+        this.#controls.saveBtn.addEventListener('click', () => this.handleSave());
+        this.#controls.generatorSelect.addEventListener('change', () => this.#updateGeneratorParamsUI());
+        this.#modifiersContainer.addEventListener('change', (event) => {
+            if (event.target.type === 'checkbox') this.#updateModifierParamsUI();
+        });
+
+        // Pattern Editor Listeners
+        this.#controls.editPatternsBtn.addEventListener('click', () => this.#openPatternEditor());
+        this.#controls.closePatternEditorBtn.addEventListener('click', () => this.#closePatternEditor());
+        this.#controls.savePatternBtn.addEventListener('click', () => this.#handleSavePattern());
+        window.addEventListener('click', (event) => {
+            if (event.target == this.#patternEditorModal) this.#closePatternEditor();
+        });
+        this.#patternGridContainer.addEventListener('click', (event) => {
+            if (event.target.classList.contains('pattern-cell')) {
+                event.target.classList.toggle('active');
+            }
+        });
+    }
+
+    // --- Pattern Editor Methods ---
+
+    #openPatternEditor() {
+        this.#patternEditorModal.style.display = 'block';
+    }
+
+    #closePatternEditor() {
+        this.#patternEditorModal.style.display = 'none';
+    }
+
+    #initializePatternEditorGrid(size = 8) {
+        this.#patternGridContainer.innerHTML = '';
+        this.#patternGridContainer.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+        for (let i = 0; i < size * size; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('pattern-cell');
+            this.#patternGridContainer.appendChild(cell);
+        }
+    }
+
+    #handleSavePattern() {
+        const name = this.#controls.patternNameInput.value.trim();
+        if (!name) {
+            alert('Please enter a name for the pattern.');
+            return;
+        }
+
+        const gridSize = Math.sqrt(this.#patternGridContainer.children.length);
+        const dataGrid = Array.from({ length: gridSize }, () => Array(gridSize).fill(0));
+        const cells = this.#patternGridContainer.children;
+
+        for (let i = 0; i < cells.length; i++) {
+            const row = Math.floor(i / gridSize);
+            const col = i % gridSize;
+            if (cells[i].classList.contains('active')) {
+                dataGrid[row][col] = 1;
+            }
+        }
+
+        const newPattern = new Pattern(name, dataGrid);
+        this.#planterInstance.registerPattern(name, newPattern);
+
+        alert(`Pattern "${name}" saved!`);
+        this.#closePatternEditor();
+    }
+
+
+    // --- Core UI Methods ---
 
     #addTooltips() {
         for (const controlId in TOOLTIP_TEXTS) {
             const controlElement = document.getElementById(controlId);
             if (!controlElement) continue;
-
-            let label;
-            if (controlId === 'modifiers-container') {
-                label = controlElement.previousElementSibling;
-            } else {
-                label = document.querySelector(`label[for="${controlId}"]`);
-            }
-
+            let label = (controlId === 'modifiers-container')
+                ? controlElement.previousElementSibling
+                : document.querySelector(`label[for="${controlId}"]`);
             if (label) {
                 label.classList.add('tooltip');
                 const tooltipText = document.createElement('span');
@@ -111,17 +189,6 @@ export class UIManager {
             div.appendChild(checkbox);
             div.appendChild(label);
             this.#modifiersContainer.appendChild(div);
-        });
-    }
-
-    #attachEventListeners() {
-        this.#controls.generateBtn.addEventListener('click', () => this.handleGenerate());
-        this.#controls.saveBtn.addEventListener('click', () => this.handleSave());
-        this.#controls.generatorSelect.addEventListener('change', () => this.#updateGeneratorParamsUI());
-        this.#modifiersContainer.addEventListener('change', (event) => {
-            if (event.target.type === 'checkbox') {
-                this.#updateModifierParamsUI();
-            }
         });
     }
 
@@ -200,7 +267,6 @@ export class UIManager {
             modifiers: []
         };
 
-        // Gather generator params
         const genParamsInputs = this.#generatorParamsContainer.querySelectorAll('[data-param-name]');
         genParamsInputs.forEach(input => {
             const key = input.dataset.paramName;
@@ -208,7 +274,6 @@ export class UIManager {
             config[key] = value;
         });
 
-        // Gather modifier params
         const modifierCheckboxes = this.#modifiersContainer.querySelectorAll('input[type="checkbox"]:checked');
         modifierCheckboxes.forEach(checkbox => {
             const modName = checkbox.dataset.modifierName;
@@ -222,7 +287,6 @@ export class UIManager {
             config.modifiers.push(modConfig);
         });
 
-        // --- Generation ---
         this.#canvasContainer.innerHTML = '';
         const newPlanter = new Planter(config);
         newPlanter.generate();
