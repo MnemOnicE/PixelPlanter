@@ -50,6 +50,18 @@
             cursor: pointer;
             border: none;
         }
+
+        /* Responsive styles for mobile */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                align-items: center; /* Center items for a better mobile view */
+            }
+            canvas {
+                max-width: 100%;
+                height: auto; /* Maintain aspect ratio */
+            }
+        }
     </style>
 </head>
 <body>
