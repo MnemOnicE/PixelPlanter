@@ -1,5 +1,14 @@
 import { Planter } from './Planter.js';
 
+const TOOLTIP_TEXTS = {
+    'generator-select': 'The core algorithm used to create the pattern.',
+    'seed-input': 'A number or string that determines the random pattern. The same seed will always produce the same image.',
+    'palette-select': 'The set of colors used in the artwork.',
+    'size-input': 'The number of cells in the grid (e.g., 32x32).',
+    'pixel-size-input': 'The size of each \'pixel\' in the final image.',
+    'modifiers-container': 'Optional effects that alter the generated image.'
+};
+
 // CLASS UIManager
 // Manages the interaction between the HTML controls and the Planter instance.
 export class UIManager {
@@ -33,9 +42,35 @@ export class UIManager {
         this.#populateGeneratorOptions();
         this.#populatePaletteOptions();
         this.#populateModifierOptions();
+        this.#addTooltips();
+
 
         // Attach all the necessary event listeners
         this.#attachEventListeners();
+    }
+
+    #addTooltips() {
+        for (const controlId in TOOLTIP_TEXTS) {
+            const controlElement = document.getElementById(controlId);
+            if (!controlElement) continue;
+
+            let label;
+            // The 'modifiers-container' has a generic label as a sibling
+            if (controlId === 'modifiers-container') {
+                label = controlElement.previousElementSibling;
+            } else {
+                // Other controls have a label linked by the 'for' attribute
+                label = document.querySelector(`label[for="${controlId}"]`);
+            }
+
+            if (label) {
+                label.classList.add('tooltip');
+                const tooltipText = document.createElement('span');
+                tooltipText.classList.add('tooltip-text');
+                tooltipText.textContent = TOOLTIP_TEXTS[controlId];
+                label.appendChild(tooltipText);
+            }
+        }
     }
 
     // METHOD populateGeneratorOptions
