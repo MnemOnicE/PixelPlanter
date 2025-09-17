@@ -1,3 +1,5 @@
+import { Layer } from './Layer.js';
+import { SeededRandom } from './utils/PRNG.js';
 import { SymmetryGenerator } from './generators/SymmetryGenerator.js';
 import { AdvancedSymmetryGenerator } from './generators/AdvancedSymmetryGenerator.js';
 import { RecursiveGrowthGenerator } from './generators/RecursiveGrowthGenerator.js';
@@ -8,101 +10,55 @@ import { MonochromePalette } from './palettes/MonochromePalette.js';
 import { VaporwavePalette, ForestPalette } from './palettes/ColorPalettes.js';
 import { OutlineModifier } from './modifiers/OutlineModifier.js';
 import { DensityMaskModifier } from './modifiers/DensityMaskModifier.js';
-import { SeededRandom } from './utils/PRNG.js';
 
 /**
  * @class Planter
  * The main class for the Pixel Planter library. This class orchestrates the entire
- * generative process, from setting up the canvas to applying generators and palettes.
+ * generative process, from managing layers to applying generators and palettes.
  */
 export class Planter {
-    /**
-     * The HTMLCanvasElement used for drawing.
-     * @private
-     * @type {HTMLCanvasElement}
-     */
-    #canvas;
+    #finalCanvas;
+    #finalContext;
+    #layerStack = [];
+    #globalConfig;
 
-    /**
-     * The 2D rendering context of the canvas.
-     * @private
-     * @type {CanvasRenderingContext2D}
-     */
-    #context;
-
-    /**
-     * Configuration options for the generation process.
-     * @private
-     * @type {object}
-     */
-    #config;
-
-    /**
-     * A registry to hold all available generator modules.
-     * This allows for easy extension by adding new generators.
-     *
-     * @private
-     * @type {Map<string, object>}
-     *
-     * @potential_datastructure A 'Map' is ideal here. It provides a simple key-value store
-     * with O(1) average time complexity for adding ('set') and retrieving ('get') modules.
-     * The key would be the generator's name (e.g., 'symmetry'), and the value would be
-     * the generator object/class itself.
-     */
     #generatorRegistry = new Map();
-
-    /**
-     * A registry to hold all available palette modules.
-     *
-     * @private
-     * @type {Map<string, object>}
-     */
     #paletteRegistry = new Map();
-
-    /**
-     * A registry for all available modifier modules.
-     * @private
-     * @type {Map<string, object>}
-     */
     #modifierRegistry = new Map();
-
-    /**
-     * A registry for all available pattern modules.
-     * @private
-     * @type {Map<string, object>}
-     */
     #patternRegistry = new Map();
-
 
     /**
      * Creates an instance of the Planter class.
-     * @param {object} config - The configuration object.
-     * @param {Array<object>} [config.modifiers=[]] - An array of modifier configs to apply.
+     * @param {object} globalConfig - The global configuration object (size, pixelSize).
      */
-    constructor(config = {}) {
-        this.#config = {
-            size: 16,
-            generator: 'advanced-symmetry',
-            symmetryMode: 'vertical',
-            palette: 'monochrome',
+    constructor(globalConfig = {}) {
+        this.#globalConfig = {
+            size: 32,
             pixelSize: 20,
-            modifiers: [], // Add a default empty array for modifiers
-            seed: Date.now(), // Default to a new seed every time
-            ...config,
+            ...globalConfig,
         };
 
-        // Create a single PRNG instance for this generation process.
-        this.prng = new SeededRandom(this.#config.seed);
-
         this.#initializeCanvas();
+        this.#loadDefaultModules();
+    }
 
-        // Load default modules.
+    #initializeCanvas() {
+        const canvasSize = this.#globalConfig.size * this.#globalConfig.pixelSize;
+        this.#finalCanvas = document.createElement('canvas');
+        this.#finalCanvas.width = canvasSize;
+        this.#finalCanvas.height = canvasSize;
+        this.#finalContext = this.#finalCanvas.getContext('2d');
+        this.#finalContext.imageSmoothingEnabled = false;
+    }
+
+    #loadDefaultModules() {
         this.registerGenerator('simple-symmetry', new SymmetryGenerator());
         this.registerGenerator('advanced-symmetry', new AdvancedSymmetryGenerator());
         this.registerGenerator('recursive-growth', new RecursiveGrowthGenerator());
         this.registerGenerator('pattern', new PatternGenerator());
         this.registerGenerator('noise', new NoiseGenerator());
         this.registerGenerator('cellular-automata', new CellularAutomataGenerator());
+
         this.registerPalette('monochrome', new MonochromePalette());
         this.registerPalette('vaporwave', new VaporwavePalette());
         this.registerPalette('forest', new ForestPalette());
@@ -112,267 +68,139 @@ export class Planter {
     }
 
     /**
-     * Initializes the canvas and its 2D context based on the configuration.
-     * @private
-     */
-    #initializeCanvas() {
-        const canvasSize = this.#config.size * this.#config.pixelSize;
-        this.#canvas = document.createElement('canvas');
-        this.#canvas.width = canvasSize;
-        this.#canvas.height = canvasSize;
-        this.#context = this.#canvas.getContext('2d');
-        this.#context.imageSmoothingEnabled = false;
-    }
-
-    /**
-     * Main orchestration method. It calls the necessary modules to generate the art.
+     * Main orchestration method. It generates each layer and composites them.
      * @returns {this} Returns the Planter instance for method chaining.
      */
     generate() {
-        // --- 1. Select and Run the Generator Module ---
-        const generator = this.#generatorRegistry.get(this.#config.generator);
-        if (!generator) {
-            throw new Error(`Generator "${this.#config.generator}" not found.`);
+        this.#finalContext.clearRect(0, 0, this.#finalCanvas.width, this.#finalCanvas.height);
+
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = this.#finalCanvas.width;
+        tempCanvas.height = this.#finalCanvas.height;
+        const tempContext = tempCanvas.getContext('2d');
+
+        for (const layer of this.#layerStack) {
+            if (!layer.isVisible) continue;
+
+            // Ensure layer's grid is generated
+            if (layer.dataGrid.length === 0) {
+                layer.generate(this);
+            }
+
+            const palette = this.getPaletteInstance(layer.config.palette);
+            if (!palette) {
+                console.error(`Palette "${layer.config.palette}" not found.`);
+                continue;
+            }
+            const colorGrid = palette.map(layer.dataGrid);
+
+            // Draw this layer to the temporary canvas
+            this.#drawColorGridToContext(tempContext, colorGrid, this.#globalConfig);
+
+            // Now, draw the temp canvas onto the final canvas with blending
+            this.#finalContext.globalAlpha = layer.opacity;
+            this.#finalContext.globalCompositeOperation = layer.blendMode;
+            this.#finalContext.drawImage(tempCanvas, 0, 0);
+
+            // Clear the temp canvas for the next layer
+            tempContext.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
         }
-        let dataGrid = generator.run(this.#config, this.prng); // Use 'let' because we will modify this grid
 
+        // Reset context properties
+        this.#finalContext.globalAlpha = 1.0;
+        this.#finalContext.globalCompositeOperation = 'source-over';
 
-        // --- 2. NEW: APPLY MODIFIER PIPELINE ---
-        // Check if there are any modifiers in the config to apply.
-        if (this.#config.modifiers && this.#config.modifiers.length > 0) {
-            // Loop through each modifier config in the array.
-            // This allows them to be chained in a specific order.
-            for (const modConfig of this.#config.modifiers) {
-                const modifier = this.#modifierRegistry.get(modConfig.name);
-                if (modifier) {
-                    // Pass the current state of the dataGrid to the modifier.
-                    // The modifier returns a new, altered grid which becomes
-                    // the input for the next modifier in the chain.
-                    dataGrid = modifier.apply(dataGrid, modConfig, this.prng);
-                } else {
-                    console.warn(`Modifier "${modConfig.name}" not found.`);
+        return this;
+    }
+
+    #drawColorGridToContext(context, colorGrid, { size, pixelSize }) {
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                const color = colorGrid[y][x];
+                if (!color) continue;
+                context.fillStyle = color;
+                context.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+            }
+        }
+    }
+
+    // --- Layer Management ---
+    addLayer(config) {
+        const fullConfig = { ...this.#globalConfig, ...config };
+        const newLayer = new Layer(fullConfig);
+        this.#layerStack.push(newLayer);
+        return newLayer;
+    }
+
+    removeLayer(layerId) {
+        this.#layerStack = this.#layerStack.filter(layer => layer.id !== layerId);
+    }
+
+    moveLayer(layerId, direction) {
+        const index = this.#layerStack.findIndex(l => l.id === layerId);
+        if (index === -1) return;
+
+        if (direction === 'up' && index > 0) {
+            [this.#layerStack[index], this.#layerStack[index - 1]] = [this.#layerStack[index - 1], this.#layerStack[index]];
+        } else if (direction === 'down' && index < this.#layerStack.length - 1) {
+            [this.#layerStack[index], this.#layerStack[index + 1]] = [this.#layerStack[index + 1], this.#layerStack[index]];
+        }
+    }
+
+    getLayerById(id) {
+        return this.#layerStack.find(l => l.id === id);
+    }
+
+    getLayerStack() {
+        return this.#layerStack;
+    }
+
+    setLayerStack(layerStack) {
+        this.#layerStack = layerStack;
+    }
+
+    /**
+     * Modifies the dataGrid of a specific layer by setting values at given points.
+     * @param {number} layerId - The ID of the layer to draw on.
+     * @param {Array<{x: number, y: number}>} points - An array of points to modify.
+     * @param {number} value - The value to set at each point (e.g., 1 for on, 0 for off).
+     */
+    drawOnLayer(layerId, points, value = 1) {
+        const layer = this.getLayerById(layerId);
+        if (!layer) return;
+
+        const size = this.#globalConfig.size;
+        for (const point of points) {
+            if (point.x >= 0 && point.x < size && point.y >= 0 && point.y < size) {
+                if (!layer.dataGrid || layer.dataGrid.length !== size) {
+                    layer.dataGrid = Array.from({ length: size }, () => Array(size).fill(0));
                 }
-            }
-        }
-
-
-        // --- 3. Select and Run the Palette Module ---
-        const palette = this.#paletteRegistry.get(this.#config.palette);
-        if (!palette) {
-            throw new Error(`Palette "${this.#config.palette}" not found.`);
-        }
-        const colorGrid = palette.map(dataGrid); // Use the final, modified grid
-
-
-        // --- 4. Draw the Final Output to the Canvas ---
-        this.#draw(colorGrid);
-
-
-        return this; // Allow chaining
-    }
-
-    /**
-     * Renders the color grid onto the canvas.
-     * @private
-     * @param {string[][]} colorGrid - A 2D array of color strings.
-     */
-    #draw(colorGrid) {
-        // Clear the canvas before drawing new content.
-        this.#context.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
-
-        const { size, pixelSize } = this.#config;
-
-        // --- Drawing Algorithm ---
-        // Iterate over each "logical" pixel in our generated grid.
-        // @potential_algorithm A nested loop is the most straightforward way to traverse a 2D grid.
-        // The outer loop handles the rows (y-axis), and the inner loop handles the columns (x-axis).
-
-        for (let y = 0; y < size; y++) {
-            for (let x = 0; x < size; x++) {
-                // Get the color for the current grid position.
-                const color = colorGrid[y][x];
-
-                // If the color is null or undefined, we can treat it as transparent and skip drawing.
-                // This is an optimization and allows for sprites with empty space.
-                if (!color) continue;
-
-                // Set the fill style for the rectangle we're about to draw.
-                this.#context.fillStyle = color;
-
-                // Calculate the actual position and size on the canvas.
-                // We multiply by pixelSize to scale up the art.
-                const canvasX = x * pixelSize;
-                const canvasY = y * pixelSize;
-
-                // Draw the scaled-up "pixel" as a rectangle.
-                this.#context.fillRect(canvasX, canvasY, pixelSize, pixelSize);
+                layer.dataGrid[point.y][point.x] = value;
             }
         }
     }
 
-    /**
-     * Registers a new generator module, making it available for use.
-     * @param {string} name - The name to identify the generator by (e.g., "symmetry").
-     * @param {object} generatorInstance - An instance of a generator class/object.
-     */
-    registerGenerator(name, generatorInstance) {
-        this.#generatorRegistry.set(name, generatorInstance);
+    getDataGridForLayer(layerId) {
+        const layer = this.getLayerById(layerId);
+        return layer ? layer.dataGrid : null;
     }
 
-    /**
-     * Registers a new palette module.
-     * @param {string} name - The name to identify the palette by (e.g., "monochrome").
-     * @param {object} paletteInstance - An instance of a palette class/object.
-     */
-    registerPalette(name, paletteInstance) {
-        this.#paletteRegistry.set(name, paletteInstance);
-    }
-
-    /**
-     * Returns the list of registered generator names.
-     * @returns {string[]} An array of generator names.
-     */
-    getGeneratorNames() {
-        return Array.from(this.#generatorRegistry.keys());
-    }
-
-    /**
-     * Returns the list of registered palette names.
-     * @returns {string[]} An array of palette names.
-     */
-    getPaletteNames() {
-        return Array.from(this.#paletteRegistry.keys());
-    }
-
-    /**
-     * Registers a new modifier module.
-     * @param {string} name - The name to identify the modifier by.
-     * @param {object} modifierInstance - An instance of a modifier class.
-     */
-    registerModifier(name, modifierInstance) {
-        this.#modifierRegistry.set(name, modifierInstance);
-    }
-
-    /**
-     * Public getter for modifier names, for the UI.
-     * @returns {string[]}
-     */
-    getModifierNames() {
-        return Array.from(this.#modifierRegistry.keys());
-    }
-
-    /**
-     * Retrieves the class constructor for a given generator.
-     * This is used by the UI to access static parameter definitions.
-     * @param {string} name - The name of the generator.
-     * @returns {Function|null} The generator's class constructor or null if not found.
-     */
-    getGenerator(name) {
-        const instance = this.#generatorRegistry.get(name);
-        return instance ? instance.constructor : null;
-    }
-
-    /**
-     * Retrieves the class constructor for a given modifier.
-     * This is used by the UI to access static parameter definitions.
-     * @param {string} name - The name of the modifier.
-     * @returns {Function|null} The modifier's class constructor or null if not found.
-     */
-    getModifier(name) {
-        const instance = this.#modifierRegistry.get(name);
-        return instance ? instance.constructor : null;
-    }
-
-    /**
-     * Registers a new pattern, making it available for use.
-     * @param {string} name - The name to identify the pattern by.
-     * @param {Pattern} patternInstance - An instance of the Pattern class.
-     */
-    registerPattern(name, patternInstance) {
-        this.#patternRegistry.set(name, patternInstance);
-    }
-
-    /**
-     * Retrieves a registered pattern by its name.
-     * @param {string} name - The name of the pattern.
-     * @returns {Pattern|null} The Pattern object or null if not found.
-     */
-    getPattern(name) {
-        return this.#patternRegistry.get(name) || null;
-    }
-
-    /**
-     * Returns the list of registered pattern names.
-     * @returns {string[]} An array of pattern names.
-     */
-    getPatternNames() {
-        return Array.from(this.#patternRegistry.keys());
-    }
-
-    /**
-     * Returns the canvas element containing the generated art.
-     * @returns {HTMLCanvasElement} The canvas element.
-     */
-    getCanvas() {
-        return this.#canvas;
-    }
-
-    /**
-     * Renders a color grid onto the canvas WITHOUT clearing it first.
-     * Used for stamping/brushing.
-     * @private
-     * @param {string[][]} colorGrid - A 2D array of color strings.
-     */
-    #drawOverlay(colorGrid) {
-        const { size, pixelSize } = this.#config;
-        for (let y = 0; y < size; y++) {
-            for (let x = 0; x < size; x++) {
-                const color = colorGrid[y][x];
-                if (!color) continue;
-                this.#context.fillStyle = color;
-                const canvasX = x * pixelSize;
-                const canvasY = y * pixelSize;
-                this.#context.fillRect(canvasX, canvasY, pixelSize, pixelSize);
-            }
-        }
-    }
-
-    /**
-     * Stamps a pattern onto the current canvas.
-     * @param {string} patternName - The name of the pattern to stamp.
-     * @param {number} x - The x-coordinate percentage (0-100) for the stamp center.
-     * @param {number} y - The y-coordinate percentage (0-100) for the stamp center.
-     */
-    stamp(patternName, x, y) {
-        const pattern = this.getPattern(patternName);
-        if (!pattern) {
-            console.error(`Attempted to stamp with non-existent pattern: ${patternName}`);
-            return;
-        }
-
-        const generator = this.#generatorRegistry.get('pattern');
-        if (!generator) {
-            console.error('PatternGenerator not registered.');
-            return;
-        }
-
-        const stampConfig = {
-            ...this.#config,
-            patternData: pattern.dataGrid,
-            x: x,
-            y: y,
-        };
-
-        // We don't want a new seed for the stamp itself, but the generator might use it.
-        const stampPrng = new SeededRandom(this.#config.seed);
-        const dataGrid = generator.run(stampConfig, stampPrng);
-
-        const palette = this.#paletteRegistry.get(this.#config.palette);
-        if (!palette) {
-            throw new Error(`Palette "${this.#config.palette}" not found.`);
-        }
-        const colorGrid = palette.map(dataGrid);
-
-        this.#drawOverlay(colorGrid);
-    }
+    // --- Registries and Getters ---
+    getPRNG(seed) { return new SeededRandom(seed); }
+    getCanvas() { return this.#finalCanvas; }
+    getGeneratorInstance(name) { return this.#generatorRegistry.get(name); }
+    getModifierInstance(name) { return this.#modifierRegistry.get(name); }
+    getPaletteInstance(name) { return this.#paletteRegistry.get(name); }
+    getGenerator(name) { const i = this.getGeneratorInstance(name); return i ? i.constructor : null; }
+    getModifier(name) { const i = this.getModifierInstance(name); return i ? i.constructor : null; }
+    getGeneratorNames() { return Array.from(this.#generatorRegistry.keys()); }
+    getPaletteNames() { return Array.from(this.#paletteRegistry.keys()); }
+    getModifierNames() { return Array.from(this.#modifierRegistry.keys()); }
+    getPattern(name) { return this.#patternRegistry.get(name) || null; }
+    getPatternNames() { return Array.from(this.#patternRegistry.keys()); }
+    registerGenerator(name, instance) { this.#generatorRegistry.set(name, instance); }
+    registerPalette(name, instance) { this.#paletteRegistry.set(name, instance); }
+    registerModifier(name, instance) { this.#modifierRegistry.set(name, instance); }
+    registerPattern(name, instance) { this.#patternRegistry.set(name, instance); }
 }
