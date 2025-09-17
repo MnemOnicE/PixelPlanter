@@ -10,6 +10,8 @@ import { MonochromePalette } from './palettes/MonochromePalette.js';
 import { VaporwavePalette, ForestPalette } from './palettes/ColorPalettes.js';
 import { OutlineModifier } from './modifiers/OutlineModifier.js';
 import { DensityMaskModifier } from './modifiers/DensityMaskModifier.js';
+import { PathfinderModifier } from './modifiers/PathfinderModifier.js';
+import { ParticleModifier } from './modifiers/ParticleModifier.js';
 
 /**
  * @class Planter
@@ -65,6 +67,8 @@ export class Planter {
 
         this.registerModifier('outline', new OutlineModifier());
         this.registerModifier('density-mask', new DensityMaskModifier());
+        this.registerModifier('pathfinder', new PathfinderModifier());
+        this.registerModifier('particle-deposition', new ParticleModifier());
     }
 
     /**
