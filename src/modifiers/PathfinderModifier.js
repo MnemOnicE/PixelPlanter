@@ -1,8 +1,14 @@
 // Filename: src/modifiers/PathfinderModifier.js
 
 export class PathfinderModifier {
-    // --- PARAMETER DEFINITIONS ---
+    // --- NEW: PARAMETER DEFINITIONS with 'mode' ---
     static params = {
+        mode: {
+            label: 'Mode',
+            type: 'select',
+            options: ['additive', 'subtractive'],
+            defaultValue: 'additive'
+        },
         pathCount: {
             label: 'Number of Paths',
             type: 'slider', min: 1, max: 10, step: 1, defaultValue: 3
@@ -17,31 +23,36 @@ export class PathfinderModifier {
         }
     };
 
-    // --- APPLY METHOD ---
-    apply(dataGrid, { pathCount = 3, pathWidth = 1, pathStraightness = 0.7 }, prng) {
-        // Create a copy of the grid to draw on.
+    // --- UPDATED APPLY METHOD ---
+    apply(dataGrid, { mode = 'additive', pathCount = 3, pathWidth = 1, pathStraightness = 0.7 }, prng) {
         const outputGrid = JSON.parse(JSON.stringify(dataGrid));
         const size = dataGrid.length;
 
-        // Run the pathfinding logic for the desired number of paths.
         for (let i = 0; i < pathCount; i++) {
-            // 1. Find a valid, empty starting point for the path.
-            const startPoint = this.#findEmptySpot(dataGrid, prng);
-            if (startPoint === null) continue; // No empty space found.
+            // --- SMART LOGIC: Choose starting point based on mode ---
+            let startPoint;
+            if (mode === 'subtractive') {
+                startPoint = this.#findSolidSpot(dataGrid, prng);
+            } else { // Additive mode
+                startPoint = this.#findEmptySpot(dataGrid, prng);
+            }
 
-            // 2. Determine a target direction. This gives the path a general goal.
+            if (startPoint === null) continue;
+
             const directions = ['up', 'down', 'left', 'right', 'up-left', 'up-right', 'down-left', 'down-right'];
             const targetDirection = directions[Math.floor(prng.next() * directions.length)];
 
-            // 3. Perform a "random walk" from the starting point.
             let currentPoint = startPoint;
-            const pathLength = size * 1.5; // Allow path to be long.
+            const pathLength = size * 1.5;
 
             for (let step = 0; step < pathLength; step++) {
-                // Draw the "brush" at the current point.
-                this.#drawBrush(outputGrid, currentPoint, pathWidth, 1); // Draw with value '1'.
+                // --- SMART LOGIC: Draw or Carve based on mode ---
+                if (mode === 'subtractive') {
+                    this.#drawBrush(outputGrid, currentPoint, pathWidth, 0); // Draw with value '0' to erase.
+                } else {
+                    this.#drawBrush(outputGrid, currentPoint, pathWidth, 1); // Draw with value '1' to add.
+                }
 
-                // Decide the next move.
                 let nextMove;
                 if (prng.next() < pathStraightness) {
                     nextMove = this.#getBiasedMove(targetDirection);
@@ -49,13 +60,12 @@ export class PathfinderModifier {
                     nextMove = this.#getRandomMove(prng);
                 }
 
-                // Check if the next position is valid (within bounds and not hitting a solid pixel).
                 const nextPoint = { x: currentPoint.x + nextMove.dx, y: currentPoint.y + nextMove.dy };
 
-                if (this.#isValidMove(dataGrid, nextPoint)) {
+                // --- SMART LOGIC: Check validity based on mode ---
+                if (this.#isValidMove(dataGrid, nextPoint, mode)) {
                     currentPoint = nextPoint;
                 } else {
-                    // If the path hits a wall, stop this walk.
                     break;
                 }
             }
@@ -64,11 +74,27 @@ export class PathfinderModifier {
         return outputGrid;
     }
 
-    // --- HELPER METHODS ---
+    // --- UPDATED HELPER METHODS ---
+    #findSolidSpot(grid, prng) {
+        const size = grid.length;
+        let attempts = 0;
+        const maxAttempts = size * size;
+
+        while (attempts < maxAttempts) {
+            const x = Math.floor(prng.next() * size);
+            const y = Math.floor(prng.next() * size);
+            if (grid[y][x] > 0) {
+                return { x, y };
+            }
+            attempts++;
+        }
+        return null; // Return null if no solid spot is found
+    }
+
     #findEmptySpot(grid, prng) {
         const size = grid.length;
         let attempts = 0;
-        const maxAttempts = size * size; // Limit attempts to find an empty spot
+        const maxAttempts = size * size;
 
         while (attempts < maxAttempts) {
             const x = Math.floor(prng.next() * size);
@@ -83,14 +109,8 @@ export class PathfinderModifier {
 
     #getBiasedMove(direction) {
         const moves = {
-            'up': { dx: 0, dy: -1 },
-            'down': { dx: 0, dy: 1 },
-            'left': { dx: -1, dy: 0 },
-            'right': { dx: 1, dy: 0 },
-            'up-left': { dx: -1, dy: -1 },
-            'up-right': { dx: 1, dy: -1 },
-            'down-left': { dx: -1, dy: 1 },
-            'down-right': { dx: 1, dy: 1 }
+            'up': { dx: 0, dy: -1 }, 'down': { dx: 0, dy: 1 }, 'left': { dx: -1, dy: 0 }, 'right': { dx: 1, dy: 0 },
+            'up-left': { dx: -1, dy: -1 }, 'up-right': { dx: 1, dy: -1 }, 'down-left': { dx: -1, dy: 1 }, 'down-right': { dx: 1, dy: 1 }
         };
         return moves[direction] || { dx: 0, dy: 0 };
     }
@@ -103,17 +123,18 @@ export class PathfinderModifier {
         return moves[Math.floor(prng.next() * moves.length)];
     }
 
-    #isValidMove(grid, point) {
+    #isValidMove(grid, point, mode) {
         const size = grid.length;
-        // Check bounds
+        // Check bounds (same for both modes).
         if (point.x < 0 || point.x >= size || point.y < 0 || point.y >= size) {
             return false;
         }
-        // Check if the cell is empty (value is 0)
-        if (grid[point.y][point.x] !== 0) {
-            return false;
+
+        if (mode === 'subtractive') {
+            return grid[point.y][point.x] > 0; // Must move onto a solid pixel to continue carving.
+        } else {
+            return grid[point.y][point.x] === 0; // Must move onto an empty pixel to continue drawing.
         }
-        return true;
     }
 
     #drawBrush(grid, point, width, value) {
