@@ -1,5 +1,6 @@
 import { Planter } from './Planter.js';
 import { Pattern } from './patterns/Pattern.js';
+import { HistoryManager } from './HistoryManager.js';
 
 const TOOLTIP_TEXTS = {
     'generator-select': 'The core algorithm used to create the pattern.',
@@ -16,6 +17,7 @@ export class UIManager {
     // PRIVATE PROPERTIES
     #planterInstance;
     #controls = {};
+    #historyManager;
     #canvasContainer;
     #modifiersContainer;
     #generatorParamsContainer;
@@ -30,9 +32,11 @@ export class UIManager {
     // CONSTRUCTOR
     constructor(planter) {
         this.#planterInstance = planter;
+        this.#historyManager = new HistoryManager();
         this.#bindDOM();
         this.#initializeUI();
         this.#attachEventListeners();
+        this.#loadConfigFromURL();
     }
 
     #bindDOM() {
@@ -43,7 +47,10 @@ export class UIManager {
         C.pixelSizeInput = document.getElementById('pixel-size-input');
         C.seedInput = document.getElementById('seed-input');
         C.generateBtn = document.getElementById('generate-btn');
+        C.undoBtn = document.getElementById('undo-btn');
+        C.redoBtn = document.getElementById('redo-btn');
         C.saveBtn = document.getElementById('save-btn');
+        C.shareBtn = document.getElementById('share-btn');
         C.editPatternsBtn = document.getElementById('edit-patterns-btn');
         C.savePatternBtn = document.getElementById('save-pattern-btn');
         C.patternNameInput = document.getElementById('pattern-name-input');
@@ -75,6 +82,9 @@ export class UIManager {
             this.#setActiveTool('generate');
             this.handleGenerate();
         });
+        this.#controls.undoBtn.addEventListener('click', () => this.#handleUndo());
+        this.#controls.redoBtn.addEventListener('click', () => this.#handleRedo());
+        this.#controls.shareBtn.addEventListener('click', () => this.#handleShare());
         this.#controls.saveBtn.addEventListener('click', () => this.handleSave());
         this.#controls.generatorSelect.addEventListener('change', () => this.#updateGeneratorParamsUI());
         this.#modifiersContainer.addEventListener('change', (e) => { if (e.target.type === 'checkbox') this.#updateModifierParamsUI(); });
@@ -329,13 +339,47 @@ export class UIManager {
         }
     }
 
-    handleGenerate(overrideConfig = {}) {
+    handleGenerate(configToUse) {
+        const isProgrammatic = !!configToUse;
+        const finalConfig = configToUse || this.#getCurrentConfig();
+
+        if (!isProgrammatic) {
+            // This is a user-initiated generation.
+            // Ensure the seed is deterministic for this generation and saved in history.
+            finalConfig.seed = this.#controls.seedInput.value || Date.now().toString();
+            this.#controls.seedInput.value = finalConfig.seed; // Update UI with the seed used.
+            this.#historyManager.addState(finalConfig);
+        }
+
+        this.#canvasContainer.innerHTML = '';
+        const newPlanter = new Planter(finalConfig);
+        newPlanter.generate();
+        const canvas = newPlanter.getCanvas();
+        this.#currentCanvas = canvas;
+        this.#currentSeed = finalConfig.seed; // Keep track of the last used seed.
+        this.#canvasContainer.appendChild(canvas);
+    }
+
+    handleSave() {
+        if (!this.#currentCanvas) {
+            console.error('No canvas to save.');
+            return;
+        }
+        const link = document.createElement('a');
+        link.href = this.#currentCanvas.toDataURL('image/png');
+        link.download = `pixel-art-seed-${this.#currentSeed}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    #getCurrentConfig() {
         const baseConfig = {
             generator: this.#controls.generatorSelect.value,
             palette: this.#controls.paletteSelect.value,
             size: parseInt(this.#controls.sizeInput.value, 10),
             pixelSize: parseInt(this.#controls.pixelSizeInput.value, 10),
-            seed: this.#controls.seedInput.value || Date.now(),
+            seed: this.#controls.seedInput.value || this.#currentSeed || Date.now(),
             modifiers: []
         };
 
@@ -359,32 +403,86 @@ export class UIManager {
             baseConfig.modifiers.push(modConfig);
         });
 
-        const finalConfig = { ...baseConfig, ...overrideConfig };
-
-        // When stamping, we don't want a new random seed
-        if (overrideConfig.generator === 'pattern') {
-            finalConfig.seed = this.#currentSeed || finalConfig.seed;
-        }
-
-        this.#canvasContainer.innerHTML = '';
-        const newPlanter = new Planter(finalConfig);
-        newPlanter.generate();
-        const canvas = newPlanter.getCanvas();
-        this.#currentCanvas = canvas;
-        this.#currentSeed = finalConfig.seed;
-        this.#canvasContainer.appendChild(canvas);
+        return baseConfig;
     }
 
-    handleSave() {
-        if (!this.#currentCanvas) {
-            console.error('No canvas to save.');
-            return;
+    #updateUIControls(config) {
+        // Basic controls
+        this.#controls.generatorSelect.value = config.generator;
+        this.#controls.paletteSelect.value = config.palette;
+        this.#controls.sizeInput.value = config.size;
+        this.#controls.pixelSizeInput.value = config.pixelSize;
+        this.#controls.seedInput.value = config.seed;
+
+        // Update generator params
+        this.#updateGeneratorParamsUI();
+        const genParamsInputs = this.#generatorParamsContainer.querySelectorAll('[data-param-name]');
+        genParamsInputs.forEach(input => {
+            const key = input.dataset.paramName;
+            if (config.hasOwnProperty(key)) {
+                input.value = config[key];
+            }
+        });
+
+        // Update modifiers
+        const allModifierCheckboxes = this.#modifiersContainer.querySelectorAll('input[type="checkbox"]');
+        allModifierCheckboxes.forEach(checkbox => {
+            checkbox.checked = config.modifiers.some(m => m.name === checkbox.dataset.modifierName);
+        });
+
+        this.#updateModifierParamsUI();
+        const modParamsInputs = this.#modifierParamsContainer.querySelectorAll('[data-param-name]');
+        modParamsInputs.forEach(input => {
+            const owner = input.dataset.paramOwner;
+            const key = input.dataset.paramName;
+            const modConfig = config.modifiers.find(m => m.name === owner);
+            if (modConfig && modConfig.hasOwnProperty(key)) {
+                input.value = modConfig[key];
+            }
+        });
+    }
+
+    #handleUndo() {
+        const previousState = this.#historyManager.undo();
+        if (previousState) {
+            this.#updateUIControls(previousState);
+            this.handleGenerate(previousState);
         }
-        const link = document.createElement('a');
-        link.href = this.#currentCanvas.toDataURL('image/png');
-        link.download = `pixel-art-seed-${this.#currentSeed}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    }
+
+    #handleRedo() {
+        const nextState = this.#historyManager.redo();
+        if (nextState) {
+            this.#updateUIControls(nextState);
+            this.handleGenerate(nextState);
+        }
+    }
+
+    #handleShare() {
+        const currentConfig = this.#getCurrentConfig();
+        const jsonString = JSON.stringify(currentConfig);
+        const base64String = btoa(jsonString);
+        const shareableURL = `${window.location.origin}${window.location.pathname}?config=${base64String}`;
+        navigator.clipboard.writeText(shareableURL);
+        alert("Link copied to clipboard!");
+    }
+
+    #loadConfigFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const configString = urlParams.get('config');
+
+        if (configString) {
+            try {
+                const jsonString = atob(configString);
+                const loadedConfig = JSON.parse(jsonString);
+                this.#updateUIControls(loadedConfig);
+                this.handleGenerate(loadedConfig);
+            } catch (error) {
+                console.error("Failed to parse config from URL:", error);
+                this.handleGenerate();
+            }
+        } else {
+            this.handleGenerate();
+        }
     }
 }

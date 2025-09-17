@@ -23,5 +23,8 @@
   "bugs": {
     "url": "https://github.com/your-username/pixel-planter/issues"
   },
-  "homepage": "https://github.com/your-username/pixel-planter#readme"
+  "homepage": "https://github.com/your-username/pixel-planter#readme",
+  "dependencies": {
+    "simplex-noise": "^4.0.3"
+  }
 }
