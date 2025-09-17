@@ -1,48 +1,51 @@
-// Filename: src/modifiers/ParticleModifier.js
+// Filename: src/modifiers/ParticleModifier.js (Updated to use context)
 
 export class ParticleModifier {
-    // --- PARAMETER DEFINITIONS ---
-    static params = {
-        particleCount: {
-            label: 'Particle Count',
-            type: 'slider', min: 10, max: 500, step: 10, defaultValue: 100
-        },
-        particleValue: {
-            label: 'Particle Value', // The grid value to draw particles with.
-            type: 'slider', min: 1, max: 5, step: 1, defaultValue: 2
-        }
-    };
+    // This modifier no longer needs its own parameters, as it operates on existing data.
+    // We leave the static property for consistency, but it can be empty.
+    static params = {};
 
-    // --- APPLY METHOD ---
-    apply(dataGrid, { particleCount = 100, particleValue = 2 }, prng) {
+    // --- UPDATED APPLY METHOD ---
+    // Now accepts the `readBelowGrid`.
+    apply(dataGrid, config, prng, readBelowGrid) {
+        // Create a deep copy to avoid modifying the original grid during iteration.
         const outputGrid = JSON.parse(JSON.stringify(dataGrid));
         const size = dataGrid.length;
 
-        for (let i = 0; i < particleCount; i++) {
-            // 1. Choose a random starting column for the particle to drop from.
-            const startX = Math.floor(prng.next() * size);
+        // If there's no grid below us, we can't simulate gravity. Return the original.
+        if (readBelowGrid === null) {
+            console.warn("ParticleModifier requires a layer below it to function.");
+            return outputGrid;
+        }
 
-            // 2. Simulate the particle falling straight down.
-            for (let y = 0; y < size; y++) {
-                // Check if the current cell is a solid surface.
-                if (outputGrid[y][startX] > 0) {
-                    // The cell below is solid. Check if the cell *above* it is empty.
-                    if (y > 0 && outputGrid[y - 1][startX] === 0) {
-                        // It's a valid surface to land on. Place the particle.
-                        outputGrid[y - 1][startX] = particleValue;
+        // Loop through the current layer's grid to find "particles" (pixels > 0).
+        // We iterate from the bottom up to handle particles correctly in one pass.
+        for (let y = size - 1; y >= 0; y--) {
+            for (let x = 0; x < size; x++) {
+                // We check the *original* dataGrid for a particle.
+                if (dataGrid[y][x] > 0) {
+                    const particleValue = dataGrid[y][x];
+                    outputGrid[y][x] = 0; // Pick it up from its original spot in the output.
+
+                    // --- SMART LOGIC: Simulate the drop using readBelowGrid ---
+                    let landed = false;
+                    for (let dropY = y; dropY < size; dropY++) {
+                        // Check if the space *below* in the composite grid is solid.
+                        if (dropY + 1 < size && readBelowGrid[dropY + 1][x] > 0) {
+                            // Land the particle here.
+                            outputGrid[dropY][x] = particleValue;
+                            landed = true;
+                            break; // Stop this particle's drop.
+                        }
                     }
-                    // Stop this particle's drop, whether it landed or not.
-                    break;
-                }
 
-                // If we reach the very bottom of the grid without hitting anything...
-                if (y === size - 1 && outputGrid[y][startX] === 0) {
-                    // ...the particle lands on the floor.
-                    outputGrid[y][startX] = particleValue;
+                    // If it never found a surface, it lands on the floor.
+                    if (!landed) {
+                        outputGrid[size - 1][x] = particleValue;
+                    }
                 }
             }
         }
-
         return outputGrid;
     }
 }

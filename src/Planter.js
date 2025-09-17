@@ -13,11 +13,6 @@ import { DensityMaskModifier } from './modifiers/DensityMaskModifier.js';
 import { PathfinderModifier } from './modifiers/PathfinderModifier.js';
 import { ParticleModifier } from './modifiers/ParticleModifier.js';
 
-/**
- * @class Planter
- * The main class for the Pixel Planter library. This class orchestrates the entire
- * generative process, from managing layers to applying generators and palettes.
- */
 export class Planter {
     #finalCanvas;
     #finalContext;
@@ -29,10 +24,6 @@ export class Planter {
     #modifierRegistry = new Map();
     #patternRegistry = new Map();
 
-    /**
-     * Creates an instance of the Planter class.
-     * @param {object} globalConfig - The global configuration object (size, pixelSize).
-     */
     constructor(globalConfig = {}) {
         this.#globalConfig = {
             size: 32,
@@ -71,25 +62,79 @@ export class Planter {
         this.registerModifier('particle-deposition', new ParticleModifier());
     }
 
-    /**
-     * Main orchestration method. It generates each layer and composites them.
-     * @returns {this} Returns the Planter instance for method chaining.
-     */
     generate() {
         this.#finalContext.clearRect(0, 0, this.#finalCanvas.width, this.#finalCanvas.height);
+        this.#generateAllLayers();
+        this.#renderAllLayers();
+        return this;
+    }
 
+    #generateAllLayers() {
+        // First pass: Generate all data grids without masking
+        for (const layer of this.#layerStack) {
+            const currentIndex = this.#layerStack.findIndex(l => l.id === layer.id);
+            const readBelowGrid = this.#createCompositeGridForLayers(this.#layerStack.slice(0, currentIndex));
+            layer.generate(this, readBelowGrid);
+        }
+        // Second pass: Apply masks
+        for (const layer of this.#layerStack) {
+            if (layer.maskLayerId) {
+                const maskLayer = this.getLayerById(layer.maskLayerId);
+                // Ensure the mask layer has its data grid generated and is not the layer itself
+                if (maskLayer && maskLayer.dataGrid && maskLayer.dataGrid.length > 0 && maskLayer.id !== layer.id) {
+                    this.#applyMask(layer.dataGrid, maskLayer.dataGrid);
+                }
+            }
+        }
+    }
+
+    // This is now just a wrapper
+    #generateLayerWithContext(layer, allLayers) {
+        const currentIndex = allLayers.findIndex(l => l.id === layer.id);
+        const readBelowGrid = this.#createCompositeGridForLayers(allLayers.slice(0, currentIndex));
+        layer.generate(this, readBelowGrid);
+    }
+
+    #applyMask(targetGrid, maskGrid) {
+        const size = this.#globalConfig.size;
+        if (targetGrid.length !== size || maskGrid.length !== size) return;
+
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                // If the mask's pixel is 0, the target's pixel becomes 0.
+                if (maskGrid[y][x] === 0) {
+                    targetGrid[y][x] = 0;
+                }
+            }
+        }
+    }
+
+    #createCompositeGridForLayers(layers) {
+        const { size } = this.#globalConfig;
+        const compositeGrid = Array.from({ length: size }, () => Array(size).fill(0));
+
+        for (const layer of layers) {
+            if (layer.isVisible && layer.dataGrid.length > 0) {
+                for (let y = 0; y < size; y++) {
+                    for (let x = 0; x < size; x++) {
+                        if (layer.dataGrid[y][x] > 0) {
+                            compositeGrid[y][x] = 1;
+                        }
+                    }
+                }
+            }
+        }
+        return compositeGrid;
+    }
+
+    #renderAllLayers() {
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = this.#finalCanvas.width;
         tempCanvas.height = this.#finalCanvas.height;
         const tempContext = tempCanvas.getContext('2d');
 
         for (const layer of this.#layerStack) {
-            if (!layer.isVisible) continue;
-
-            // Ensure layer's grid is generated
-            if (layer.dataGrid.length === 0) {
-                layer.generate(this);
-            }
+            if (!layer.isVisible || layer.dataGrid.length === 0) continue;
 
             const palette = this.getPaletteInstance(layer.config.palette);
             if (!palette) {
@@ -98,23 +143,17 @@ export class Planter {
             }
             const colorGrid = palette.map(layer.dataGrid);
 
-            // Draw this layer to the temporary canvas
             this.#drawColorGridToContext(tempContext, colorGrid, this.#globalConfig);
 
-            // Now, draw the temp canvas onto the final canvas with blending
             this.#finalContext.globalAlpha = layer.opacity;
             this.#finalContext.globalCompositeOperation = layer.blendMode;
             this.#finalContext.drawImage(tempCanvas, 0, 0);
 
-            // Clear the temp canvas for the next layer
             tempContext.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
         }
 
-        // Reset context properties
         this.#finalContext.globalAlpha = 1.0;
         this.#finalContext.globalCompositeOperation = 'source-over';
-
-        return this;
     }
 
     #drawColorGridToContext(context, colorGrid, { size, pixelSize }) {
@@ -153,7 +192,8 @@ export class Planter {
     }
 
     getLayerById(id) {
-        return this.#layerStack.find(l => l.id === id);
+        // Make sure to handle number and string conversions
+        return this.#layerStack.find(l => l.id == id);
     }
 
     getLayerStack() {
@@ -164,12 +204,6 @@ export class Planter {
         this.#layerStack = layerStack;
     }
 
-    /**
-     * Modifies the dataGrid of a specific layer by setting values at given points.
-     * @param {number} layerId - The ID of the layer to draw on.
-     * @param {Array<{x: number, y: number}>} points - An array of points to modify.
-     * @param {number} value - The value to set at each point (e.g., 1 for on, 0 for off).
-     */
     drawOnLayer(layerId, points, value = 1) {
         const layer = this.getLayerById(layerId);
         if (!layer) return;
