@@ -1,6 +1,6 @@
 import { Planter } from './Planter.js';
-import { Pattern } from './patterns/Pattern.js';
 import { HistoryManager } from './HistoryManager.js';
+import { Layer } from './Layer.js';
 
 const TOOLTIP_TEXTS = {
     'generator-select': 'The core algorithm used to create the pattern.',
@@ -14,56 +14,67 @@ const TOOLTIP_TEXTS = {
 // CLASS UIManager
 // Manages the interaction between the HTML controls and the Planter instance.
 export class UIManager {
-    // PRIVATE PROPERTIES
     #planterInstance;
     #controls = {};
-    #historyManager;
     #canvasContainer;
     #modifiersContainer;
     #generatorParamsContainer;
     #modifierParamsContainer;
-    #patternEditorModal;
-    #patternGridContainer;
-    #currentCanvas;
-    #currentSeed;
-    #activeTool = 'generate'; // 'generate', 'stamp', 'brush'
+    #layerPanel;
+    #activeLayerId = null;
+    #historyManager;
+    #activeSymmetryMode = 'none';
     #isBrushing = false;
 
-    // CONSTRUCTOR
-    constructor(planter) {
-        this.#planterInstance = planter;
+    constructor() {
         this.#historyManager = new HistoryManager();
         this.#bindDOM();
+
+        const globalConfig = {
+            size: parseInt(this.#controls.sizeInput.value, 10),
+            pixelSize: parseInt(this.#controls.pixelSizeInput.value, 10),
+        };
+        this.#planterInstance = new Planter(globalConfig);
+
         this.#initializeUI();
         this.#attachEventListeners();
-        this.#loadConfigFromURL();
+
+        // Load from URL if config is present, otherwise start with a default layer
+        const loadedFromURL = this.#loadConfigFromURL();
+        if (!loadedFromURL) {
+            this.#handleAddLayer();
+        }
     }
 
     #bindDOM() {
-        const C = this.#controls; // Shorthand
-        C.generatorSelect = document.getElementById('generator-select');
-        C.paletteSelect = document.getElementById('palette-select');
-        C.sizeInput = document.getElementById('size-input');
-        C.pixelSizeInput = document.getElementById('pixel-size-input');
-        C.seedInput = document.getElementById('seed-input');
-        C.generateBtn = document.getElementById('generate-btn');
-        C.undoBtn = document.getElementById('undo-btn');
-        C.redoBtn = document.getElementById('redo-btn');
-        C.saveBtn = document.getElementById('save-btn');
-        C.shareBtn = document.getElementById('share-btn');
-        C.editPatternsBtn = document.getElementById('edit-patterns-btn');
-        C.savePatternBtn = document.getElementById('save-pattern-btn');
-        C.patternNameInput = document.getElementById('pattern-name-input');
-        C.closePatternEditorBtn = document.querySelector('.close-button');
-        C.stampToolBtn = document.getElementById('stamp-tool-btn');
-        C.brushToolBtn = document.getElementById('brush-tool-btn');
+        // Main Controls
+        this.#controls.generatorSelect = document.getElementById('generator-select');
+        this.#controls.paletteSelect = document.getElementById('palette-select');
+        this.#controls.sizeInput = document.getElementById('size-input');
+        this. #controls.pixelSizeInput = document.getElementById('pixel-size-input');
+        this.#controls.seedInput = document.getElementById('seed-input');
+        this.#controls.generateBtn = document.getElementById('generate-btn');
+        this.#controls.randomizeBtn = document.getElementById('randomize-btn');
+        this.#controls.symmetrySelect = document.getElementById('symmetry-select');
 
+        // Layer Panel
+        this.#layerPanel = document.getElementById('layer-panel');
+        this.#controls.addLayerBtn = document.getElementById('add-layer-btn');
+        this.#controls.layerList = document.getElementById('layer-list');
+
+        // Containers
         this.#canvasContainer = document.getElementById('canvas-container');
         this.#modifiersContainer = document.getElementById('modifiers-container');
         this.#generatorParamsContainer = document.getElementById('generator-params');
         this.#modifierParamsContainer = document.getElementById('modifier-params');
-        this.#patternEditorModal = document.getElementById('pattern-editor-modal');
-        this.#patternGridContainer = document.getElementById('pattern-grid-container');
+
+        // Note: History, Share, and other buttons are not bound yet as their
+        // functionality needs to be rewritten for the layer system.
+        this.#controls.saveBtn = document.getElementById('save-btn');
+        this.#controls.exportJsonBtn = document.getElementById('export-json-btn');
+        this.#controls.undoBtn = document.getElementById('undo-btn');
+        this.#controls.redoBtn = document.getElementById('redo-btn');
+        this.#controls.shareBtn = document.getElementById('share-btn');
     }
 
     #initializeUI() {
@@ -71,147 +82,316 @@ export class UIManager {
         this.#populatePaletteOptions();
         this.#populateModifierOptions();
         this.#addTooltips();
-        this.#updateGeneratorParamsUI();
-        this.#initializePatternEditorGrid();
-        this.#setActiveTool('generate'); // Set initial tool
+
+        const canvas = this.#planterInstance.getCanvas();
+        this.#canvasContainer.appendChild(canvas);
     }
 
     #attachEventListeners() {
-        // Main controls
-        this.#controls.generateBtn.addEventListener('click', () => {
-            this.#setActiveTool('generate');
-            this.handleGenerate();
-        });
+        // Main controls - now they affect the active layer
+        this.#controls.generateBtn.addEventListener('click', () => this.handleGenerateActiveLayer());
+        this.#controls.randomizeBtn.addEventListener('click', () => this.#handleRandomizeAll());
+        this.#controls.addLayerBtn.addEventListener('click', () => this.#handleAddLayer());
+        this.#controls.exportJsonBtn.addEventListener('click', () => this.#handleExportJSON());
         this.#controls.undoBtn.addEventListener('click', () => this.#handleUndo());
         this.#controls.redoBtn.addEventListener('click', () => this.#handleRedo());
         this.#controls.shareBtn.addEventListener('click', () => this.#handleShare());
-        this.#controls.saveBtn.addEventListener('click', () => this.handleSave());
-        this.#controls.generatorSelect.addEventListener('change', () => this.#updateGeneratorParamsUI());
-        this.#modifiersContainer.addEventListener('change', (e) => { if (e.target.type === 'checkbox') this.#updateModifierParamsUI(); });
 
-        // Pattern Editor
-        this.#controls.editPatternsBtn.addEventListener('click', () => this.#openPatternEditor());
-        this.#controls.closePatternEditorBtn.addEventListener('click', () => this.#closePatternEditor());
-        this.#controls.savePatternBtn.addEventListener('click', () => this.#handleSavePattern());
-        window.addEventListener('click', (e) => { if (e.target === this.#patternEditorModal) this.#closePatternEditor(); });
-        this.#patternGridContainer.addEventListener('click', (e) => { if (e.target.classList.contains('pattern-cell')) e.target.classList.toggle('active'); });
+        // Delegated listeners for the layer list
+        this.#controls.layerList.addEventListener('click', e => {
+            const layerItem = e.target.closest('.layer-item');
+            if (!layerItem) return;
+            const layerId = Number(layerItem.dataset.layerId);
 
-        // Canvas tools
-        this.#controls.stampToolBtn.addEventListener('click', () => this.#setActiveTool('stamp'));
-        this.#controls.brushToolBtn.addEventListener('click', () => this.#setActiveTool('brush'));
-        this.#canvasContainer.addEventListener('mousedown', (e) => this.#handleCanvasMouseDown(e));
-        this.#canvasContainer.addEventListener('mousemove', (e) => this.#handleCanvasMouseMove(e));
+            if (e.target.matches('.layer-delete-btn')) {
+                this.#handleRemoveLayer(layerId);
+            } else if (e.target.matches('.layer-move-up-btn')) {
+                this.#planterInstance.moveLayer(layerId, 'up');
+                this.#renderLayerPanel();
+                this.#saveState();
+            } else if (e.target.matches('.layer-move-down-btn')) {
+                this.#planterInstance.moveLayer(layerId, 'down');
+                this.#renderLayerPanel();
+                this.#saveState();
+            } else {
+                this.#setActiveLayer(layerId);
+            }
+        });
+
+        this.#controls.layerList.addEventListener('input', e => {
+            const layerItem = e.target.closest('.layer-item');
+            if (!layerItem) return;
+            const layerId = Number(layerItem.dataset.layerId);
+            const layer = this.#planterInstance.getLayerById(layerId);
+            if (!layer) return;
+
+            if (e.target.matches('.layer-visible-toggle')) {
+                layer.isVisible = e.target.checked;
+            } else if (e.target.matches('.layer-opacity-slider')) {
+                layer.opacity = parseFloat(e.target.value);
+            } else if (e.target.matches('.layer-blend-mode-select')) {
+                layer.blendMode = e.target.value;
+            }
+
+            // Trigger a full redraw to show blending/opacity changes
+            this.#planterInstance.generate();
+            this.#saveState();
+        });
+
+        // Symmetry and Brush Listeners
+        this.#controls.symmetrySelect.addEventListener('change', e => {
+            this.#activeSymmetryMode = e.target.value;
+        });
+
+        this.#canvasContainer.addEventListener('mousedown', e => {
+            this.#isBrushing = true;
+            this.#handleBrushStroke(e);
+        });
+        this.#canvasContainer.addEventListener('mousemove', e => {
+            if (this.#isBrushing) {
+                this.#handleBrushStroke(e);
+            }
+        });
         this.#canvasContainer.addEventListener('mouseup', () => this.#isBrushing = false);
         this.#canvasContainer.addEventListener('mouseleave', () => this.#isBrushing = false);
     }
 
-    // --- Tooling Methods ---
+    #handleBrushStroke(event) {
+        if (!this.#activeLayerId) return;
 
-    #setActiveTool(toolName) {
-        this.#activeTool = toolName;
-        // Add visual feedback for active tool
-        this.#controls.stampToolBtn.style.fontWeight = toolName === 'stamp' ? 'bold' : 'normal';
-        this.#controls.brushToolBtn.style.fontWeight = toolName === 'brush' ? 'bold' : 'normal';
-        this.#controls.generateBtn.style.fontWeight = toolName === 'generate' ? 'bold' : 'normal';
-        this.#canvasContainer.style.cursor = (toolName === 'stamp' || toolName === 'brush') ? 'crosshair' : 'default';
-    }
+        const canvas = this.#planterInstance.getCanvas();
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
 
-    #handleCanvasMouseDown(event) {
-        if (this.#activeTool === 'stamp') {
-            this.#handleStamp(event);
-        } else if (this.#activeTool === 'brush') {
-            this.#isBrushing = true;
-            this.#handleStamp(event); // Stamp once on initial click
-        }
-    }
-
-    #handleCanvasMouseMove(event) {
-        if (this.#isBrushing) {
-            this.#handleStamp(event);
-        }
-    }
-
-    #handleStamp(event) {
-        if (!this.#currentCanvas) {
-            alert('Please generate an image first to define the canvas area.');
-            return;
-        }
-
-        if (this.#controls.generatorSelect.value !== 'pattern') {
-            alert("Please select the 'pattern' generator from the dropdown to use the Stamp/Brush tools.");
-            this.#setActiveTool('generate');
-            return;
-        }
-
-        const patternNameInput = this.#generatorParamsContainer.querySelector('select[data-param-name="patternName"]');
-        const patternName = patternNameInput?.value;
-
-        if (!patternName || this.#planterInstance.getPatternNames().length === 0) {
-             alert("Please create and save a pattern first, then select it from the 'Pattern' dropdown.");
-             return;
-        }
-
-        const pattern = this.#planterInstance.getPattern(patternName);
-        if (!pattern) {
-            alert(`Pattern "${patternName}" not found!`);
-            return;
-        }
-
-        const rect = this.#currentCanvas.getBoundingClientRect();
-        const scaleX = this.#currentCanvas.width / rect.width;
-        const scaleY = this.#currentCanvas.height / rect.height;
         const canvasX = (event.clientX - rect.left) * scaleX;
         const canvasY = (event.clientY - rect.top) * scaleY;
 
-        const xPercent = (canvasX / this.#currentCanvas.width) * 100;
-        const yPercent = (canvasY / this.#currentCanvas.height) * 100;
+        const layer = this.#planterInstance.getLayerById(this.#activeLayerId);
+        const { size, pixelSize } = layer.config;
 
-        this.#planterInstance.stamp(patternName, xPercent, yPercent);
+        const gridX = Math.floor(canvasX / pixelSize);
+        const gridY = Math.floor(canvasY / pixelSize);
+
+        const pointsToDraw = [{ x: gridX, y: gridY }];
+
+        if (this.#activeSymmetryMode === 'vertical' || this.#activeSymmetryMode === 'quad') {
+            pointsToDraw.push({ x: size - 1 - gridX, y: gridY });
+        }
+        if (this.#activeSymmetryMode === 'horizontal' || this.#activeSymmetryMode === 'quad') {
+            pointsToDraw.push({ x: gridX, y: size - 1 - gridY });
+        }
+        if (this.#activeSymmetryMode === 'quad') {
+            pointsToDraw.push({ x: size - 1 - gridX, y: size - 1 - gridY });
+        }
+
+        this.#planterInstance.drawOnLayer(this.#activeLayerId, pointsToDraw, 1);
+        this.#planterInstance.generate();
+        this.#saveState();
     }
 
-    // --- Pattern Editor Methods ---
+    #renderLayerPanel() {
+        const layerStack = this.#planterInstance.getLayerStack();
+        this.#controls.layerList.innerHTML = '';
 
-    #openPatternEditor() { this.#patternEditorModal.style.display = 'block'; }
-    #closePatternEditor() { this.#patternEditorModal.style.display = 'none'; }
+        // Iterate backwards to render top layer first
+        [...layerStack].reverse().forEach(layer => {
+            const item = document.createElement('div');
+            item.className = 'layer-item';
+            item.dataset.layerId = layer.id;
+            if (layer.id === this.#activeLayerId) {
+                item.classList.add('active');
+            }
 
-    #initializePatternEditorGrid(size = 8) {
-        this.#patternGridContainer.innerHTML = '';
-        this.#patternGridContainer.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
-        for (let i = 0; i < size * size; i++) {
-            const cell = document.createElement('div');
-            cell.classList.add('pattern-cell');
-            this.#patternGridContainer.appendChild(cell);
+            item.innerHTML = `
+                <input type="checkbox" class="layer-visible-toggle" ${layer.isVisible ? 'checked' : ''}>
+                <span class="layer-item-name">${layer.name}</span>
+                <div class="layer-item-buttons">
+                    <button class="layer-move-up-btn">↑</button>
+                    <button class="layer-move-down-btn">↓</button>
+                    <button class="layer-delete-btn">X</button>
+                </div>
+                <div class="layer-item-controls">
+                    <div>
+                        <label>Opacity</label>
+                        <input type="range" class="layer-opacity-slider" min="0" max="1" step="0.05" value="${layer.opacity}">
+                    </div>
+                    <div>
+                        <label>Blend Mode</label>
+                        <select class="layer-blend-mode-select">
+                            <option value="source-over" ${layer.blendMode === 'source-over' ? 'selected' : ''}>Normal</option>
+                            <option value="multiply" ${layer.blendMode === 'multiply' ? 'selected' : ''}>Multiply</option>
+                            <option value="screen" ${layer.blendMode === 'screen' ? 'selected' : ''}>Screen</option>
+                            <option value="overlay" ${layer.blendMode === 'overlay' ? 'selected' : ''}>Overlay</option>
+                            <option value="difference" ${layer.blendMode === 'difference' ? 'selected' : ''}>Difference</option>
+                            <option value="lighten" ${layer.blendMode === 'lighten' ? 'selected' : ''}>Lighten</option>
+                            <option value="darken" ${layer.blendMode === 'darken' ? 'selected' : ''}>Darken</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            this.#controls.layerList.appendChild(item);
+        });
+    }
+
+    #setActiveLayer(layerId) {
+        this.#activeLayerId = layerId;
+        const layer = this.#planterInstance.getLayerById(layerId);
+        if (layer) {
+            this.#updateMainControlsFromLayer(layer);
+        }
+        this.#renderLayerPanel();
+    }
+
+    #handleAddLayer() {
+        const defaultConfig = {
+            generator: 'noise',
+            palette: 'monochrome',
+            seed: Date.now().toString(),
+            modifiers: [],
+            noiseScale: 20,
+            noiseThreshold: 0.5,
+        };
+        const newLayer = this.#planterInstance.addLayer(defaultConfig);
+        newLayer.generate(this.#planterInstance);
+        this.#setActiveLayer(newLayer.id);
+        this.#planterInstance.generate();
+        this.#saveState();
+    }
+
+    #handleRemoveLayer(layerId) {
+        this.#planterInstance.removeLayer(layerId);
+        if (this.#activeLayerId === layerId) {
+            const layerStack = this.#planterInstance.getLayerStack();
+            const newActiveLayer = layerStack.length > 0 ? layerStack[layerStack.length - 1] : null;
+            this.#setActiveLayer(newActiveLayer ? newActiveLayer.id : null);
+        }
+        this.#renderLayerPanel();
+        this.#planterInstance.generate();
+        this.#saveState();
+    }
+
+    handleGenerateActiveLayer() {
+        if (!this.#activeLayerId) {
+            alert("Please add or select a layer first.");
+            return;
+        }
+        const layer = this.#planterInstance.getLayerById(this.#activeLayerId);
+        if (layer) {
+            // Update layer's config from the main UI controls
+            layer.config = this.#getConfigFromMainControls();
+            // Regenerate the data grid for this layer specifically
+            layer.generate(this.#planterInstance);
+            // Redraw the entire canvas with the updated layer
+            this.#planterInstance.generate();
+            this.#saveState();
         }
     }
 
-    #handleSavePattern() {
-        const name = this.#controls.patternNameInput.value.trim();
-        if (!name) { alert('Please enter a name for the pattern.'); return; }
-
-        const gridSize = Math.sqrt(this.#patternGridContainer.children.length);
-        const dataGrid = Array.from({ length: gridSize }, () => Array(gridSize).fill(0));
-        const cells = this.#patternGridContainer.children;
-        for (let i = 0; i < cells.length; i++) {
-            const row = Math.floor(i / gridSize);
-            const col = i % gridSize;
-            if (cells[i].classList.contains('active')) dataGrid[row][col] = 1;
+    #handleRandomizeAll() {
+        if (!this.#activeLayerId) {
+            alert("Please add or select a layer to randomize.");
+            return;
         }
-        const newPattern = new Pattern(name, dataGrid);
-        this.#planterInstance.registerPattern(name, newPattern);
-        alert(`Pattern "${name}" saved!`);
-        this.#closePatternEditor();
-        this.#updateGeneratorParamsUI(); // Refresh UI in case the pattern generator is selected
+
+        const allGenerators = this.#planterInstance.getGeneratorNames();
+        const allPalettes = this.#planterInstance.getPaletteNames();
+        const allModifiers = this.#planterInstance.getModifierNames();
+
+        const randomConfig = {};
+        randomConfig.generator = allGenerators[Math.floor(Math.random() * allGenerators.length)];
+        randomConfig.palette = allPalettes[Math.floor(Math.random() * allPalettes.length)];
+        randomConfig.seed = Date.now().toString();
+
+        // Also randomize global size property for fun
+        const sizes = [16, 32, 64];
+        randomConfig.size = sizes[Math.floor(Math.random() * sizes.length)];
+        // Note: pixelSize is not randomized to keep the canvas size consistent.
+
+        randomConfig.modifiers = [];
+        const numModifiers = Math.floor(Math.random() * 3);
+        const shuffledModifiers = allModifiers.sort(() => 0.5 - Math.random());
+
+        for (let i = 0; i < numModifiers; i++) {
+            const modName = shuffledModifiers[i];
+            const modConfig = { name: modName };
+            const modifierClass = this.#planterInstance.getModifier(modName);
+
+            if (modifierClass && modifierClass.params) {
+                for (const paramKey in modifierClass.params) {
+                    const paramDef = modifierClass.params[paramKey];
+                    if (paramDef.type === 'slider') {
+                        const randomValue = Math.random() * (paramDef.max - paramDef.min) + paramDef.min;
+                        modConfig[paramKey] = parseFloat(randomValue.toFixed(2));
+                    } else if (paramDef.type === 'select' && paramDef.options) {
+                        modConfig[paramKey] = paramDef.options[Math.floor(Math.random() * paramDef.options.length)];
+                    }
+                }
+            }
+            randomConfig.modifiers.push(modConfig);
+        }
+
+        const layer = this.#planterInstance.getLayerById(this.#activeLayerId);
+        if (layer) {
+            layer.config = { ...layer.config, ...randomConfig };
+            this.#updateMainControlsFromLayer(layer);
+            // handleGenerateActiveLayer already saves state, so we just call it.
+            this.handleGenerateActiveLayer();
+        }
     }
 
-    // --- Core UI Methods ---
+    #getConfigFromMainControls() {
+        const config = {
+            generator: this.#controls.generatorSelect.value,
+            palette: this.#controls.paletteSelect.value,
+            seed: this.#controls.seedInput.value || Date.now().toString(),
+            modifiers: []
+        };
+
+        const genParamsInputs = this.#generatorParamsContainer.querySelectorAll('[data-param-name]');
+        genParamsInputs.forEach(input => {
+            const key = input.dataset.paramName;
+            config[key] = input.type === 'range' ? parseFloat(input.value) : input.value;
+        });
+
+        const modifierCheckboxes = this.#modifiersContainer.querySelectorAll('input[type="checkbox"]:checked');
+        modifierCheckboxes.forEach(checkbox => {
+            const modName = checkbox.dataset.modifierName;
+            const modConfig = { name: modName };
+            const modParamsInputs = this.#modifierParamsContainer.querySelectorAll(`[data-param-owner="${modName}"]`);
+            modParamsInputs.forEach(input => {
+                const key = input.dataset.paramName;
+                modConfig[key] = input.type === 'range' ? parseFloat(input.value) : input.value;
+            });
+            config.modifiers.push(modConfig);
+        });
+
+        return config;
+    }
+
+    #updateMainControlsFromLayer(layer) {
+        const config = layer.config;
+        this.#controls.generatorSelect.value = config.generator;
+        this.#controls.paletteSelect.value = config.palette;
+        this.#controls.seedInput.value = config.seed;
+
+        this.#updateGeneratorParamsUI(config.generator, config);
+
+        const allModifierCheckboxes = this.#modifiersContainer.querySelectorAll('input[type="checkbox"]');
+        allModifierCheckboxes.forEach(checkbox => {
+            checkbox.checked = config.modifiers.some(m => m.name === checkbox.dataset.modifierName);
+        });
+
+        this.#updateModifierParamsUI(config.modifiers);
+    }
+
+    // --- UI Population and Updates ---
 
     #addTooltips() {
         for (const controlId in TOOLTIP_TEXTS) {
-            const controlElement = document.getElementById(controlId);
-            if (!controlElement) continue;
-            let label = (controlId === 'modifiers-container')
-                ? controlElement.previousElementSibling
-                : document.querySelector(`label[for="${controlId}"]`);
+            const el = document.getElementById(controlId);
+            if (!el) continue;
+            let label = (controlId === 'modifiers-container') ? el.previousElementSibling : document.querySelector(`label[for="${controlId}"]`);
             if (label) {
                 label.classList.add('tooltip');
                 const tooltipText = document.createElement('span');
@@ -223,75 +403,54 @@ export class UIManager {
     }
 
     #populateGeneratorOptions() {
-        const generatorNames = this.#planterInstance.getGeneratorNames();
-        this.#controls.generatorSelect.innerHTML = '';
-        generatorNames.forEach(name => {
-            const option = document.createElement('option');
-            option.value = name;
-            option.textContent = name;
-            this.#controls.generatorSelect.appendChild(option);
-        });
+        const names = this.#planterInstance.getGeneratorNames();
+        this.#controls.generatorSelect.innerHTML = names.map(name => `<option value="${name}">${name}</option>`).join('');
     }
 
     #populatePaletteOptions() {
-        const paletteNames = this.#planterInstance.getPaletteNames();
-        this.#controls.paletteSelect.innerHTML = '';
-        paletteNames.forEach(name => {
-            const option = document.createElement('option');
-            option.value = name;
-            option.textContent = name;
-            this.#controls.paletteSelect.appendChild(option);
-        });
+        const names = this.#planterInstance.getPaletteNames();
+        this.#controls.paletteSelect.innerHTML = names.map(name => `<option value="${name}">${name}</option>`).join('');
     }
 
     #populateModifierOptions() {
-        const modifierNames = this.#planterInstance.getModifierNames();
-        this.#modifiersContainer.innerHTML = '';
-        modifierNames.forEach(name => {
-            const div = document.createElement('div');
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.id = `mod-${name}`;
-            checkbox.dataset.modifierName = name;
-            const label = document.createElement('label');
-            label.htmlFor = `mod-${name}`;
-            label.textContent = name;
-            div.appendChild(checkbox);
-            div.appendChild(label);
-            this.#modifiersContainer.appendChild(div);
-        });
+        const names = this.#planterInstance.getModifierNames();
+        this.#modifiersContainer.innerHTML = names.map(name => `
+            <div>
+                <input type="checkbox" id="mod-${name}" data-modifier-name="${name}">
+                <label for="mod-${name}">${name}</label>
+            </div>
+        `).join('');
     }
 
-    #updateGeneratorParamsUI() {
-        const generatorName = this.#controls.generatorSelect.value;
+    #updateGeneratorParamsUI(generatorName, config) {
         const generatorClass = this.#planterInstance.getGenerator(generatorName);
         this.#generatorParamsContainer.innerHTML = '';
         if (generatorClass && generatorClass.params) {
-            this.#buildControls(this.#generatorParamsContainer, generatorClass.params, generatorName);
+            this.#buildControls(this.#generatorParamsContainer, generatorClass.params, generatorName, config);
         }
     }
 
-    #updateModifierParamsUI() {
+    #updateModifierParamsUI(modifiersConfig) {
         this.#modifierParamsContainer.innerHTML = '';
-        const modifierCheckboxes = this.#modifiersContainer.querySelectorAll('input[type="checkbox"]:checked');
-        modifierCheckboxes.forEach(checkbox => {
-            const modifierName = checkbox.dataset.modifierName;
-            const modifierClass = this.#planterInstance.getModifier(modifierName);
+        modifiersConfig.forEach(modConfig => {
+            const modifierClass = this.#planterInstance.getModifier(modConfig.name);
             if (modifierClass && modifierClass.params) {
                 const groupDiv = document.createElement('div');
                 groupDiv.className = 'modifier-param-group';
                 const groupLabel = document.createElement('h4');
-                groupLabel.textContent = `${modifierName} Settings`;
+                groupLabel.textContent = `${modConfig.name} Settings`;
                 groupDiv.appendChild(groupLabel);
-                this.#buildControls(groupDiv, modifierClass.params, modifierName);
+                this.#buildControls(groupDiv, modifierClass.params, modConfig.name, modConfig);
                 this.#modifierParamsContainer.appendChild(groupDiv);
             }
         });
     }
 
-    #buildControls(container, paramsObject, ownerName) {
+    #buildControls(container, paramsObject, ownerName, config) {
         for (const key in paramsObject) {
             const paramConfig = paramsObject[key];
+            const currentValue = config[key] !== undefined ? config[key] : paramConfig.defaultValue;
+
             const controlDiv = document.createElement('div');
             const label = document.createElement('label');
             label.textContent = paramConfig.label;
@@ -303,35 +462,16 @@ export class UIManager {
                 input.min = paramConfig.min;
                 input.max = paramConfig.max;
                 input.step = paramConfig.step;
-                input.value = paramConfig.defaultValue;
+                input.value = currentValue;
             } else if (paramConfig.type === 'select') {
                 input = document.createElement('select');
-                let options = [];
-                if (paramConfig.optionsSource === 'patterns') {
-                    options = this.#planterInstance.getPatternNames();
-                    if (options.length === 0) {
-                        const option = document.createElement('option');
-                        option.textContent = 'No patterns saved';
-                        option.disabled = true;
-                        input.appendChild(option);
-                    }
-                } else {
-                    options = paramConfig.options || [];
-                }
-                options.forEach(opt => {
-                    const option = document.createElement('option');
-                    option.value = opt;
-                    option.textContent = opt;
-                    input.appendChild(option);
-                });
-                input.value = paramConfig.defaultValue;
+                let options = paramConfig.optionsSource === 'patterns' ? this.#planterInstance.getPatternNames() : (paramConfig.options || []);
+                input.innerHTML = options.map(opt => `<option value="${opt}" ${opt === currentValue ? 'selected' : ''}>${opt}</option>`).join('');
             }
 
             if (input) {
                 input.dataset.paramOwner = ownerName;
                 input.dataset.paramName = key;
-                label.htmlFor = `${ownerName}-${key}`;
-                input.id = `${ownerName}-${key}`;
                 controlDiv.appendChild(label);
                 controlDiv.appendChild(input);
                 container.appendChild(controlDiv);
@@ -339,150 +479,139 @@ export class UIManager {
         }
     }
 
-    handleGenerate(configToUse) {
-        const isProgrammatic = !!configToUse;
-        const finalConfig = configToUse || this.#getCurrentConfig();
-
-        if (!isProgrammatic) {
-            // This is a user-initiated generation.
-            // Ensure the seed is deterministic for this generation and saved in history.
-            finalConfig.seed = this.#controls.seedInput.value || Date.now().toString();
-            this.#controls.seedInput.value = finalConfig.seed; // Update UI with the seed used.
-            this.#historyManager.addState(finalConfig);
-        }
-
-        this.#canvasContainer.innerHTML = '';
-        const newPlanter = new Planter(finalConfig);
-        newPlanter.generate();
-        const canvas = newPlanter.getCanvas();
-        this.#currentCanvas = canvas;
-        this.#currentSeed = finalConfig.seed; // Keep track of the last used seed.
-        this.#canvasContainer.appendChild(canvas);
-    }
-
-    handleSave() {
-        if (!this.#currentCanvas) {
-            console.error('No canvas to save.');
+    #handleExportJSON() {
+        if (!this.#activeLayerId) {
+            alert("Please select a layer to export.");
             return;
         }
+
+        const finalGrid = this.#planterInstance.getDataGridForLayer(this.#activeLayerId);
+        const layer = this.#planterInstance.getLayerById(this.#activeLayerId);
+
+        if (!finalGrid || finalGrid.length === 0) {
+            alert("Please generate the active layer first!");
+            return;
+        }
+
+        const exportObject = {
+            name: `pixel-planter-export-layer-${layer.name}-seed-${layer.config.seed}`,
+            size: finalGrid.length,
+            createdAt: new Date().toISOString(),
+            grid: finalGrid
+        };
+
+        const jsonString = JSON.stringify(exportObject, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = this.#currentCanvas.toDataURL('image/png');
-        link.download = `pixel-art-seed-${this.#currentSeed}.png`;
+        link.href = url;
+        link.download = `pixel-art-layer-seed-${layer.config.seed}.json`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     }
 
-    #getCurrentConfig() {
-        const baseConfig = {
-            generator: this.#controls.generatorSelect.value,
-            palette: this.#controls.paletteSelect.value,
-            size: parseInt(this.#controls.sizeInput.value, 10),
-            pixelSize: parseInt(this.#controls.pixelSizeInput.value, 10),
-            seed: this.#controls.seedInput.value || this.#currentSeed || Date.now(),
-            modifiers: []
-        };
-
-        const genParamsInputs = this.#generatorParamsContainer.querySelectorAll('[data-param-name]');
-        genParamsInputs.forEach(input => {
-            const key = input.dataset.paramName;
-            const value = input.type === 'range' ? parseFloat(input.value) : input.value;
-            baseConfig[key] = value;
+    #saveState() {
+        const layerStack = this.#planterInstance.getLayerStack();
+        // Deep copy the stack and its layers
+        const state = layerStack.map(layer => {
+            const newLayer = new Layer(JSON.parse(JSON.stringify(layer.config)));
+            newLayer.id = layer.id;
+            newLayer.name = layer.name;
+            newLayer.isVisible = layer.isVisible;
+            newLayer.opacity = layer.opacity;
+            newLayer.blendMode = layer.blendMode;
+            newLayer.dataGrid = JSON.parse(JSON.stringify(layer.dataGrid));
+            return newLayer;
         });
-
-        const modifierCheckboxes = this.#modifiersContainer.querySelectorAll('input[type="checkbox"]:checked');
-        modifierCheckboxes.forEach(checkbox => {
-            const modName = checkbox.dataset.modifierName;
-            const modConfig = { name: modName };
-            const modParamsInputs = this.#modifierParamsContainer.querySelectorAll(`[data-param-owner="${modName}"]`);
-            modParamsInputs.forEach(input => {
-                const key = input.dataset.paramName;
-                const value = input.type === 'range' ? parseFloat(input.value) : input.value;
-                modConfig[key] = value;
-            });
-            baseConfig.modifiers.push(modConfig);
-        });
-
-        return baseConfig;
+        this.#historyManager.addState(state);
     }
 
-    #updateUIControls(config) {
-        // Basic controls
-        this.#controls.generatorSelect.value = config.generator;
-        this.#controls.paletteSelect.value = config.palette;
-        this.#controls.sizeInput.value = config.size;
-        this.#controls.pixelSizeInput.value = config.pixelSize;
-        this.#controls.seedInput.value = config.seed;
-
-        // Update generator params
-        this.#updateGeneratorParamsUI();
-        const genParamsInputs = this.#generatorParamsContainer.querySelectorAll('[data-param-name]');
-        genParamsInputs.forEach(input => {
-            const key = input.dataset.paramName;
-            if (config.hasOwnProperty(key)) {
-                input.value = config[key];
-            }
-        });
-
-        // Update modifiers
-        const allModifierCheckboxes = this.#modifiersContainer.querySelectorAll('input[type="checkbox"]');
-        allModifierCheckboxes.forEach(checkbox => {
-            checkbox.checked = config.modifiers.some(m => m.name === checkbox.dataset.modifierName);
-        });
-
-        this.#updateModifierParamsUI();
-        const modParamsInputs = this.#modifierParamsContainer.querySelectorAll('[data-param-name]');
-        modParamsInputs.forEach(input => {
-            const owner = input.dataset.paramOwner;
-            const key = input.dataset.paramName;
-            const modConfig = config.modifiers.find(m => m.name === owner);
-            if (modConfig && modConfig.hasOwnProperty(key)) {
-                input.value = modConfig[key];
-            }
-        });
+    #restoreState(state) {
+        if (!state) return;
+        this.#planterInstance.setLayerStack(state);
+        const newActiveLayer = state.find(l => l.id === this.#activeLayerId) || state[state.length - 1];
+        this.#setActiveLayer(newActiveLayer ? newActiveLayer.id : null);
+        this.#planterInstance.generate();
+        this.#renderLayerPanel();
     }
 
     #handleUndo() {
-        const previousState = this.#historyManager.undo();
-        if (previousState) {
-            this.#updateUIControls(previousState);
-            this.handleGenerate(previousState);
+        const prevState = this.#historyManager.undo();
+        if (prevState) {
+            this.#restoreState(prevState);
         }
     }
 
     #handleRedo() {
         const nextState = this.#historyManager.redo();
         if (nextState) {
-            this.#updateUIControls(nextState);
-            this.handleGenerate(nextState);
+            this.#restoreState(nextState);
         }
     }
 
     #handleShare() {
-        const currentConfig = this.#getCurrentConfig();
-        const jsonString = JSON.stringify(currentConfig);
+        const layerStack = this.#planterInstance.getLayerStack();
+        // We only need to store the serializable parts of each layer
+        const simplifiedStack = layerStack.map(layer => ({
+            config: layer.config,
+            name: layer.name,
+            isVisible: layer.isVisible,
+            opacity: layer.opacity,
+            blendMode: layer.blendMode,
+            dataGrid: layer.dataGrid // The grid is needed to reconstruct the exact state
+        }));
+
+        const jsonString = JSON.stringify(simplifiedStack);
         const base64String = btoa(jsonString);
         const shareableURL = `${window.location.origin}${window.location.pathname}?config=${base64String}`;
-        navigator.clipboard.writeText(shareableURL);
-        alert("Link copied to clipboard!");
+
+        navigator.clipboard.writeText(shareableURL)
+            .then(() => alert("Link copied to clipboard!"))
+            .catch(err => console.error("Failed to copy link: ", err));
     }
 
     #loadConfigFromURL() {
         const urlParams = new URLSearchParams(window.location.search);
         const configString = urlParams.get('config');
 
-        if (configString) {
-            try {
-                const jsonString = atob(configString);
-                const loadedConfig = JSON.parse(jsonString);
-                this.#updateUIControls(loadedConfig);
-                this.handleGenerate(loadedConfig);
-            } catch (error) {
-                console.error("Failed to parse config from URL:", error);
-                this.handleGenerate();
+        if (!configString) return false;
+
+        try {
+            const jsonString = atob(configString);
+            const simplifiedStack = JSON.parse(jsonString);
+
+            if (!Array.isArray(simplifiedStack)) {
+                console.error("Failed to load from URL: config is not an array.");
+                return false;
             }
-        } else {
-            this.handleGenerate();
+
+            const newLayerStack = simplifiedStack.map(simpleLayer => {
+                const newLayer = new Layer(simpleLayer.config);
+                newLayer.name = simpleLayer.name;
+                newLayer.isVisible = simpleLayer.isVisible;
+                newLayer.opacity = simpleLayer.opacity;
+                newLayer.blendMode = simpleLayer.blendMode;
+                newLayer.dataGrid = simpleLayer.dataGrid;
+                // ID will be new, but that's okay.
+                return newLayer;
+            });
+
+            this.#planterInstance.setLayerStack(newLayerStack);
+
+            const firstLayer = newLayerStack[0];
+            if (firstLayer) {
+                this.#setActiveLayer(firstLayer.id);
+            }
+
+            this.#planterInstance.generate();
+            this.#saveState(); // Save this loaded state as the initial state in history
+            return true;
+
+        } catch (error) {
+            console.error("Failed to parse config from URL:", error);
+            return false;
         }
     }
 }

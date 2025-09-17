@@ -124,6 +124,46 @@
             background-color: #333;
         }
 
+        #layer-panel {
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+        }
+        #layer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .layer-item {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 5px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            align-items: center;
+            cursor: pointer;
+        }
+        .layer-item.active {
+            border-color: #007bff;
+            background-color: #f0f8ff;
+        }
+        .layer-item-controls {
+            grid-column: 1 / -1;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .layer-item.active .layer-item-controls {
+            display: flex;
+        }
+        .layer-item-name {
+            font-weight: bold;
+        }
+
         /* Responsive styles for mobile */
         @media (max-width: 768px) {
             body {
@@ -147,6 +187,16 @@
         </div>
 
         <div class="control-group" id="generator-params">
+        </div>
+
+        <div class="control-group">
+            <label for="symmetry-select">Symmetry Mode</label>
+            <select id="symmetry-select">
+                <option value="none">None</option>
+                <option value="vertical">Vertical</option>
+                <option value="horizontal">Horizontal</option>
+                <option value="quad">Quad</option>
+            </select>
         </div>
 
         <div class="control-group">
@@ -179,10 +229,20 @@
         <div class="control-group" id="modifier-params">
         </div>
 
-        <button id="generate-btn">Regenerate</button>
+        <hr>
+        <div id="layer-panel">
+            <h3>Layers</h3>
+            <div id="layer-list"></div>
+            <button id="add-layer-btn">+ Add Layer</button>
+        </div>
+        <hr>
+
+        <button id="generate-btn">Regenerate Active Layer</button>
+        <button id="randomize-btn">Roll the Dice</button>
         <button id="undo-btn">Undo</button>
         <button id="redo-btn">Redo</button>
         <button id="save-btn">Save Artwork</button>
+        <button id="export-json-btn">Export JSON</button>
         <button id="share-btn">Share</button>
         <button id="edit-patterns-btn">Edit Patterns</button>
         <hr>
