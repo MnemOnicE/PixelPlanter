@@ -2,6 +2,7 @@ import { SymmetryGenerator } from './generators/SymmetryGenerator.js';
 import { AdvancedSymmetryGenerator } from './generators/AdvancedSymmetryGenerator.js';
 import { RecursiveGrowthGenerator } from './generators/RecursiveGrowthGenerator.js';
 import { PatternGenerator } from './generators/PatternGenerator.js';
+import { CellularAutomataGenerator } from './generators/CellularAutomataGenerator.js';
 import { MonochromePalette } from './palettes/MonochromePalette.js';
 import { VaporwavePalette, ForestPalette } from './palettes/ColorPalettes.js';
 import { OutlineModifier } from './modifiers/OutlineModifier.js';
@@ -99,6 +100,7 @@ export class Planter {
         this.registerGenerator('advanced-symmetry', new AdvancedSymmetryGenerator());
         this.registerGenerator('recursive-growth', new RecursiveGrowthGenerator());
         this.registerGenerator('pattern', new PatternGenerator());
+        this.registerGenerator('cellular-automata', new CellularAutomataGenerator());
         this.registerPalette('monochrome', new MonochromePalette());
         this.registerPalette('vaporwave', new VaporwavePalette());
         this.registerPalette('forest', new ForestPalette());
