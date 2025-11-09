@@ -4,7 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pixel Planter Workbench</title>
+    <link rel="stylesheet" href="/node_modules/driver.js/dist/driver.css">
     <style>
+        /* --- Styles for Simple/Advanced Mode --- */
+        .simple-mode .hide-in-simple-mode {
+            display: none !important;
+        }
+
+        #mode-toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 8px;
+            background-color: #e9ecef;
+            border-radius: 20px;
+        }
+
+        .mode-toggle-label {
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 15px;
+            transition: background-color 0.3s, color 0.3s;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        #mode-toggle {
+            display: none;
+        }
+
+        #mode-toggle:checked + .mode-toggle-label.advanced,
+        #mode-toggle:not(:checked) + .mode-toggle-label.simple {
+            background-color: #007bff;
+            color: white;
+        }
         /* Keep your existing styles */
         body {
             background-color: #f0f0f0;
@@ -171,7 +206,7 @@
                 align-items: center; /* Center items for a better mobile view */
             }
             canvas {
-                max-width: 100%;
+                max-w-width: 100%;
                 height: auto; /* Maintain aspect ratio */
             }
         }
@@ -180,6 +215,11 @@
 <body>
 
     <div id="controls">
+        <div id="mode-toggle-container">
+            <input type="checkbox" id="mode-toggle">
+            <label for="mode-toggle" class="mode-toggle-label simple">Simple</label>
+            <label for="mode-toggle" class="mode-toggle-label advanced">Advanced</label>
+        </div>
         <div class="control-group">
             <label for="generator-select">Generator</label>
             <select id="generator-select">
@@ -189,7 +229,7 @@
         <div class="control-group" id="generator-params">
         </div>
 
-        <div class="control-group">
+        <div class="control-group .hide-in-simple-mode">
             <label for="symmetry-select">Symmetry Mode</label>
             <select id="symmetry-select">
                 <option value="none">None</option>
@@ -220,34 +260,34 @@
             <input type="number" id="pixel-size-input" value="15" min="1" max="50">
         </div>
 
-        <div class="control-group">
+        <div class="control-group hide-in-simple-mode">
             <label>Modifiers</label>
             <div id="modifiers-container">
                 </div>
         </div>
 
-        <div class="control-group" id="modifier-params">
+        <div class="control-group hide-in-simple-mode" id="modifier-params">
         </div>
 
-        <hr>
-        <div id="layer-panel">
+        <hr class="hide-in-simple-mode">
+        <div id="layer-panel" class="hide-in-simple-mode">
             <h3>Layers</h3>
             <div id="layer-list"></div>
             <button id="add-layer-btn">+ Add Layer</button>
         </div>
-        <hr>
+        <hr class="hide-in-simple-mode">
 
         <button id="generate-btn">Regenerate Active Layer</button>
         <button id="randomize-btn">Roll the Dice</button>
-        <button id="undo-btn">Undo</button>
-        <button id="redo-btn">Redo</button>
+        <button id="undo-btn" class="hide-in-simple-mode">Undo</button>
+        <button id="redo-btn" class="hide-in-simple-mode">Redo</button>
         <button id="save-btn">Save Artwork</button>
-        <button id="export-json-btn">Export JSON</button>
-        <button id="share-btn">Share</button>
-        <button id="edit-patterns-btn">Edit Patterns</button>
-        <hr>
-        <button id="stamp-tool-btn">Stamp Tool</button>
-        <button id="brush-tool-btn">Brush Tool</button>
+        <button id="export-json-btn" class="hide-in-simple-mode">Export JSON</button>
+        <button id="share-btn" class="hide-in-simple-mode">Share</button>
+        <button id="edit-patterns-btn" class="hide-in-simple-mode">Edit Patterns</button>
+        <hr class="hide-in-simple-mode">
+        <button id="stamp-tool-btn" class="hide-in-simple-mode">Stamp Tool</button>
+        <button id="brush-tool-btn" class="hide-in-simple-mode">Brush Tool</button>
     </div>
 
     <div id="canvas-container">
@@ -264,7 +304,6 @@
             <button id="save-pattern-btn">Save Pattern</button>
         </div>
     </div>
-
     <script type="module" src="main.js"></script>
 </body>
 </html>

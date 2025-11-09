@@ -1,3 +1,4 @@
+import { driver } from "driver.js";
 import { Planter } from './Planter.js';
 import { HistoryManager } from './HistoryManager.js';
 import { Layer } from './Layer.js';
@@ -42,6 +43,28 @@ export class UIManager {
         if (!loadedFromURL) {
             this.#handleAddLayer();
         }
+        this.#startOnboardingTour();
+    }
+
+    #startOnboardingTour() {
+        const hasBeenOnboarded = localStorage.getItem('pixelPlanterOnboarded');
+        if (hasBeenOnboarded) {
+            return;
+        }
+
+        const driverObj = driver({
+            showProgress: true,
+            steps: [
+                { element: '#generator-select', popover: { title: '1. Pick a Generator', description: 'This is the main algorithm used to create your art. Try "noise" or "cellular" to start.' } },
+                { element: '#palette-select', popover: { title: '2. Pick a Palette', description: 'Choose a color scheme for your creation.' } },
+                { element: '#generate-btn', popover: { title: '3. Generate!', description: 'Click here to create your artwork. You can click it again to get a new variation with the same settings.' } },
+                { element: '#randomize-btn', popover: { title: 'Roll the Dice', description: 'This button will randomize all settings for a surprise result.' } },
+                { element: '#mode-toggle-container', popover: { title: 'Unlock More Power', description: 'When you\'re ready, switch to "Advanced" mode to unlock layers, modifiers, and more!' } }
+            ]
+        });
+
+        driverObj.drive();
+        localStorage.setItem('pixelPlanterOnboarded', 'true');
     }
 
     #bindDOM() {
@@ -84,6 +107,13 @@ export class UIManager {
         this.#controls.undoBtn.addEventListener('click', () => this.#handleUndo());
         this.#controls.redoBtn.addEventListener('click', () => this.#handleRedo());
         this.#controls.shareBtn.addEventListener('click', () => this.#handleShare());
+        document.getElementById('mode-toggle').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                document.body.classList.remove('simple-mode');
+            } else {
+                document.body.classList.add('simple-mode');
+            }
+        });
 
         // --- UPDATED: Delegated listeners for the layer list ---
         this.#controls.layerList.addEventListener('click', e => {
