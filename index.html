@@ -199,6 +199,35 @@
             font-weight: bold;
         }
 
+        #preset-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            padding-top: 15px;
+        }
+        .preset-item {
+            cursor: pointer;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            transition: box-shadow 0.2s;
+        }
+        .preset-item:hover {
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+        }
+        .preset-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            background-color: #eee;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+        }
+        .preset-item-name {
+            padding: 8px;
+            font-weight: bold;
+        }
+
         /* Responsive styles for mobile */
         @media (max-width: 768px) {
             body {
@@ -288,6 +317,7 @@
         <hr class="hide-in-simple-mode">
         <button id="stamp-tool-btn" class="hide-in-simple-mode">Stamp Tool</button>
         <button id="brush-tool-btn" class="hide-in-simple-mode">Brush Tool</button>
+        <button id="show-presets-btn" class="hide-in-simple-mode">Presets</button>
     </div>
 
     <div id="canvas-container">
@@ -302,6 +332,16 @@
             </div>
             <input type="text" id="pattern-name-input" placeholder="Pattern Name">
             <button id="save-pattern-btn">Save Pattern</button>
+        </div>
+    </div>
+
+    <div id="presets-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Community Presets</h2>
+            <div id="preset-gallery">
+                <!-- Gallery items will be injected here by JS -->
+            </div>
         </div>
     </div>
     <script type="module" src="main.js"></script>

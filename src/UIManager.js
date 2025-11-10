@@ -25,6 +25,9 @@ export class UIManager {
     #activeSymmetryMode = 'none';
     #isBrushing = false;
     #clipboard = null; // For copy/pasting modifiers
+    #presetsModal;
+    #presetGallery;
+    #closePresetsBtn;
 
     constructor() {
         this.#historyManager = new HistoryManager();
@@ -88,6 +91,10 @@ export class UIManager {
         this.#controls.undoBtn = document.getElementById('undo-btn');
         this.#controls.redoBtn = document.getElementById('redo-btn');
         this.#controls.shareBtn = document.getElementById('share-btn');
+        this.#controls.showPresetsBtn = document.getElementById('show-presets-btn');
+        this.#presetsModal = document.getElementById('presets-modal');
+        this.#presetGallery = document.getElementById('preset-gallery');
+        this.#closePresetsBtn = this.#presetsModal.querySelector('.close-button');
     }
 
     #initializeUI() {
@@ -175,6 +182,23 @@ export class UIManager {
         this.#canvasContainer.addEventListener('mousemove', e => { if (this.#isBrushing) this.#handleBrushStroke(e); });
         this.#canvasContainer.addEventListener('mouseup', () => this.#isBrushing = false);
         this.#canvasContainer.addEventListener('mouseleave', () => this.#isBrushing = false);
+
+        this.#controls.showPresetsBtn.addEventListener('click', () => this.#handleShowPresets());
+        this.#closePresetsBtn.addEventListener('click', () => this.#presetsModal.style.display = 'none');
+        window.addEventListener('click', (event) => {
+            if (event.target == this.#presetsModal) {
+                this.#presetsModal.style.display = 'none';
+            }
+        });
+
+        this.#presetGallery.addEventListener('click', (event) => {
+            const presetItem = event.target.closest('.preset-item');
+            if (presetItem) {
+                const configString = presetItem.dataset.config;
+                this.#loadConfig(configString);
+                this.#presetsModal.style.display = 'none';
+            }
+        });
     }
 
     #handleBrushStroke(event) {
@@ -342,6 +366,35 @@ export class UIManager {
             this.#planterInstance.generate();
             this.#saveState();
         }
+    }
+
+    async #handleShowPresets() {
+        if (this.#presetGallery.children.length === 0) {
+            try {
+                const response = await fetch('./src/presets.json');
+                const presets = await response.json();
+                this.#populatePresetGallery(presets);
+            } catch (error) {
+                console.error('Failed to load presets:', error);
+                this.#presetGallery.innerHTML = '<p>Could not load presets.</p>';
+            }
+        }
+        this.#presetsModal.style.display = 'block';
+    }
+
+    #populatePresetGallery(presets) {
+        this.#presetGallery.innerHTML = '';
+        presets.forEach(preset => {
+            const item = document.createElement('div');
+            item.className = 'preset-item';
+            item.dataset.config = preset.config;
+            item.innerHTML = `
+                <img src="${preset.preview}" alt="${preset.name}" loading="lazy">
+                <div class="preset-item-name">${preset.name}</div>
+            `;
+            this.#presetGallery.appendChild(item);
+        });
+    }
     }
 
     #handleRandomizeAll() {
@@ -554,6 +607,11 @@ export class UIManager {
         const urlParams = new URLSearchParams(window.location.search);
         const configString = urlParams.get('config');
         if (!configString) return false;
+
+        return this.#loadConfig(configString);
+    }
+
+    #loadConfig(configString) {
         try {
             const jsonString = decodeURIComponent(atob(configString));
             const simplifiedStack = JSON.parse(jsonString);
@@ -576,7 +634,7 @@ export class UIManager {
             this.#saveState();
             return true;
         } catch (error) {
-            console.error("Failed to parse config from URL:", error);
+            console.error("Failed to parse config:", error);
             return false;
         }
     }

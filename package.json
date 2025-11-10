@@ -2,10 +2,11 @@
   "name": "pixel-planter",
   "version": "0.1.0",
   "description": "A modular, lightweight JavaScript library for creating generative pixel art.",
+  "type": "module",
   "main": "dist/pixel-planter.js",
   "module": "src/index.js",
   "scripts": {
-    "test": "node tests/test.js"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "repository": {
     "type": "git",
@@ -27,5 +28,12 @@
   "dependencies": {
     "driver.js": "^1.3.6",
     "simplex-noise": "^4.0.3"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.28.5",
+    "babel-jest": "^30.2.0",
+    "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
+    "jsdom": "^27.1.0"
   }
 }
