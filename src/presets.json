@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Alien Relic",
+    "preview": "https://i.imgur.com/8L3A32S.png",
+    "config": "W3sib25maWciOnsic2l6ZSI6MzIsInBpeGVsU2l6ZSI6MTUsImdlbmVyYXRvciI6ImFkdmFuY2VkLXN5bW1ldHJ5IiwicGFsZXR0ZSI6InZhcG9yd2F2ZSIsInNlZWQiOiIxNzE1NzM0MDExMDk5IiwibW9kaWZpZXJzIjpbXX0sIm5hbWUiOiJMYXllciAwIiwiaXNWaXNpYmxlIjp0cnVlLCJvcGFjaXR5IjoxLCJibGVuZE1vZGUiOiJzb3VyY2Utb3ZlciIsIm1hc2tMYXllcklkIjpudWxsfV0="
+  },
+  {
+    "name": "Glitch Grid",
+    "preview": "https://i.imgur.com/sSUfH6y.png",
+    "config": "W3sib25maWciOnsic2l6ZSI6MzIsInBpeGVsU2l6ZSI6MTUsImdlbmVyYXRvciI6Im5vaXNlIiwicGFsZXR0ZSI6InZhcG9yd2F2ZSIsInNlZWQiOiIxNzE1NzM0MDc4ODg3IiwibW9kaWZpZXJzIjpbeyJuYW1lIjoib3V0bGluZSIsImNvbG9ySW5kZXgiOjEsImRpc3RhbmNlIjoxfV0sIm5vaXNlU2NhbGUiOjEwLCJub2lzZVRocmVzaG9sZCI6MC42fSwibmFtZSI6IkxheWVyIDAiLCJpc1Zpc2libGUiOnRydWUsIm9wYWNpdHkiOjEsImJsZW5kTW9kZSI6InNvdXJjZS1vdmVyIiwibWFza0xheWVySWQiOm51bGx9XQ=="
+  },
+  {
+    "name": "Forest Spirit",
+    "preview": "https://i.imgur.com/u0E2gJ1.png",
+    "config": "W3sib25maWciOnsic2l6ZSI6MzIsInBpeGVsU2l6ZSI6MTUsImdlbmVyYXRvciI6InJlY3Vyc2l2ZS1ncm93dGgiLCJwYWxldHRlIjoiZm9yZXN0Iiwic2VlZCI6IjE3MTU3MzQwMzQzMzkiLCJtb2RpZmllcnMiOltdLCJncm93dGhGYWN0b3IiOjAuOCwibWF4RGVwdGgiOjQsImluaXRpYWxQb2ludHMiOjF9LCJuYW1lIjoiTGF5ZXIgMCIsImlzVmlzaWJsZSI6dHJ1ZSwib3BhY2l0eSI6MSwiYmxlbmRNb2RlIjoic291cmNlLW92ZXIiLCJtYXNrTGF5ZXJJZCI6bnVsbH1d"
+  },
+  {
+    "name": "Circuit Board",
+    "preview": "https://i.imgur.com/uS20xYX.png",
+    "config": "W3sib25maWciOnsic2l6ZSI6MzIsInBpeGVsU2l6ZSI6MTUsImdlbmVyYXRvciI6InBhdGhmaW5kZXIiLCJwYWxldHRlIjoiZm9yZXN0Iiwic2VlZCI6IjE3MTU3MzQxMDM0NTUiLCJtb2RpZmllcnMiOlt7Im5hbWUiOiJvdXRsaW5lIiwiY29sb3JJbmRleCI6MywiZGlzdGFuY2UiOjF9XSwic3RhcnRUb3AiOjAuNSwic3RhcnRCb3R0b20iOjAuNSwic3RhcnRMZWZ0IjowLjUsInN0YXJ0UmlnaHQiOjAuNSwiZW5kVG9wIjowLjUsImVuZEJvdHRvbSI6MC41LCJlbmRMZWZ0IjowLjUsImVuZFJpZ2h0IjowLjUsImF2b2lkWm9uZXMiOnRydWV9LCJuYW1lIjoiTGF5ZXIgMCIsImlzVmlzaWJsZSI6dHJ1ZSwib3BhY2l0eSI6MSwiYmxlbmRNb2RlIjoic291cmNlLW92ZXIiLCJtYXNrTGF5ZXJJZCI6bnVsbH1d"
+  }
+]
