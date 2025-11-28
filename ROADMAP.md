@@ -34,3 +34,10 @@ This document outlines the future direction and planned features for Pixel Plant
 -   [ ] More exporter options (SVG, JSON data).
 -   [ ] A simple browser-based UI for experimenting with generators.
 -   [ ] WebGL-based renderer for improved performance with large canvases.
+
+## Future Design Concepts
+
+We are exploring deeper functionality for professional workflows. See `DESIGN_specs.md` for detailed specifications on:
+-   **The Asset Factory:** Batch generation and sprite sheets.
+-   **Smart Regions:** Zone-based generation constraints.
+-   **Visual Modifier Pipeline:** Logic-based post-processing.
