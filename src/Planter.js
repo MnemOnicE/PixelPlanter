@@ -392,10 +392,10 @@ export class Planter {
         const index = this.#layerStack.findIndex(l => l.id === layerId);
         if (index === -1) return;
 
-        if (direction === 'up' && index > 0) {
-            [this.#layerStack[index], this.#layerStack[index - 1]] = [this.#layerStack[index - 1], this.#layerStack[index]];
-        } else if (direction === 'down' && index < this.#layerStack.length - 1) {
+        if (direction === 'up' && index < this.#layerStack.length - 1) {
             [this.#layerStack[index], this.#layerStack[index + 1]] = [this.#layerStack[index + 1], this.#layerStack[index]];
+        } else if (direction === 'down' && index > 0) {
+            [this.#layerStack[index], this.#layerStack[index - 1]] = [this.#layerStack[index - 1], this.#layerStack[index]];
         }
     }
 
