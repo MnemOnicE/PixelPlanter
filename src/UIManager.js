@@ -395,14 +395,31 @@ export class UIManager {
             this.#presetGallery.appendChild(item);
         });
     }
-    }
 
     #handleRandomizeAll() {
         if (!this.#activeLayerId) {
             alert("Please add or select a layer to randomize.");
             return;
         }
-        // ... (rest of the method is unchanged, so omitted for brevity)
+
+        const generators = this.#planterInstance.getGeneratorNames();
+        const palettes = this.#planterInstance.getPaletteNames();
+
+        const randomGenerator = generators[Math.floor(Math.random() * generators.length)];
+        const randomPalette = palettes[Math.floor(Math.random() * palettes.length)];
+        const randomSeed = Math.floor(Math.random() * 1000000).toString();
+
+        this.#controls.generatorSelect.value = randomGenerator;
+        this.#controls.paletteSelect.value = randomPalette;
+        this.#controls.seedInput.value = randomSeed;
+
+        this.#updateGeneratorParamsUI(randomGenerator, {});
+
+        const allModifierCheckboxes = this.#modifiersContainer.querySelectorAll('input[type="checkbox"]');
+        allModifierCheckboxes.forEach(cb => cb.checked = false);
+        this.#updateModifierParamsUI([]);
+
+        this.handleGenerateActiveLayer();
     }
 
     #getConfigFromMainControls() {
@@ -537,7 +554,26 @@ export class UIManager {
     }
 
     #handleExportJSON() {
-        // ... (omitted for brevity, unchanged)
+        const layerStack = this.#planterInstance.getLayerStack();
+        const simplifiedStack = layerStack.map(layer => ({
+            config: layer.config,
+            name: layer.name,
+            isVisible: layer.isVisible,
+            opacity: layer.opacity,
+            blendMode: layer.blendMode,
+            maskLayerId: layer.maskLayerId,
+        }));
+        const jsonString = JSON.stringify(simplifiedStack, null, 2);
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "pixel-planter-export.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 
     #saveState() {
