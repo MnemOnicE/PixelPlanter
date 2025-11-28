@@ -146,6 +146,82 @@ export class Planter {
     }
 
     /**
+     * Generates a batch of variations as a single sprite sheet.
+     * @param {object} config - Configuration for the batch.
+     * @param {number} config.rows - Number of rows.
+     * @param {number} config.cols - Number of columns.
+     * @param {number} config.padding - Padding between sprites in pixels.
+     * @param {number} config.variance - Variance level (0-100).
+     * @returns {HTMLCanvasElement} The generated sprite sheet canvas.
+     */
+    generateBatch({ rows = 4, cols = 4, padding = 0, variance = 20 }) {
+        // Backup current layer configs
+        const originalLayerConfigs = this.#layerStack.map(layer => ({
+            id: layer.id,
+            config: JSON.parse(JSON.stringify(layer.config))
+        }));
+
+        const spriteWidth = this.#finalCanvas.width;
+        const spriteHeight = this.#finalCanvas.height;
+        const sheetWidth = (spriteWidth * cols) + (padding * (cols - 1));
+        const sheetHeight = (spriteHeight * rows) + (padding * (rows - 1));
+
+        const sheetCanvas = document.createElement('canvas');
+        sheetCanvas.width = sheetWidth;
+        sheetCanvas.height = sheetHeight;
+        const ctx = sheetCanvas.getContext('2d');
+
+        // Heuristic for "structural" generators that shouldn't change on low variance
+        const structuralGenerators = ['simple-symmetry', 'advanced-symmetry', 'recursive-growth'];
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const variationIndex = (r * cols) + c;
+
+                if (variationIndex > 0) {
+                     this.#layerStack.forEach(layer => {
+                        const original = originalLayerConfigs.find(l => l.id === layer.id);
+                        const isStructural = structuralGenerators.includes(original.config.generator);
+
+                        // If variance is high (>50), change everything.
+                        // If variance is low, preserve structural layers.
+                        if (variance > 50 || !isStructural) {
+                             // Modify seed
+                             // We use the original seed + variation index to be deterministic for this batch
+                             layer.config.seed = `${original.config.seed}-${variationIndex}`;
+                        }
+                     });
+                } else {
+                    // Index 0: Ensure it's the original config
+                    this.#layerStack.forEach(layer => {
+                        const original = originalLayerConfigs.find(l => l.id === layer.id);
+                        layer.config = JSON.parse(JSON.stringify(original.config));
+                    });
+                }
+
+                this.generate(); // Render to #finalCanvas
+
+                const x = c * (spriteWidth + padding);
+                const y = r * (spriteHeight + padding);
+                ctx.drawImage(this.#finalCanvas, 0, 0, spriteWidth, spriteHeight, x, y, spriteWidth, spriteHeight);
+            }
+        }
+
+        // Restore original configuration
+        this.#layerStack.forEach(layer => {
+             const original = originalLayerConfigs.find(l => l.id === layer.id);
+             if (original) {
+                 layer.config = original.config;
+             }
+        });
+
+        // Restore the single view
+        this.generate();
+
+        return sheetCanvas;
+    }
+
+    /**
      * Generates data grids for all layers.
      * Handles dependencies between layers (like masking and reading below).
      * @private

@@ -17,15 +17,15 @@ This document outlines the future direction and planned features for Pixel Plant
 -   [x] Establish core rendering engine (`Planter` class).
 -   [x] Implement basic generator modules (`symmetry`, `noise`).
 -   [x] Implement basic palette and exporter modules.
--   [ ] Write comprehensive unit tests for the core engine.
+-   [x] Write comprehensive unit tests for the core engine.
 -   [ ] Set up a basic examples page.
 
 ## v1.0.0 - Stable Release
 
 -   [ ] Finalize the public API.
--   [ ] Add at least 5 distinct generator modules.
--   [ ] Implement the sprite sheet stitching utility.
--   [ ] Implement the layering and opacity system.
+-   [x] Add at least 5 distinct generator modules.
+-   [x] Implement the sprite sheet stitching utility.
+-   [x] Implement the layering and opacity system.
 -   [ ] Full documentation for all public methods and modules.
 
 ## Post-v1.0 - Future Features
