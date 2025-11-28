@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+-   **Asset Factory**: A new tool to generate sprite sheets of variations with configurable rows, columns, padding, and variance.
+-   Browser compatibility fixes for ESM imports (`driver.js` and `simplex-noise`).
+-   Unit tests for batch generation.
 -   Initial project setup with documentation templates.
 
 ---

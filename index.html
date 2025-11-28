@@ -318,6 +318,7 @@
         <button id="stamp-tool-btn" class="hide-in-simple-mode">Stamp Tool</button>
         <button id="brush-tool-btn" class="hide-in-simple-mode">Brush Tool</button>
         <button id="show-presets-btn" class="hide-in-simple-mode">Presets</button>
+        <button id="show-factory-btn" class="hide-in-simple-mode">Asset Factory</button>
     </div>
 
     <div id="canvas-container">
@@ -342,6 +343,31 @@
             <div id="preset-gallery">
                 <!-- Gallery items will be injected here by JS -->
             </div>
+        </div>
+    </div>
+
+    <div id="factory-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Asset Factory</h2>
+            <p>Generate a sprite sheet of variations.</p>
+            <div class="control-group">
+                <label for="factory-rows">Rows</label>
+                <input type="number" id="factory-rows" value="4" min="1" max="16">
+            </div>
+            <div class="control-group">
+                <label for="factory-cols">Columns</label>
+                <input type="number" id="factory-cols" value="4" min="1" max="16">
+            </div>
+            <div class="control-group">
+                <label for="factory-padding">Padding (px)</label>
+                <input type="number" id="factory-padding" value="2" min="0" max="10">
+            </div>
+            <div class="control-group">
+                <label for="factory-variance">Variance</label>
+                <input type="range" id="factory-variance" min="0" max="100" value="20" title="How much the seed changes per item">
+            </div>
+            <button id="factory-generate-btn">Download Sprite Sheet</button>
         </div>
     </div>
     <script type="module" src="main.js"></script>

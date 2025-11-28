@@ -2,7 +2,7 @@
  * @file UIManager.js
  * @description Manages the user interface and interactions.
  */
-import { driver } from "driver.js";
+import { driver } from "/node_modules/driver.js/dist/driver.js.mjs";
 import { Planter } from './Planter.js';
 import { HistoryManager } from './HistoryManager.js';
 import { Layer } from './Layer.js';
@@ -131,6 +131,20 @@ export class UIManager {
     #closePresetsBtn;
 
     /**
+     * Modal element for asset factory.
+     * @type {HTMLElement}
+     * @private
+     */
+    #factoryModal;
+
+    /**
+     * Button to close the factory modal.
+     * @type {HTMLElement}
+     * @private
+     */
+    #closeFactoryBtn;
+
+    /**
      * Initializes the UI Manager.
      * Sets up the Planter instance, binds DOM elements, and starts the tour.
      */
@@ -209,6 +223,10 @@ export class UIManager {
         this.#presetsModal = document.getElementById('presets-modal');
         this.#presetGallery = document.getElementById('preset-gallery');
         this.#closePresetsBtn = this.#presetsModal.querySelector('.close-button');
+        this.#controls.showFactoryBtn = document.getElementById('show-factory-btn');
+        this.#factoryModal = document.getElementById('factory-modal');
+        this.#closeFactoryBtn = this.#factoryModal.querySelector('.close-button');
+        this.#controls.factoryGenerateBtn = document.getElementById('factory-generate-btn');
     }
 
     /**
@@ -322,6 +340,15 @@ export class UIManager {
                 this.#presetsModal.style.display = 'none';
             }
         });
+
+        this.#controls.showFactoryBtn.addEventListener('click', () => this.#factoryModal.style.display = 'block');
+        this.#closeFactoryBtn.addEventListener('click', () => this.#factoryModal.style.display = 'none');
+        window.addEventListener('click', (event) => {
+            if (event.target == this.#factoryModal) {
+                this.#factoryModal.style.display = 'none';
+            }
+        });
+        this.#controls.factoryGenerateBtn.addEventListener('click', () => this.#handleGenerateBatch());
     }
 
     /**
@@ -879,6 +906,27 @@ export class UIManager {
         const base64String = btoa(encodeURIComponent(jsonString));
         const shareableURL = `${window.location.origin}${window.location.pathname}?config=${base64String}`;
         navigator.clipboard.writeText(shareableURL).then(() => alert("Link copied to clipboard!")).catch(err => console.error("Failed to copy link: ", err));
+    }
+
+    /**
+     * Handles the batch generation and download.
+     * @private
+     */
+    #handleGenerateBatch() {
+        const rows = parseInt(document.getElementById('factory-rows').value, 10);
+        const cols = parseInt(document.getElementById('factory-cols').value, 10);
+        const padding = parseInt(document.getElementById('factory-padding').value, 10);
+        const variance = parseInt(document.getElementById('factory-variance').value, 10);
+
+        const sheetCanvas = this.#planterInstance.generateBatch({ rows, cols, padding, variance });
+
+        // Download
+        const link = document.createElement('a');
+        link.download = 'pixel-planter-sheet.png';
+        link.href = sheetCanvas.toDataURL();
+        link.click();
+
+        this.#factoryModal.style.display = 'none';
     }
 
     /**

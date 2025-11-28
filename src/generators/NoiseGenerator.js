@@ -2,7 +2,7 @@
  * @file NoiseGenerator.js
  * @description Generates a grid based on Simplex Noise.
  */
-import { createNoise2D } from 'simplex-noise';
+import { createNoise2D } from '/node_modules/simplex-noise/dist/esm/simplex-noise.js';
 
 /**
  * Generates organic-looking patterns using Simplex Noise.

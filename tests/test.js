@@ -63,6 +63,15 @@ describe('UIManager Preset Loading', () => {
                 <span class="close-button"></span>
                 <div id="preset-gallery"></div>
             </div>
+            <div id="factory-modal" style="display: none;">
+                <span class="close-button"></span>
+                <input id="factory-rows" value="4" />
+                <input id="factory-cols" value="4" />
+                <input id="factory-padding" value="2" />
+                <input id="factory-variance" value="20" />
+                <button id="factory-generate-btn"></button>
+            </div>
+            <button id="show-factory-btn"></button>
             <div id="modifiers-container"></div>
             <div id="generator-params"></div>
             <div id="modifier-params"></div>
