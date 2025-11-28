@@ -1,8 +1,17 @@
-// Filename: src/generators/NoiseGenerator.js
+/**
+ * @file NoiseGenerator.js
+ * @description Generates a grid based on Simplex Noise.
+ */
 import { createNoise2D } from 'simplex-noise';
 
+/**
+ * Generates organic-looking patterns using Simplex Noise.
+ */
 export class NoiseGenerator {
-    // --- PARAMETER DEFINITIONS ---
+    /**
+     * Parameter definitions for the UI.
+     * @type {object}
+     */
     static params = {
         noiseScale: {
             label: 'Scale', // How "zoomed in" the noise is.
@@ -22,20 +31,37 @@ export class NoiseGenerator {
         }
     }
 
-    // --- INSTANCE PROPERTIES ---
+    /**
+     * The noise function from simplex-noise.
+     * @type {function}
+     * @private
+     */
     #noise2D;
 
-    // CONSTRUCTOR
+    /**
+     * Creates an instance of NoiseGenerator.
+     * Initializes the Simplex Noise generator.
+     */
     constructor() {
         this.#noise2D = createNoise2D();
     }
 
-    // --- RUN METHOD ---
+    /**
+     * Runs the noise generation algorithm.
+     *
+     * @param {object} config - The configuration object.
+     * @param {number} config.size - The grid size.
+     * @param {number} [config.noiseScale=20] - Controls the zoom level of the noise. Higher values zoom out (more detail).
+     * @param {number} [config.noiseThreshold=0.5] - The cutoff value (0-1). Values above this become active pixels.
+     * @param {SeededRandom} prng - The pseudo-random number generator.
+     * @returns {number[][]} A 2D array representing the generated noise grid.
+     */
     run({ size, noiseScale = 20, noiseThreshold = 0.5 }, prng) {
         // Create an empty grid to store our data.
         const dataGrid = Array.from({ length: size }, () => Array(size).fill(0));
 
         // The PRNG passed from Planter can be used to add a random offset to the noise.
+        // This ensures that different seeds produce different noise patterns.
         const xOffset = prng.next() * 1000;
         const yOffset = prng.next() * 1000;
 

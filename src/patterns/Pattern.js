@@ -1,6 +1,11 @@
 /**
- * @class Pattern
+ * @file Pattern.js
+ * @description Defines the Pattern class for storing user-defined pattern data.
+ */
+
+/**
  * A simple container for a user-defined pattern.
+ * Holds the pattern's name and its 2D grid representation.
  */
 export class Pattern {
     /**
@@ -17,6 +22,7 @@ export class Pattern {
 
     /**
      * Creates an instance of the Pattern class.
+     *
      * @param {string} name - The name of the pattern.
      * @param {number[][]} dataGrid - The 2D array representing the pattern's shape.
      */

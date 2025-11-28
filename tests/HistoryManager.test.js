@@ -1,3 +1,7 @@
+/**
+ * @file HistoryManager.test.js
+ * @description Unit tests for the HistoryManager class.
+ */
 import { HistoryManager } from '../src/HistoryManager.js';
 
 describe('HistoryManager', () => {
@@ -11,10 +15,7 @@ describe('HistoryManager', () => {
         history.addState({ id: 1 });
         // The current state is just the last added one. HistoryManager doesn't expose getCurrentState()
         // but undo returns previous.
-        // If we add state, and then undo, we should get what was before?
-        // Wait, undo() implementation:
-        // if length < 2 return null.
-        // So we need at least 2 states to undo.
+        // We need at least 2 states to undo to get back the first one.
         history.addState({ id: 2 });
         expect(history.undo()).toEqual({ id: 1 });
     });

@@ -1,12 +1,17 @@
 /**
- * A collection of multi-color palette modules.
+ * @file ColorPalettes.js
+ * @description A collection of multi-color palette modules.
  */
 
 /**
- * @class VaporwavePalette
  * A palette with classic vaporwave/outrun colors.
+ * Maps binary grid values to a set of predefined colors.
  */
 export class VaporwavePalette {
+    /**
+     * Creates an instance of VaporwavePalette.
+     * Initializes the color array.
+     */
     constructor() {
         // First color is the background for "off" pixels (value 0).
         // The rest are for "on" pixels (value 1).
@@ -20,7 +25,8 @@ export class VaporwavePalette {
 
     /**
      * Maps the data grid to this palette.
-     * @param {number[][]} dataGrid The grid from the generator.
+     *
+     * @param {number[][]} dataGrid - The grid from the generator.
      * @returns {string[][]} A 2D array of color strings.
      */
     map(dataGrid) {
@@ -43,10 +49,14 @@ export class VaporwavePalette {
 
 
 /**
- * @class ForestPalette
  * A palette with earthy greens and browns.
+ * Maps binary grid values to a set of nature-inspired colors.
  */
 export class ForestPalette {
+    /**
+     * Creates an instance of ForestPalette.
+     * Initializes the color array.
+     */
     constructor() {
         this.colors = [
             '#2F1B05', // Dark Brown Background
@@ -56,6 +66,12 @@ export class ForestPalette {
         ];
     }
 
+    /**
+     * Maps the data grid to this palette.
+     *
+     * @param {number[][]} dataGrid - The grid from the generator.
+     * @returns {string[][]} A 2D array of color strings.
+     */
     map(dataGrid) {
         const backgroundColor = this.colors[0];
         const foregroundColors = this.colors.slice(1);

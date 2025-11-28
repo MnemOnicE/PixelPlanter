@@ -1,7 +1,17 @@
-// Filename: src/modifiers/PathfinderModifier.js
+/**
+ * @file PathfinderModifier.js
+ * @description Creates paths through the grid using "drunkard's walk" algorithms.
+ */
 
+/**
+ * Draws or erases paths using random walkers.
+ * Can be used to create rivers, roads, or carve out caves.
+ */
 export class PathfinderModifier {
-    // --- NEW: PARAMETER DEFINITIONS with 'mode' ---
+    /**
+     * Parameter definitions for the UI.
+     * @type {object}
+     */
     static params = {
         mode: {
             label: 'Mode',
@@ -23,7 +33,18 @@ export class PathfinderModifier {
         }
     };
 
-    // --- UPDATED APPLY METHOD ---
+    /**
+     * Applies the pathfinding modification.
+     *
+     * @param {number[][]} dataGrid - The incoming 2D array.
+     * @param {object} config - Configuration object.
+     * @param {string} [config.mode='additive'] - 'additive' to draw, 'subtractive' to erase.
+     * @param {number} [config.pathCount=3] - Number of paths to generate.
+     * @param {number} [config.pathWidth=1] - Width of the path brush.
+     * @param {number} [config.pathStraightness=0.7] - Bias towards continuing in the same direction (0-1).
+     * @param {SeededRandom} prng - The pseudo-random number generator.
+     * @returns {number[][]} A new grid with paths applied.
+     */
     apply(dataGrid, { mode = 'additive', pathCount = 3, pathWidth = 1, pathStraightness = 0.7 }, prng) {
         const outputGrid = JSON.parse(JSON.stringify(dataGrid));
         const size = dataGrid.length;
@@ -74,7 +95,13 @@ export class PathfinderModifier {
         return outputGrid;
     }
 
-    // --- UPDATED HELPER METHODS ---
+    /**
+     * Finds a random coordinate that is "solid" (value > 0).
+     * @param {number[][]} grid - The grid to search.
+     * @param {SeededRandom} prng - Random number generator.
+     * @returns {object|null} The coordinate {x, y} or null if not found.
+     * @private
+     */
     #findSolidSpot(grid, prng) {
         const size = grid.length;
         let attempts = 0;
@@ -91,6 +118,13 @@ export class PathfinderModifier {
         return null; // Return null if no solid spot is found
     }
 
+    /**
+     * Finds a random coordinate that is "empty" (value === 0).
+     * @param {number[][]} grid - The grid to search.
+     * @param {SeededRandom} prng - Random number generator.
+     * @returns {object|null} The coordinate {x, y} or null if not found.
+     * @private
+     */
     #findEmptySpot(grid, prng) {
         const size = grid.length;
         let attempts = 0;
@@ -107,6 +141,12 @@ export class PathfinderModifier {
         return null; // Return null if no empty spot is found
     }
 
+    /**
+     * Returns a movement delta biased towards a specific direction.
+     * @param {string} direction - The target direction.
+     * @returns {object} The movement delta {dx, dy}.
+     * @private
+     */
     #getBiasedMove(direction) {
         const moves = {
             'up': { dx: 0, dy: -1 }, 'down': { dx: 0, dy: 1 }, 'left': { dx: -1, dy: 0 }, 'right': { dx: 1, dy: 0 },
@@ -115,6 +155,12 @@ export class PathfinderModifier {
         return moves[direction] || { dx: 0, dy: 0 };
     }
 
+    /**
+     * Returns a random movement delta.
+     * @param {SeededRandom} prng - Random number generator.
+     * @returns {object} The movement delta {dx, dy}.
+     * @private
+     */
     #getRandomMove(prng) {
         const moves = [
             { dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 },
@@ -123,6 +169,14 @@ export class PathfinderModifier {
         return moves[Math.floor(prng.next() * moves.length)];
     }
 
+    /**
+     * Checks if a move is valid for the given mode.
+     * @param {number[][]} grid - The grid.
+     * @param {object} point - The target coordinate {x, y}.
+     * @param {string} mode - 'additive' or 'subtractive'.
+     * @returns {boolean} True if valid, false otherwise.
+     * @private
+     */
     #isValidMove(grid, point, mode) {
         const size = grid.length;
         // Check bounds (same for both modes).
@@ -137,6 +191,14 @@ export class PathfinderModifier {
         }
     }
 
+    /**
+     * Modifies the grid by drawing a shape at the given point.
+     * @param {number[][]} grid - The grid to modify.
+     * @param {object} point - The center coordinate {x, y}.
+     * @param {number} width - The width of the brush.
+     * @param {number} value - The value to set (0 or 1).
+     * @private
+     */
     #drawBrush(grid, point, width, value) {
         const size = grid.length;
         const halfWidth = Math.floor(width / 2);

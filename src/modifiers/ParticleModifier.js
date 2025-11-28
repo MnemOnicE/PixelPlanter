@@ -1,12 +1,28 @@
-// Filename: src/modifiers/ParticleModifier.js (Updated to use context)
+/**
+ * @file ParticleModifier.js
+ * @description Simulates gravity on pixels, causing them to fall until they hit a surface.
+ */
 
+/**
+ * Simulates particle deposition/gravity.
+ * Pixels fall until they encounter a solid pixel in the layer below or the bottom of the grid.
+ */
 export class ParticleModifier {
-    // This modifier no longer needs its own parameters, as it operates on existing data.
-    // We leave the static property for consistency, but it can be empty.
+    /**
+     * Parameter definitions for the UI.
+     * @type {object}
+     */
     static params = {};
 
-    // --- UPDATED APPLY METHOD ---
-    // Now accepts the `readBelowGrid`.
+    /**
+     * Applies the particle deposition logic.
+     *
+     * @param {number[][]} dataGrid - The current layer's grid.
+     * @param {object} config - The configuration object (unused).
+     * @param {SeededRandom} prng - The pseudo-random number generator (unused).
+     * @param {number[][]} readBelowGrid - The composite grid of all layers below this one.
+     * @returns {number[][]} A new grid with the particles dropped.
+     */
     apply(dataGrid, config, prng, readBelowGrid) {
         // Create a deep copy to avoid modifying the original grid during iteration.
         const outputGrid = JSON.parse(JSON.stringify(dataGrid));

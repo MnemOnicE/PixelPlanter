@@ -1,16 +1,38 @@
-// Filename: src/HistoryManager.js
+/**
+ * @file HistoryManager.js
+ * @description Manages the undo/redo stack for application state.
+ */
 
+/**
+ * Manages the history of application states (Undo/Redo).
+ * Uses a stack-based approach to store configuration snapshots.
+ */
 export class HistoryManager {
-    // --- PROPERTIES ---
-    #historyStack = []; // An array to store previous states.
-    #redoStack = [];    // An array to store undone states.
-    #maxHistory = 20;   // Limit how many states we store to save memory.
+    /**
+     * An array to store previous states.
+     * @type {object[]}
+     * @private
+     */
+    #historyStack = [];
 
-    // --- METHODS ---
+    /**
+     * An array to store undone states.
+     * @type {object[]}
+     * @private
+     */
+    #redoStack = [];
+
+    /**
+     * Limit how many states we store to save memory.
+     * @type {number}
+     * @private
+     */
+    #maxHistory = 20;
 
     /**
      * Adds a new state to the history.
      * A 'state' is the full configuration object used for generation.
+     *
      * @param {object} config - The configuration object to save.
      */
     addState(config) {
@@ -28,6 +50,7 @@ export class HistoryManager {
 
     /**
      * Returns the previous state and moves the current one to the redo stack.
+     *
      * @returns {object|null} The previous configuration object or null if no history.
      */
     undo() {
@@ -46,6 +69,7 @@ export class HistoryManager {
 
     /**
      * Returns a state from the redo stack.
+     *
      * @returns {object|null} The redone configuration object or null if no redo states.
      */
     redo() {

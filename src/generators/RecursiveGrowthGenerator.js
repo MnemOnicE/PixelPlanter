@@ -1,8 +1,17 @@
-// == RecursiveGrowthGenerator Pseudocode ==
+/**
+ * @file RecursiveGrowthGenerator.js
+ * @description Generates a grid using a recursive growth algorithm.
+ */
 
-// CLASS RecursiveGrowthGenerator
+/**
+ * Generates a pattern by recursively growing from random starting points.
+ * Simulates organic growth spreading from seed locations.
+ */
 export class RecursiveGrowthGenerator {
-    // --- NEW: PARAMETER DEFINITIONS ---
+    /**
+     * Parameter definitions for the UI.
+     * @type {object}
+     */
     static params = {
         startPoints: {
             label: 'Start Points',
@@ -22,12 +31,26 @@ export class RecursiveGrowthGenerator {
         }
     };
 
-    // METHOD run
-    // PARAMETERS: config, prng
+    /**
+     * Runs the recursive growth generation.
+     *
+     * @param {object} config - The configuration object.
+     * @param {number} config.size - The grid size.
+     * @param {number} [config.startPoints=1] - Number of random starting points.
+     * @param {number} [config.maxDepth=5] - Maximum recursion depth for growth.
+     * @param {SeededRandom} prng - The pseudo-random number generator.
+     * @returns {number[][]} The generated grid.
+     */
     run({ size, startPoints = 1, maxDepth = 5 }, prng) {
         const dataGrid = Array.from({ length: size }, () => Array(size).fill(0));
 
         // --- Define the recursive function ---
+        /**
+         * Recursively grows the pattern from a coordinate.
+         * @param {number} x - Current X coordinate.
+         * @param {number} y - Current Y coordinate.
+         * @param {number} depth - Current recursion depth.
+         */
         const grow = (x, y, depth) => {
             // Base cases for recursion
             if (depth >= maxDepth || x < 0 || x >= size || y < 0 || y >= size) {

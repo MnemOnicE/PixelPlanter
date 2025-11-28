@@ -1,4 +1,17 @@
+/**
+ * @file PatternGenerator.js
+ * @description Stamps a pre-defined pattern onto the grid.
+ */
+
+/**
+ * Places a user-selected pattern onto the grid at a specified offset.
+ * Useful for stamping specific shapes or brushes.
+ */
 export class PatternGenerator {
+    /**
+     * Parameter definitions for the UI.
+     * @type {object}
+     */
     static params = {
         patternName: {
             label: 'Pattern',
@@ -10,6 +23,17 @@ export class PatternGenerator {
         y: { label: 'Y Offset', type: 'slider', min: 0, max: 100, step: 1, defaultValue: 50 },
     };
 
+    /**
+     * Runs the pattern placement algorithm.
+     *
+     * @param {object} config - The configuration object.
+     * @param {number} config.size - The grid size.
+     * @param {number[][]} [config.patternData] - The 2D array data of the pattern to stamp.
+     * @param {number} [config.x=50] - X offset percentage (0-100).
+     * @param {number} [config.y=50] - Y offset percentage (0-100).
+     * @param {SeededRandom} prng - The pseudo-random number generator (unused but part of signature).
+     * @returns {number[][]} The generated grid.
+     */
     run({ size, patternData, x, y }, prng) {
         const dataGrid = Array.from({ length: size }, () => Array(size).fill(0));
 

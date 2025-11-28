@@ -1,17 +1,74 @@
-// Filename: src/Layer.js
+/**
+ * @file Layer.js
+ * @description Represents a single layer in the drawing stack.
+ */
 
+/**
+ * Represents a single layer in the drawing stack.
+ * Contains its own configuration, data grid, and state (visibility, opacity, etc.).
+ */
 export class Layer {
-    // --- PROPERTIES ---
+    /**
+     * Unique identifier for the layer.
+     * @type {number}
+     */
     id;
+
+    /**
+     * Configuration object for this layer (generator params, modifiers, etc.).
+     * @type {object}
+     */
     config;
+
+    /**
+     * The generated 2D grid data for this layer.
+     * @type {number[][]}
+     */
     dataGrid;
+
+    /**
+     * Whether the layer is currently visible.
+     * @type {boolean}
+     */
     isVisible = true;
+
+    /**
+     * The opacity of the layer (0.0 to 1.0).
+     * @type {number}
+     */
     opacity = 1.0;
+
+    /**
+     * The blend mode for compositing this layer.
+     * @type {string}
+     */
     blendMode = 'source-over';
-    maskLayerId = null; // For Feature #3
+
+    /**
+     * The ID of the layer used as a mask for this layer (if any).
+     * @type {number|null}
+     */
+    maskLayerId = null;
+
+    /**
+     * The display name of the layer.
+     * @type {string}
+     */
     name;
 
-    // CONSTRUCTOR
+    /**
+     * Creates an instance of Layer.
+     *
+     * @param {object} initialConfig - The initial configuration object.
+     * @param {string} [initialConfig.name] - The name of the layer.
+     * @param {boolean} [initialConfig.isVisible] - Initial visibility state.
+     * @param {number} [initialConfig.opacity] - Initial opacity.
+     * @param {string} [initialConfig.blendMode] - Initial blend mode.
+     * @param {number} [initialConfig.maskLayerId] - Initial mask layer ID.
+     * @param {string} [initialConfig.generator] - The generator name.
+     * @param {object[]} [initialConfig.modifiers] - List of modifier configs.
+     * @param {number|string} [initialConfig.seed] - Seed for PRNG.
+     */
     constructor(initialConfig) {
         this.id = Date.now() + Math.random(); // Add random to avoid collision
         this.name = initialConfig.name || `Layer ${Math.floor(this.id)}`;
@@ -24,7 +81,14 @@ export class Layer {
         if (initialConfig.maskLayerId !== undefined) this.maskLayerId = initialConfig.maskLayerId;
     }
 
-    // --- UPDATED generate() METHOD ---
+    /**
+     * Generates the data grid for this layer.
+     * Runs the assigned generator and applies any modifiers.
+     *
+     * @param {Planter} planterInstance - The main Planter instance (for registry access).
+     * @param {number[][]} [readBelowGrid=null] - The composite grid of layers below this one (for context-aware modifiers).
+     * @returns {Layer} The layer instance (for chaining).
+     */
     generate(planterInstance, readBelowGrid = null) {
         const prng = planterInstance.getPRNG(this.config.seed);
         const generator = planterInstance.getGeneratorInstance(this.config.generator);

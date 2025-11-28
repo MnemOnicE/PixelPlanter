@@ -1,3 +1,7 @@
+/**
+ * @file Layer.test.js
+ * @description Unit tests for the Layer class.
+ */
 import { jest } from '@jest/globals';
 import { Layer } from '../src/Layer.js';
 

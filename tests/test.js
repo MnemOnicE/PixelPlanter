@@ -1,6 +1,11 @@
+/**
+ * @file test.js
+ * @description Unit tests for UIManager and preset loading logic.
+ */
 import { jest } from '@jest/globals';
 import 'jest-environment-jsdom';
 
+// Mock the Planter class to isolate UIManager tests
 jest.unstable_mockModule('../src/Planter.js', () => ({
     Planter: jest.fn().mockImplementation(() => ({
         getCanvas: () => document.createElement('canvas'),
@@ -21,6 +26,7 @@ jest.unstable_mockModule('../src/Planter.js', () => ({
     })),
 }));
 
+// Mock the driver.js library
 jest.unstable_mockModule('driver.js', () => ({
     driver: jest.fn().mockReturnValue({ drive: jest.fn() }),
 }));
@@ -33,6 +39,7 @@ describe('UIManager Preset Loading', () => {
     let uiManager;
 
     beforeEach(async () => {
+        // Setup a mock DOM
         document.body.innerHTML = `
             <div id="controls">
                 <button id="show-presets-btn"></button>
