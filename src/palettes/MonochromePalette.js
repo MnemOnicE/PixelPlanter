@@ -1,12 +1,18 @@
 /**
- * @class MonochromePalette
+ * @file MonochromePalette.js
+ * @description Defines the MonochromePalette class for black and white color mapping.
+ */
+
+/**
  * Maps a 2D data grid to a simple black and white color scheme.
+ * Implements the palette interface expected by the Planter.
  */
 export class MonochromePalette {
     /**
      * Maps the abstract data grid to a color grid.
+     *
      * @param {number[][]} dataGrid - The grid from the generator (containing 0s and 1s).
-     * @returns {string[][]} A 2D array of color strings.
+     * @returns {string[][]} A 2D array of color strings (hex codes).
      */
     map(dataGrid) {
         // Define the colors. The first color corresponds to a value of 0, the second to 1, etc.

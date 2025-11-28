@@ -1,3 +1,9 @@
+/**
+ * @file main.js
+ * @description Entry point for the Pixel Planter application.
+ * Initializes the UIManager when the DOM is fully loaded.
+ */
+
 // IMPORT necessary classes
 import { UIManager } from './src/UIManager.js';
 

@@ -1,13 +1,20 @@
-// == OutlineModifier Pseudocode ==
+/**
+ * @file OutlineModifier.js
+ * @description Adds an outline around shapes in the grid.
+ */
 
-// CLASS OutlineModifier
-// Adds a 1-pixel outline around all "on" (value > 0) pixels.
+/**
+ * Adds a 1-pixel outline around all "on" (value > 0) pixels.
+ * Used for emphasizing shapes or creating borders.
+ */
 export class OutlineModifier {
-    // METHOD apply
-    // PARAMETERS:
-    //  - dataGrid: The incoming 2D array from the generator or a previous modifier.
-    //  - config (optional): An object for modifier-specific settings, like outline color/value.
-    // RETURNS: A new, modified 2D array.
+    /**
+     * Applies the outline modification.
+     *
+     * @param {number[][]} dataGrid - The incoming 2D array from the generator or a previous modifier.
+     * @param {object} [config={}] - An object for modifier-specific settings (unused here but standard signature).
+     * @returns {number[][]} A new, modified 2D array with outlines applied.
+     */
     apply(dataGrid, config = {}) {
         const height = dataGrid.length;
         if (height === 0) return [];
@@ -18,6 +25,8 @@ export class OutlineModifier {
         const outputGrid = dataGrid.map(row => [...row]);
 
         // Define the value to use for the outline.
+        // Assuming > 0 is "on", we use 2 to distinguish or just ensure it's on.
+        // The palette mapper should handle values > 0 as "on".
         const outlineValue = 2;
 
         // Iterate over every cell (y, x) in the original `dataGrid`.

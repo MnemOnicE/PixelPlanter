@@ -1,3 +1,7 @@
+/**
+ * @file Planter.test.js
+ * @description Integration/Unit tests for the Planter class.
+ */
 import { jest } from '@jest/globals';
 import 'jest-environment-jsdom';
 import { Planter } from '../src/Planter.js';

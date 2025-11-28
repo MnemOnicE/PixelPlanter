@@ -1,8 +1,16 @@
+/**
+ * @file UIManager.js
+ * @description Manages the user interface and interactions.
+ */
 import { driver } from "driver.js";
 import { Planter } from './Planter.js';
 import { HistoryManager } from './HistoryManager.js';
 import { Layer } from './Layer.js';
 
+/**
+ * Text content for UI tooltips.
+ * @type {object}
+ */
 const TOOLTIP_TEXTS = {
     'generator-select': 'The core algorithm used to create the pattern.',
     'seed-input': 'A number or string that determines the random pattern. The same seed will always produce the same image.',
@@ -12,23 +20,120 @@ const TOOLTIP_TEXTS = {
     'modifiers-container': 'Optional effects that alter the generated image.'
 };
 
+/**
+ * Manages the User Interface.
+ * Handles DOM events, updates the view, and communicates with the Planter instance.
+ */
 export class UIManager {
+    /**
+     * The core application engine.
+     * @type {Planter}
+     * @private
+     */
     #planterInstance;
+
+    /**
+     * Cache of DOM elements.
+     * @type {object}
+     * @private
+     */
     #controls = {};
+
+    /**
+     * Container for the canvas.
+     * @type {HTMLElement}
+     * @private
+     */
     #canvasContainer;
+
+    /**
+     * Container for modifier controls.
+     * @type {HTMLElement}
+     * @private
+     */
     #modifiersContainer;
+
+    /**
+     * Container for generator parameters.
+     * @type {HTMLElement}
+     * @private
+     */
     #generatorParamsContainer;
+
+    /**
+     * Container for modifier parameters.
+     * @type {HTMLElement}
+     * @private
+     */
     #modifierParamsContainer;
+
+    /**
+     * Panel displaying the layer list.
+     * @type {HTMLElement}
+     * @private
+     */
     #layerPanel;
+
+    /**
+     * The ID of the currently selected layer.
+     * @type {number|null}
+     * @private
+     */
     #activeLayerId = null;
+
+    /**
+     * Manager for undo/redo history.
+     * @type {HistoryManager}
+     * @private
+     */
     #historyManager;
+
+    /**
+     * Current symmetry mode for brushing.
+     * @type {string}
+     * @private
+     */
     #activeSymmetryMode = 'none';
+
+    /**
+     * State flag for mouse drag operations.
+     * @type {boolean}
+     * @private
+     */
     #isBrushing = false;
-    #clipboard = null; // For copy/pasting modifiers
+
+    /**
+     * Clipboard for copying modifier configurations.
+     * @type {object[]|null}
+     * @private
+     */
+    #clipboard = null;
+
+    /**
+     * Modal element for presets.
+     * @type {HTMLElement}
+     * @private
+     */
     #presetsModal;
+
+    /**
+     * Gallery container inside the presets modal.
+     * @type {HTMLElement}
+     * @private
+     */
     #presetGallery;
+
+    /**
+     * Button to close the presets modal.
+     * @type {HTMLElement}
+     * @private
+     */
     #closePresetsBtn;
 
+    /**
+     * Initializes the UI Manager.
+     * Sets up the Planter instance, binds DOM elements, and starts the tour.
+     */
     constructor() {
         this.#historyManager = new HistoryManager();
         this.#bindDOM();
@@ -49,6 +154,11 @@ export class UIManager {
         this.#startOnboardingTour();
     }
 
+    /**
+     * Starts the guided onboarding tour for new users using `driver.js`.
+     * Checks localStorage to prevent showing it repeatedly.
+     * @private
+     */
     #startOnboardingTour() {
         const hasBeenOnboarded = localStorage.getItem('pixelPlanterOnboarded');
         if (hasBeenOnboarded) {
@@ -70,6 +180,10 @@ export class UIManager {
         localStorage.setItem('pixelPlanterOnboarded', 'true');
     }
 
+    /**
+     * Binds DOM elements to class properties for easy access.
+     * @private
+     */
     #bindDOM() {
         this.#controls.generatorSelect = document.getElementById('generator-select');
         this.#controls.paletteSelect = document.getElementById('palette-select');
@@ -97,6 +211,10 @@ export class UIManager {
         this.#closePresetsBtn = this.#presetsModal.querySelector('.close-button');
     }
 
+    /**
+     * Populates initial UI options and adds tooltips.
+     * @private
+     */
     #initializeUI() {
         this.#populateGeneratorOptions();
         this.#populatePaletteOptions();
@@ -106,6 +224,11 @@ export class UIManager {
         this.#canvasContainer.appendChild(canvas);
     }
 
+    /**
+     * Attaches event listeners to DOM elements.
+     * Handles clicks, inputs, and canvas interactions.
+     * @private
+     */
     #attachEventListeners() {
         this.#controls.generateBtn.addEventListener('click', () => this.handleGenerateActiveLayer());
         this.#controls.randomizeBtn.addEventListener('click', () => this.#handleRandomizeAll());
@@ -122,7 +245,7 @@ export class UIManager {
             }
         });
 
-        // --- UPDATED: Delegated listeners for the layer list ---
+        // Delegated listeners for the layer list
         this.#controls.layerList.addEventListener('click', e => {
             const layerItem = e.target.closest('.layer-item');
             if (!layerItem) return;
@@ -201,6 +324,11 @@ export class UIManager {
         });
     }
 
+    /**
+     * Handles manual painting on the canvas.
+     * @param {MouseEvent} event - The mouse event.
+     * @private
+     */
     #handleBrushStroke(event) {
         if (!this.#activeLayerId) return;
 
@@ -235,7 +363,10 @@ export class UIManager {
         this.#saveState();
     }
 
-    // --- UPDATED: Renders the entire layer panel with new controls ---
+    /**
+     * Renders the layer panel list, including controls for each layer.
+     * @private
+     */
     #renderLayerPanel() {
         const layerStack = this.#planterInstance.getLayerStack();
         this.#controls.layerList.innerHTML = '';
@@ -295,7 +426,11 @@ export class UIManager {
         });
     }
 
-    // --- NEW: Methods for copy/pasting modifiers ---
+    /**
+     * Copies the modifier stack of a layer to the clipboard.
+     * @param {number} layerId - The ID of the source layer.
+     * @private
+     */
     #copyModifierStack(layerId) {
         const layer = this.#planterInstance.getLayerById(layerId);
         if (layer && layer.config.modifiers) {
@@ -304,6 +439,11 @@ export class UIManager {
         }
     }
 
+    /**
+     * Pastes the modifier stack from the clipboard to a layer.
+     * @param {number} layerId - The ID of the target layer.
+     * @private
+     */
     #pasteModifierStack(layerId) {
         if (this.#clipboard === null) {
             alert('Nothing to paste!');
@@ -317,6 +457,11 @@ export class UIManager {
         }
     }
 
+    /**
+     * Sets the active layer and updates the UI to reflect its configuration.
+     * @param {number} layerId - The ID of the layer to select.
+     * @private
+     */
     #setActiveLayer(layerId) {
         this.#activeLayerId = layerId;
         const layer = this.#planterInstance.getLayerById(layerId);
@@ -326,6 +471,10 @@ export class UIManager {
         this.#renderLayerPanel();
     }
 
+    /**
+     * Adds a new layer with default settings.
+     * @private
+     */
     #handleAddLayer() {
         const defaultConfig = {
             generator: 'noise',
@@ -340,6 +489,11 @@ export class UIManager {
         this.handleGenerateActiveLayer(); // This will generate and save
     }
 
+    /**
+     * Removes a layer and updates the active selection if needed.
+     * @param {number} layerId - The ID of the layer to remove.
+     * @private
+     */
     #handleRemoveLayer(layerId) {
         this.#planterInstance.removeLayer(layerId);
         if (this.#activeLayerId === layerId) {
@@ -352,6 +506,10 @@ export class UIManager {
         this.#saveState();
     }
 
+    /**
+     * Triggers generation for the active layer using current UI controls.
+     * Updates the layer's config and then the full image.
+     */
     handleGenerateActiveLayer() {
         if (!this.#activeLayerId) {
             // This can happen if the last layer is deleted.
@@ -368,6 +526,11 @@ export class UIManager {
         }
     }
 
+    /**
+     * Loads and displays the presets modal.
+     * Fetches presets from `src/presets.json` if not already loaded.
+     * @private
+     */
     async #handleShowPresets() {
         if (this.#presetGallery.children.length === 0) {
             try {
@@ -382,6 +545,11 @@ export class UIManager {
         this.#presetsModal.style.display = 'block';
     }
 
+    /**
+     * Populates the preset gallery with items.
+     * @param {object[]} presets - List of preset objects.
+     * @private
+     */
     #populatePresetGallery(presets) {
         this.#presetGallery.innerHTML = '';
         presets.forEach(preset => {
@@ -396,6 +564,10 @@ export class UIManager {
         });
     }
 
+    /**
+     * Randomizes all settings for the active layer.
+     * @private
+     */
     #handleRandomizeAll() {
         if (!this.#activeLayerId) {
             alert("Please add or select a layer to randomize.");
@@ -422,6 +594,11 @@ export class UIManager {
         this.handleGenerateActiveLayer();
     }
 
+    /**
+     * Gathers configuration data from the main control panel.
+     * @returns {object} The configuration object.
+     * @private
+     */
     #getConfigFromMainControls() {
         const config = {
             generator: this.#controls.generatorSelect.value,
@@ -450,6 +627,11 @@ export class UIManager {
         return config;
     }
 
+    /**
+     * Updates the main controls to match a layer's configuration.
+     * @param {Layer} layer - The layer to read from.
+     * @private
+     */
     #updateMainControlsFromLayer(layer) {
         const config = layer.config;
         this.#controls.generatorSelect.value = config.generator;
@@ -463,6 +645,10 @@ export class UIManager {
         this.#updateModifierParamsUI(config.modifiers);
     }
 
+    /**
+     * Adds tooltips to UI elements based on the TOOLTIP_TEXTS constant.
+     * @private
+     */
     #addTooltips() {
         for (const controlId in TOOLTIP_TEXTS) {
             const el = document.getElementById(controlId);
@@ -478,16 +664,28 @@ export class UIManager {
         }
     }
 
+    /**
+     * Populates the generator select dropdown.
+     * @private
+     */
     #populateGeneratorOptions() {
         const names = this.#planterInstance.getGeneratorNames();
         this.#controls.generatorSelect.innerHTML = names.map(name => `<option value="${name}">${name}</option>`).join('');
     }
 
+    /**
+     * Populates the palette select dropdown.
+     * @private
+     */
     #populatePaletteOptions() {
         const names = this.#planterInstance.getPaletteNames();
         this.#controls.paletteSelect.innerHTML = names.map(name => `<option value="${name}">${name}</option>`).join('');
     }
 
+    /**
+     * Populates the modifier checkbox list.
+     * @private
+     */
     #populateModifierOptions() {
         const names = this.#planterInstance.getModifierNames();
         this.#modifiersContainer.innerHTML = names.map(name => `
@@ -498,6 +696,12 @@ export class UIManager {
         `).join('');
     }
 
+    /**
+     * Dynamically builds UI controls for generator parameters.
+     * @param {string} generatorName - The name of the generator.
+     * @param {object} config - Current configuration values.
+     * @private
+     */
     #updateGeneratorParamsUI(generatorName, config) {
         const generatorClass = this.#planterInstance.getGenerator(generatorName);
         this.#generatorParamsContainer.innerHTML = '';
@@ -506,6 +710,11 @@ export class UIManager {
         }
     }
 
+    /**
+     * Dynamically builds UI controls for modifier parameters.
+     * @param {object[]} modifiersConfig - List of active modifier configurations.
+     * @private
+     */
     #updateModifierParamsUI(modifiersConfig) {
         this.#modifierParamsContainer.innerHTML = '';
         if (!modifiersConfig) return;
@@ -523,6 +732,14 @@ export class UIManager {
         });
     }
 
+    /**
+     * Helper to create input elements based on a params definition object.
+     * @param {HTMLElement} container - The container to append controls to.
+     * @param {object} paramsObject - The parameters definition.
+     * @param {string} ownerName - The name of the owning generator/modifier.
+     * @param {object} config - Current values.
+     * @private
+     */
     #buildControls(container, paramsObject, ownerName, config) {
         for (const key in paramsObject) {
             const paramConfig = paramsObject[key];
@@ -553,6 +770,10 @@ export class UIManager {
         }
     }
 
+    /**
+     * Exports the current layer stack to a JSON file.
+     * @private
+     */
     #handleExportJSON() {
         const layerStack = this.#planterInstance.getLayerStack();
         const simplifiedStack = layerStack.map(layer => ({
@@ -576,6 +797,10 @@ export class UIManager {
         URL.revokeObjectURL(url);
     }
 
+    /**
+     * Saves the current application state to the history manager.
+     * @private
+     */
     #saveState() {
         const layerStack = this.#planterInstance.getLayerStack();
         const state = layerStack.map(layer => {
@@ -593,6 +818,11 @@ export class UIManager {
         this.#historyManager.addState({ layers: state, activeLayerId: this.#activeLayerId });
     }
 
+    /**
+     * Restores the application state from a history snapshot.
+     * @param {object} state - The state object to restore.
+     * @private
+     */
     #restoreState(state) {
         if (!state) return;
         const newLayerStack = state.layers.map(simpleLayer => {
@@ -613,16 +843,28 @@ export class UIManager {
         this.#planterInstance.generate();
     }
 
+    /**
+     * Handles the Undo action.
+     * @private
+     */
     #handleUndo() {
         const prevState = this.#historyManager.undo();
         if (prevState) this.#restoreState(prevState);
     }
 
+    /**
+     * Handles the Redo action.
+     * @private
+     */
     #handleRedo() {
         const nextState = this.#historyManager.redo();
         if (nextState) this.#restoreState(nextState);
     }
 
+    /**
+     * Generates a shareable URL for the current artwork.
+     * @private
+     */
     #handleShare() {
         const layerStack = this.#planterInstance.getLayerStack();
         const simplifiedStack = layerStack.map(layer => ({
@@ -639,6 +881,11 @@ export class UIManager {
         navigator.clipboard.writeText(shareableURL).then(() => alert("Link copied to clipboard!")).catch(err => console.error("Failed to copy link: ", err));
     }
 
+    /**
+     * Checks the URL for configuration parameters and loads them.
+     * @returns {boolean} True if config was loaded, false otherwise.
+     * @private
+     */
     #loadConfigFromURL() {
         const urlParams = new URLSearchParams(window.location.search);
         const configString = urlParams.get('config');
@@ -647,6 +894,12 @@ export class UIManager {
         return this.#loadConfig(configString);
     }
 
+    /**
+     * Loads a configuration string (base64 encoded JSON).
+     * @param {string} configString - The encoded configuration.
+     * @returns {boolean} True if successful.
+     * @private
+     */
     #loadConfig(configString) {
         try {
             const jsonString = decodeURIComponent(atob(configString));

@@ -1,9 +1,17 @@
-// == DensityMaskModifier Pseudocode ==
+/**
+ * @file DensityMaskModifier.js
+ * @description Modifies the density of the grid by randomly removing pixels.
+ */
 
-// CLASS DensityMaskModifier
-// Removes pixels based on a probability mask or a "density" value.
+/**
+ * Reduces the density of the pattern by culling pixels.
+ * Supports asymmetric culling to create gradients (e.g., fading out to the left).
+ */
 export class DensityMaskModifier {
-    // --- NEW: PARAMETER DEFINITIONS ---
+    /**
+     * Parameter definitions for the UI.
+     * @type {object}
+     */
     static params = {
         density: {
             label: 'Density',
@@ -22,7 +30,8 @@ export class DensityMaskModifier {
     };
 
     /**
-     * Applies the modifier to the data grid.
+     * Applies the density modification to the data grid.
+     *
      * @param {number[][]} dataGrid - The incoming 2D array.
      * @param {object} config - An object for modifier-specific settings.
      * @param {number} [config.density=0.8] - The target density of the output.

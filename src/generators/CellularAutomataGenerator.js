@@ -1,4 +1,17 @@
+/**
+ * @file CellularAutomataGenerator.js
+ * @description Generates a grid using Cellular Automata rules.
+ */
+
+/**
+ * Generates a pattern using Cellular Automata (Game of Life style rules).
+ * Iteratively updates the grid based on neighbor counts to create organic, cave-like structures.
+ */
 export class CellularAutomataGenerator {
+    /**
+     * Parameter definitions for the UI.
+     * @type {object}
+     */
     static params = {
         iterations: {
             label: 'Iterations',
@@ -34,6 +47,18 @@ export class CellularAutomataGenerator {
         }
     }
 
+    /**
+     * Runs the cellular automata simulation.
+     *
+     * @param {object} config - The configuration object.
+     * @param {number} config.size - The grid size.
+     * @param {number} [config.iterations=5] - Number of simulation steps to run.
+     * @param {number} [config.birthLimit=4] - Number of neighbors required for a dead cell to become alive.
+     * @param {number} [config.deathLimit=3] - Number of neighbors required for a live cell to die (less than this dies).
+     * @param {number} [config.initialChance=0.45] - Probability of a cell starting as alive (0.0 - 1.0).
+     * @param {SeededRandom} prng - The pseudo-random number generator.
+     * @returns {number[][]} The generated grid.
+     */
     run({ size, iterations = 5, birthLimit = 4, deathLimit = 3, initialChance = 0.45 }, prng) {
         let grid = Array.from({ length: size }, () => Array(size).fill(0));
 
@@ -52,6 +77,16 @@ export class CellularAutomataGenerator {
         return grid;
     }
 
+    /**
+     * Performs a single step of the simulation.
+     *
+     * @param {number[][]} oldGrid - The grid state before this step.
+     * @param {number} size - The grid size.
+     * @param {number} birthLimit - Threshold for cell birth.
+     * @param {number} deathLimit - Threshold for cell death.
+     * @returns {number[][]} The new grid state.
+     * @private
+     */
     #doSimulationStep(oldGrid, size, birthLimit, deathLimit) {
         const newGrid = Array.from({ length: size }, () => Array(size).fill(0));
         for (let y = 0; y < size; y++) {
@@ -75,6 +110,16 @@ export class CellularAutomataGenerator {
         return newGrid;
     }
 
+    /**
+     * Counts the number of active neighbors for a given cell.
+     *
+     * @param {number[][]} grid - The current grid.
+     * @param {number} x - The x coordinate of the cell.
+     * @param {number} y - The y coordinate of the cell.
+     * @param {number} size - The grid size.
+     * @returns {number} The count of active neighbors.
+     * @private
+     */
     #countNeighbors(grid, x, y, size) {
         let count = 0;
         for (let i = -1; i < 2; i++) {
@@ -84,7 +129,7 @@ export class CellularAutomataGenerator {
                 if (i === 0 && j === 0) {
                     continue;
                 } else if (neighbourX < 0 || neighbourY < 0 || neighbourX >= size || neighbourY >= size) {
-                    count = count + 1;
+                    count = count + 1; // Treat out-of-bounds as alive (walls)
                 } else if (grid[neighbourY][neighbourX] === 1) {
                     count = count + 1;
                 }

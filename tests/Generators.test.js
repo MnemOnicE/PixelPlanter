@@ -1,3 +1,7 @@
+/**
+ * @file Generators.test.js
+ * @description Unit tests for generator classes (CellularAutomataGenerator, NoiseGenerator).
+ */
 import { jest } from '@jest/globals';
 import { CellularAutomataGenerator } from '../src/generators/CellularAutomataGenerator.js';
 import { NoiseGenerator } from '../src/generators/NoiseGenerator.js';

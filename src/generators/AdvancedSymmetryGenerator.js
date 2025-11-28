@@ -1,9 +1,21 @@
-// == AdvancedSymmetryGenerator Pseudocode ==
+/**
+ * @file AdvancedSymmetryGenerator.js
+ * @description Generates patterns with multiple symmetry modes (vertical, horizontal, quad, radial).
+ */
 
-// CLASS AdvancedSymmetryGenerator
+/**
+ * Generates patterns with complex symmetry modes including vertical, horizontal, quad, and radial.
+ */
 export class AdvancedSymmetryGenerator {
-    // METHOD run
-    // PARAMETERS: config, prng
+    /**
+     * Runs the generation algorithm.
+     *
+     * @param {object} config - The configuration object.
+     * @param {number} config.size - The width and height of the grid.
+     * @param {string} [config.symmetryMode='vertical'] - The type of symmetry to apply ('vertical', 'horizontal', 'quad', 'radial').
+     * @param {SeededRandom} prng - The pseudo-random number generator instance.
+     * @returns {number[][]} A 2D array of numbers (0 for off, 1 for on).
+     */
     run({ size, symmetryMode = 'vertical' }, prng) {
         const dataGrid = Array.from({ length: size }, () => Array(size).fill(0));
         const midX = Math.ceil(size / 2);

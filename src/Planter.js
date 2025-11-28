@@ -1,3 +1,7 @@
+/**
+ * @file Planter.js
+ * @description The core engine for the Pixel Planter application.
+ */
 import { Layer } from './Layer.js';
 import { SeededRandom } from './utils/PRNG.js';
 import { SymmetryGenerator } from './generators/SymmetryGenerator.js';
@@ -13,17 +17,75 @@ import { DensityMaskModifier } from './modifiers/DensityMaskModifier.js';
 import { PathfinderModifier } from './modifiers/PathfinderModifier.js';
 import { ParticleModifier } from './modifiers/ParticleModifier.js';
 
+/**
+ * The main engine class.
+ * Orchestrates generators, modifiers, palettes, and layer management.
+ * Responsible for rendering the final composite image.
+ */
 export class Planter {
+    /**
+     * The final canvas element where the result is drawn.
+     * @type {HTMLCanvasElement}
+     * @private
+     */
     #finalCanvas;
+
+    /**
+     * The 2D rendering context for the final canvas.
+     * @type {CanvasRenderingContext2D}
+     * @private
+     */
     #finalContext;
+
+    /**
+     * The stack of layers that make up the image.
+     * @type {Layer[]}
+     * @private
+     */
     #layerStack = [];
+
+    /**
+     * Global configuration settings (e.g., size, pixelSize).
+     * @type {object}
+     * @private
+     */
     #globalConfig;
 
+    /**
+     * Registry for generator instances.
+     * @type {Map<string, object>}
+     * @private
+     */
     #generatorRegistry = new Map();
+
+    /**
+     * Registry for palette instances.
+     * @type {Map<string, object>}
+     * @private
+     */
     #paletteRegistry = new Map();
+
+    /**
+     * Registry for modifier instances.
+     * @type {Map<string, object>}
+     * @private
+     */
     #modifierRegistry = new Map();
+
+    /**
+     * Registry for pattern instances.
+     * @type {Map<string, object>}
+     * @private
+     */
     #patternRegistry = new Map();
 
+    /**
+     * Creates an instance of Planter.
+     *
+     * @param {object} globalConfig - The initial global configuration.
+     * @param {number} [globalConfig.size=32] - The grid size (width and height).
+     * @param {number} [globalConfig.pixelSize=20] - The visual size of each pixel.
+     */
     constructor(globalConfig = {}) {
         this.#globalConfig = {
             size: 32,
@@ -35,6 +97,10 @@ export class Planter {
         this.#loadDefaultModules();
     }
 
+    /**
+     * Initializes the canvas element and context.
+     * @private
+     */
     #initializeCanvas() {
         const canvasSize = this.#globalConfig.size * this.#globalConfig.pixelSize;
         this.#finalCanvas = document.createElement('canvas');
@@ -44,6 +110,10 @@ export class Planter {
         this.#finalContext.imageSmoothingEnabled = false;
     }
 
+    /**
+     * Registers and loads the default set of generators, palettes, and modifiers.
+     * @private
+     */
     #loadDefaultModules() {
         this.registerGenerator('simple-symmetry', new SymmetryGenerator());
         this.registerGenerator('advanced-symmetry', new AdvancedSymmetryGenerator());
@@ -62,6 +132,12 @@ export class Planter {
         this.registerModifier('particle-deposition', new ParticleModifier());
     }
 
+    /**
+     * Generates and renders the entire image.
+     * Clears the canvas, regenerates all layer data, and then composites them.
+     *
+     * @returns {Planter} The instance for chaining.
+     */
     generate() {
         this.#finalContext.clearRect(0, 0, this.#finalCanvas.width, this.#finalCanvas.height);
         this.#generateAllLayers();
@@ -69,6 +145,11 @@ export class Planter {
         return this;
     }
 
+    /**
+     * Generates data grids for all layers.
+     * Handles dependencies between layers (like masking and reading below).
+     * @private
+     */
     #generateAllLayers() {
         // First pass: Generate all data grids without masking
         for (const layer of this.#layerStack) {
@@ -88,13 +169,27 @@ export class Planter {
         }
     }
 
-    // This is now just a wrapper
+    /**
+     * Helper to generate a single layer with context.
+     * (Currently unused directly but kept for completeness).
+     * @param {Layer} layer - The layer to generate.
+     * @param {Layer[]} allLayers - The full stack of layers.
+     * @private
+     */
     #generateLayerWithContext(layer, allLayers) {
         const currentIndex = allLayers.findIndex(l => l.id === layer.id);
         const readBelowGrid = this.#createCompositeGridForLayers(allLayers.slice(0, currentIndex));
         layer.generate(this, readBelowGrid);
     }
 
+    /**
+     * Applies a mask to a target grid.
+     * Zeros out pixels in the target where the mask is zero.
+     *
+     * @param {number[][]} targetGrid - The grid to modify.
+     * @param {number[][]} maskGrid - The grid to use as a mask.
+     * @private
+     */
     #applyMask(targetGrid, maskGrid) {
         const size = this.#globalConfig.size;
         if (targetGrid.length !== size || maskGrid.length !== size) return;
@@ -109,6 +204,14 @@ export class Planter {
         }
     }
 
+    /**
+     * Creates a composite grid from a list of layers.
+     * Useful for checking "solid" ground below a layer.
+     *
+     * @param {Layer[]} layers - The list of layers to composite.
+     * @returns {number[][]} A combined 2D grid where >0 means occupied.
+     * @private
+     */
     #createCompositeGridForLayers(layers) {
         const { size } = this.#globalConfig;
         const compositeGrid = Array.from({ length: size }, () => Array(size).fill(0));
@@ -127,6 +230,11 @@ export class Planter {
         return compositeGrid;
     }
 
+    /**
+     * Renders all layers to the final canvas.
+     * Handles coloring, opacity, and blending modes.
+     * @private
+     */
     #renderAllLayers() {
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = this.#finalCanvas.width;
@@ -156,6 +264,14 @@ export class Planter {
         this.#finalContext.globalCompositeOperation = 'source-over';
     }
 
+    /**
+     * Draws a color grid to a canvas context.
+     *
+     * @param {CanvasRenderingContext2D} context - The target context.
+     * @param {string[][]} colorGrid - The 2D array of color strings.
+     * @param {object} config - Configuration containing size and pixelSize.
+     * @private
+     */
     #drawColorGridToContext(context, colorGrid, { size, pixelSize }) {
         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
         for (let y = 0; y < size; y++) {
@@ -169,6 +285,13 @@ export class Planter {
     }
 
     // --- Layer Management ---
+
+    /**
+     * Adds a new layer to the stack.
+     *
+     * @param {object} config - The configuration for the new layer.
+     * @returns {Layer} The created layer instance.
+     */
     addLayer(config) {
         const fullConfig = { ...this.#globalConfig, ...config };
         const newLayer = new Layer(fullConfig);
@@ -176,10 +299,19 @@ export class Planter {
         return newLayer;
     }
 
+    /**
+     * Removes a layer by its ID.
+     * @param {number} layerId - The ID of the layer to remove.
+     */
     removeLayer(layerId) {
         this.#layerStack = this.#layerStack.filter(layer => layer.id !== layerId);
     }
 
+    /**
+     * Moves a layer up or down in the stack.
+     * @param {number} layerId - The ID of the layer to move.
+     * @param {string} direction - 'up' or 'down'.
+     */
     moveLayer(layerId, direction) {
         const index = this.#layerStack.findIndex(l => l.id === layerId);
         if (index === -1) return;
@@ -191,19 +323,38 @@ export class Planter {
         }
     }
 
+    /**
+     * Retrieves a layer by its ID.
+     * @param {number|string} id - The layer ID.
+     * @returns {Layer|undefined} The layer instance or undefined.
+     */
     getLayerById(id) {
         // Make sure to handle number and string conversions
         return this.#layerStack.find(l => l.id == id);
     }
 
+    /**
+     * Returns the full stack of layers.
+     * @returns {Layer[]} The array of layers.
+     */
     getLayerStack() {
         return this.#layerStack;
     }
 
+    /**
+     * Replaces the layer stack with a new one.
+     * @param {Layer[]} layerStack - The new layer stack.
+     */
     setLayerStack(layerStack) {
         this.#layerStack = layerStack;
     }
 
+    /**
+     * Directly modifies a layer's data grid (e.g., for manual drawing).
+     * @param {number} layerId - The ID of the layer.
+     * @param {object[]} points - Array of points {x, y}.
+     * @param {number} [value=1] - The value to write to the grid.
+     */
     drawOnLayer(layerId, points, value = 1) {
         const layer = this.getLayerById(layerId);
         if (!layer) return;
@@ -219,26 +370,122 @@ export class Planter {
         }
     }
 
+    /**
+     * Gets the data grid for a specific layer.
+     * @param {number} layerId - The layer ID.
+     * @returns {number[][]|null} The data grid or null.
+     */
     getDataGridForLayer(layerId) {
         const layer = this.getLayerById(layerId);
         return layer ? layer.dataGrid : null;
     }
 
     // --- Registries and Getters ---
+
+    /**
+     * Gets a PRNG instance initialized with a seed.
+     * @param {string|number} seed - The seed.
+     * @returns {SeededRandom} The PRNG instance.
+     */
     getPRNG(seed) { return new SeededRandom(seed); }
+
+    /**
+     * Gets the final canvas element.
+     * @returns {HTMLCanvasElement} The canvas.
+     */
     getCanvas() { return this.#finalCanvas; }
+
+    /**
+     * Gets a generator instance by name.
+     * @param {string} name - The generator name.
+     * @returns {object|undefined} The generator instance.
+     */
     getGeneratorInstance(name) { return this.#generatorRegistry.get(name); }
+
+    /**
+     * Gets a modifier instance by name.
+     * @param {string} name - The modifier name.
+     * @returns {object|undefined} The modifier instance.
+     */
     getModifierInstance(name) { return this.#modifierRegistry.get(name); }
+
+    /**
+     * Gets a palette instance by name.
+     * @param {string} name - The palette name.
+     * @returns {object|undefined} The palette instance.
+     */
     getPaletteInstance(name) { return this.#paletteRegistry.get(name); }
+
+    /**
+     * Gets the constructor/class of a generator by name.
+     * @param {string} name - The generator name.
+     * @returns {class|null} The generator class.
+     */
     getGenerator(name) { const i = this.getGeneratorInstance(name); return i ? i.constructor : null; }
+
+    /**
+     * Gets the constructor/class of a modifier by name.
+     * @param {string} name - The modifier name.
+     * @returns {class|null} The modifier class.
+     */
     getModifier(name) { const i = this.getModifierInstance(name); return i ? i.constructor : null; }
+
+    /**
+     * Gets the list of registered generator names.
+     * @returns {string[]} List of names.
+     */
     getGeneratorNames() { return Array.from(this.#generatorRegistry.keys()); }
+
+    /**
+     * Gets the list of registered palette names.
+     * @returns {string[]} List of names.
+     */
     getPaletteNames() { return Array.from(this.#paletteRegistry.keys()); }
+
+    /**
+     * Gets the list of registered modifier names.
+     * @returns {string[]} List of names.
+     */
     getModifierNames() { return Array.from(this.#modifierRegistry.keys()); }
+
+    /**
+     * Gets a registered pattern by name.
+     * @param {string} name - The pattern name.
+     * @returns {object|null} The pattern object or null.
+     */
     getPattern(name) { return this.#patternRegistry.get(name) || null; }
+
+    /**
+     * Gets the list of registered pattern names.
+     * @returns {string[]} List of names.
+     */
     getPatternNames() { return Array.from(this.#patternRegistry.keys()); }
+
+    /**
+     * Registers a generator.
+     * @param {string} name - The name.
+     * @param {object} instance - The generator instance.
+     */
     registerGenerator(name, instance) { this.#generatorRegistry.set(name, instance); }
+
+    /**
+     * Registers a palette.
+     * @param {string} name - The name.
+     * @param {object} instance - The palette instance.
+     */
     registerPalette(name, instance) { this.#paletteRegistry.set(name, instance); }
+
+    /**
+     * Registers a modifier.
+     * @param {string} name - The name.
+     * @param {object} instance - The modifier instance.
+     */
     registerModifier(name, instance) { this.#modifierRegistry.set(name, instance); }
+
+    /**
+     * Registers a pattern.
+     * @param {string} name - The name.
+     * @param {object} instance - The pattern instance.
+     */
     registerPattern(name, instance) { this.#patternRegistry.set(name, instance); }
 }
