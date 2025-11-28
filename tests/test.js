@@ -1,6 +1,5 @@
 import { jest } from '@jest/globals';
 import 'jest-environment-jsdom';
-import { UIManager } from '../src/UIManager.js';
 
 jest.unstable_mockModule('../src/Planter.js', () => ({
     Planter: jest.fn().mockImplementation(() => ({
@@ -8,11 +7,17 @@ jest.unstable_mockModule('../src/Planter.js', () => ({
         getGeneratorNames: () => ['noise'],
         getPaletteNames: () => ['monochrome'],
         getModifierNames: () => ['outline'],
-        addLayer: jest.fn().mockReturnValue({ id: 1 }),
-        getLayerById: jest.fn(),
+        addLayer: jest.fn().mockReturnValue({ id: 1, config: { modifiers: [] } }),
+        getLayerById: jest.fn().mockReturnValue({ id: 1, config: { modifiers: [] } }),
         generate: jest.fn(),
         setLayerStack: jest.fn(),
         getLayerStack: () => [],
+        getGenerator: jest.fn(),
+        getModifier: jest.fn(),
+        getPatternNames: jest.fn().mockReturnValue([]),
+        moveLayer: jest.fn(),
+        removeLayer: jest.fn(),
+        drawOnLayer: jest.fn(),
     })),
 }));
 
@@ -20,9 +25,12 @@ jest.unstable_mockModule('driver.js', () => ({
     driver: jest.fn().mockReturnValue({ drive: jest.fn() }),
 }));
 
+// Import dynamically after mocks
+const { UIManager } = await import('../src/UIManager.js');
+const { Planter } = await import('../src/Planter.js');
+
 describe('UIManager Preset Loading', () => {
     let uiManager;
-    let Planter;
 
     beforeEach(async () => {
         document.body.innerHTML = `
@@ -41,6 +49,8 @@ describe('UIManager Preset Loading', () => {
                 <button id="redo-btn"></button>
                 <button id="share-btn"></button>
                 <input type="checkbox" id="mode-toggle"/>
+                <button id="add-layer-btn"></button>
+                <button id="save-btn"></button>
             </div>
             <div id="presets-modal" style="display: none;">
                 <span class="close-button"></span>
@@ -50,14 +60,12 @@ describe('UIManager Preset Loading', () => {
             <div id="generator-params"></div>
             <div id="modifier-params"></div>
             <div id="layer-panel">
-                <button id="add-layer-btn"></button>
                 <div id="layer-list"></div>
             </div>
             <div id="canvas-container"></div>
         `;
 
         global.localStorage = { getItem: jest.fn(), setItem: jest.fn() };
-        Planter = (await import('../src/Planter.js')).Planter;
         uiManager = new UIManager();
     });
 
@@ -67,26 +75,40 @@ describe('UIManager Preset Loading', () => {
     });
 
     it('should load presets and update the layer stack when a preset is clicked', async () => {
+        const configObj = [{
+            config: {size: 32, pixelSize: 15, generator: "noise", palette: "monochrome", seed: "1234", modifiers: []},
+            name: "Test Layer",
+            isVisible: true,
+            opacity: 1,
+            blendMode: "source-over",
+            maskLayerId: null
+        }];
+        const configStr = btoa(encodeURIComponent(JSON.stringify(configObj)));
+        // Note: UIManager uses decodeURIComponent(atob(configStr)) so we must encodeURIComponent before btoa.
+
         global.fetch = jest.fn(() =>
             Promise.resolve({
                 json: () => Promise.resolve([
                     {
                         name: 'Test Preset',
                         preview: '',
-                        config: 'W3sib25maWciOnsic2l6ZSI6MzIsInBpeGVsU2l6ZSI6MTUsImdlbmVyYXRvciI6Im5vaXNlIiwicGFsZXR0ZSI6Im1vbm9jaHJvbWUiLCJzZWVkIjoiMTIzNCIsIm1vZGlmaWVcnMiOltdfSwibmFtZSI6IlRlc3QgTGF5ZXIiLCJpc1Zpc2libGUiOnRydWUsIm9wYWNpdHkiOjEsImJsZW5kTW9kZSI6InNvdXJjZS1vdmVyIiwibWFza0xheWVySWQiOm51bGx9XQ==',
+                        config: configStr,
                     },
                 ]),
             })
         );
 
         const showPresetsBtn = document.getElementById('show-presets-btn');
-        await uiManager['#handleShowPresets']();
+        showPresetsBtn.click();
+
+        await new Promise(process.nextTick);
+        await new Promise(process.nextTick);
 
         const presetItem = document.querySelector('.preset-item');
         expect(presetItem).not.toBeNull();
         presetItem.click();
 
-        const planterInstance = Planter.mock.instances[0];
+        const planterInstance = Planter.mock.results[0].value;
         expect(planterInstance.setLayerStack).toHaveBeenCalled();
         const callArg = planterInstance.setLayerStack.mock.calls[0][0];
         expect(callArg[0].name).toBe('Test Layer');

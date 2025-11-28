@@ -9,13 +9,19 @@ export class Layer {
     opacity = 1.0;
     blendMode = 'source-over';
     maskLayerId = null; // For Feature #3
+    name;
 
     // CONSTRUCTOR
     constructor(initialConfig) {
         this.id = Date.now() + Math.random(); // Add random to avoid collision
-        this.name = `Layer ${Math.floor(this.id)}`;
+        this.name = initialConfig.name || `Layer ${Math.floor(this.id)}`;
         this.config = initialConfig;
         this.dataGrid = [];
+
+        if (initialConfig.isVisible !== undefined) this.isVisible = initialConfig.isVisible;
+        if (initialConfig.opacity !== undefined) this.opacity = initialConfig.opacity;
+        if (initialConfig.blendMode !== undefined) this.blendMode = initialConfig.blendMode;
+        if (initialConfig.maskLayerId !== undefined) this.maskLayerId = initialConfig.maskLayerId;
     }
 
     // --- UPDATED generate() METHOD ---
