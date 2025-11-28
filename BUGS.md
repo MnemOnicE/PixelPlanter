@@ -6,6 +6,6 @@ This document lists known bugs that have been reported or discovered. For a more
 
 | ID  | Description                                                                 | Status       | Priority | Workaround / Notes                                           |
 |-----|-----------------------------------------------------------------------------|--------------|----------|--------------------------------------------------------------|
-| B001| The 'Cellular Automata' generator occasionally produces an empty canvas on sizes less than 8x8. | **Open** | Medium   | Best to use this generator on canvas sizes of 8x8 or greater. |
+| B001| The 'Cellular Automata' generator occasionally produces an empty canvas on sizes less than 8x8. | **Resolved** | Medium   | Fixed in PR #... |
 |     |                                                                             |              |          |                                                              |
 |     |                                                                             |              |          |                                                              |

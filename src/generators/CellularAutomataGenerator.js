@@ -60,18 +60,36 @@ export class CellularAutomataGenerator {
      * @returns {number[][]} The generated grid.
      */
     run({ size, iterations = 5, birthLimit = 4, deathLimit = 3, initialChance = 0.45 }, prng) {
-        let grid = Array.from({ length: size }, () => Array(size).fill(0));
+        const gridSize = Math.floor(size);
+        let grid = Array.from({ length: gridSize }, () => Array(gridSize).fill(0));
 
         // Initialize randomly
-        for (let y = 0; y < size; y++) {
-            for (let x = 0; x < size; x++) {
+        for (let y = 0; y < gridSize; y++) {
+            for (let x = 0; x < gridSize; x++) {
                 grid[y][x] = prng.next() < initialChance ? 1 : 0;
             }
         }
 
         // Simulation steps
         for (let i = 0; i < iterations; i++) {
-            grid = this.#doSimulationStep(grid, size, birthLimit, deathLimit);
+            grid = this.#doSimulationStep(grid, gridSize, birthLimit, deathLimit);
+        }
+
+        // Safety check: Ensure the grid is not empty (bug fix for small sizes)
+        let hasLife = false;
+        for (let y = 0; y < gridSize; y++) {
+            for (let x = 0; x < gridSize; x++) {
+                if (grid[y][x] === 1) {
+                    hasLife = true;
+                    break;
+                }
+            }
+            if (hasLife) break;
+        }
+
+        if (!hasLife && gridSize > 0) {
+            const mid = Math.floor(gridSize / 2);
+            grid[mid][mid] = 1;
         }
 
         return grid;
