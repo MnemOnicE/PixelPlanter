@@ -32,21 +32,6 @@ export class NoiseGenerator {
     }
 
     /**
-     * The noise function from simplex-noise.
-     * @type {function}
-     * @private
-     */
-    #noise2D;
-
-    /**
-     * Creates an instance of NoiseGenerator.
-     * Initializes the Simplex Noise generator.
-     */
-    constructor() {
-        this.#noise2D = createNoise2D();
-    }
-
-    /**
      * Runs the noise generation algorithm.
      *
      * @param {object} config - The configuration object.
@@ -59,6 +44,9 @@ export class NoiseGenerator {
     run({ size, noiseScale = 20, noiseThreshold = 0.5 }, prng) {
         // Create an empty grid to store our data.
         const dataGrid = Array.from({ length: size }, () => Array(size).fill(0));
+
+        // Initialize noise with the seeded PRNG to ensure determinism.
+        const noise2D = createNoise2D(() => prng.next());
 
         // The PRNG passed from Planter can be used to add a random offset to the noise.
         // This ensures that different seeds produce different noise patterns.
@@ -73,7 +61,7 @@ export class NoiseGenerator {
                 const sampleY = (y / size) * noiseScale + yOffset;
 
                 // Get the noise value from the library. This is between -1 and 1.
-                const noiseValue = this.#noise2D(sampleX, sampleY);
+                const noiseValue = noise2D(sampleX, sampleY);
 
                 // Normalize the value to be between 0 and 1.
                 const normalizedValue = (noiseValue + 1) / 2;
