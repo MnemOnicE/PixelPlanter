@@ -96,6 +96,20 @@ export class UIManager {
     #activeSymmetryMode = 'none';
 
     /**
+     * Current drawing tool.
+     * @type {string}
+     * @private
+     */
+    #activeTool = 'brush';
+
+    /**
+     * Current brush size.
+     * @type {number}
+     * @private
+     */
+    #activeBrushSize = 1;
+
+    /**
      * State flag for mouse drag operations.
      * @type {boolean}
      * @private
@@ -227,6 +241,9 @@ export class UIManager {
         this.#factoryModal = document.getElementById('factory-modal');
         this.#closeFactoryBtn = this.#factoryModal.querySelector('.close-button');
         this.#controls.factoryGenerateBtn = document.getElementById('factory-generate-btn');
+        this.#controls.toolRadios = document.querySelectorAll('input[name="tool"]');
+        this.#controls.brushSize = document.getElementById('brush-size');
+        this.#controls.brushSizeVal = document.getElementById('brush-size-val');
     }
 
     /**
@@ -319,7 +336,23 @@ export class UIManager {
         });
 
         this.#controls.symmetrySelect.addEventListener('change', e => this.#activeSymmetryMode = e.target.value);
-        this.#canvasContainer.addEventListener('mousedown', e => { this.#isBrushing = true; this.#handleBrushStroke(e); });
+
+        this.#controls.toolRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => this.#activeTool = e.target.value);
+        });
+        this.#controls.brushSize.addEventListener('input', (e) => {
+             this.#activeBrushSize = parseInt(e.target.value);
+             this.#controls.brushSizeVal.textContent = this.#activeBrushSize;
+        });
+
+        this.#canvasContainer.addEventListener('mousedown', e => {
+            if (this.#activeTool === 'fill') {
+                this.#handleFloodFill(e);
+            } else {
+                this.#isBrushing = true;
+                this.#handleBrushStroke(e);
+            }
+        });
         this.#canvasContainer.addEventListener('mousemove', e => { if (this.#isBrushing) this.#handleBrushStroke(e); });
         this.#canvasContainer.addEventListener('mouseup', () => this.#isBrushing = false);
         this.#canvasContainer.addEventListener('mouseleave', () => this.#isBrushing = false);
@@ -370,22 +403,67 @@ export class UIManager {
         const layer = this.#planterInstance.getLayerById(this.#activeLayerId);
         const { size, pixelSize } = layer.config;
 
+        const centerX = Math.floor(canvasX / pixelSize);
+        const centerY = Math.floor(canvasY / pixelSize);
+
+        const points = [];
+        const offset = Math.floor(this.#activeBrushSize / 2);
+
+        for (let yOff = 0; yOff < this.#activeBrushSize; yOff++) {
+            for (let xOff = 0; xOff < this.#activeBrushSize; xOff++) {
+                points.push({
+                    x: centerX - offset + xOff,
+                    y: centerY - offset + yOff
+                });
+            }
+        }
+
+        const value = this.#activeTool === 'eraser' ? 0 : 1;
+        const finalPoints = [];
+
+        points.forEach(p => {
+             finalPoints.push(p);
+             if (this.#activeSymmetryMode === 'vertical' || this.#activeSymmetryMode === 'quad') {
+                finalPoints.push({ x: size - 1 - p.x, y: p.y });
+             }
+             if (this.#activeSymmetryMode === 'horizontal' || this.#activeSymmetryMode === 'quad') {
+                finalPoints.push({ x: p.x, y: size - 1 - p.y });
+             }
+             if (this.#activeSymmetryMode === 'quad') {
+                finalPoints.push({ x: size - 1 - p.x, y: size - 1 - p.y });
+             }
+        });
+
+        this.#planterInstance.drawOnLayer(this.#activeLayerId, finalPoints, value);
+        this.#planterInstance.generate();
+        this.#saveState();
+    }
+
+    /**
+     * Handles flood fill on the canvas.
+     * @param {MouseEvent} event - The mouse event.
+     * @private
+     */
+    #handleFloodFill(event) {
+        if (!this.#activeLayerId) return;
+
+        const canvas = this.#planterInstance.getCanvas();
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        const canvasX = (event.clientX - rect.left) * scaleX;
+        const canvasY = (event.clientY - rect.top) * scaleY;
+
+        const layer = this.#planterInstance.getLayerById(this.#activeLayerId);
+        const { size, pixelSize } = layer.config;
+
         const gridX = Math.floor(canvasX / pixelSize);
         const gridY = Math.floor(canvasY / pixelSize);
 
-        const pointsToDraw = [{ x: gridX, y: gridY }];
+        const value = 1;
 
-        if (this.#activeSymmetryMode === 'vertical' || this.#activeSymmetryMode === 'quad') {
-            pointsToDraw.push({ x: size - 1 - gridX, y: gridY });
-        }
-        if (this.#activeSymmetryMode === 'horizontal' || this.#activeSymmetryMode === 'quad') {
-            pointsToDraw.push({ x: gridX, y: size - 1 - gridY });
-        }
-        if (this.#activeSymmetryMode === 'quad') {
-            pointsToDraw.push({ x: size - 1 - gridX, y: size - 1 - gridY });
-        }
-
-        this.#planterInstance.drawOnLayer(this.#activeLayerId, pointsToDraw, 1);
+        this.#planterInstance.floodFillLayer(this.#activeLayerId, gridX, gridY, value);
         this.#planterInstance.generate();
         this.#saveState();
     }

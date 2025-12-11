@@ -58,6 +58,11 @@ describe('UIManager Preset Loading', () => {
                 <input type="checkbox" id="mode-toggle"/>
                 <button id="add-layer-btn"></button>
                 <button id="save-btn"></button>
+                <input type="radio" name="tool" value="brush" />
+                <input type="radio" name="tool" value="eraser" />
+                <input type="radio" name="tool" value="fill" />
+                <input id="brush-size" value="1"/>
+                <span id="brush-size-val"></span>
             </div>
             <div id="presets-modal" style="display: none;">
                 <span class="close-button"></span>
