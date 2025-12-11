@@ -41,7 +41,7 @@ export class RecursiveGrowthGenerator {
      * @param {SeededRandom} prng - The pseudo-random number generator.
      * @returns {number[][]} The generated grid.
      */
-    run({ size, startPoints = 1, maxDepth = 5 }, prng) {
+    run({ size, startPoints = 1, maxDepth = 5 }, prng, inputMask = null) {
         const dataGrid = Array.from({ length: size }, () => Array(size).fill(0));
 
         // --- Define the recursive function ---
@@ -74,6 +74,11 @@ export class RecursiveGrowthGenerator {
                         neighbor.ny >= 0 && neighbor.ny < size &&
                         dataGrid[neighbor.ny][neighbor.nx] === 0
                     ) {
+                        // Check mask constraint: if mask exists and pixel is 0, do not grow
+                        if (inputMask && inputMask[neighbor.ny][neighbor.nx] === 0) {
+                            continue;
+                        }
+
                         dataGrid[neighbor.ny][neighbor.nx] = 1;
                         // RECURSIVE CALL
                         grow(neighbor.nx, neighbor.ny, depth + 1);
@@ -86,6 +91,12 @@ export class RecursiveGrowthGenerator {
         for (let i = 0; i < startPoints; i++) {
             const startX = Math.floor(prng.next() * size);
             const startY = Math.floor(prng.next() * size);
+
+            // Check mask constraint for seed point
+            if (inputMask && inputMask[startY][startX] === 0) {
+                continue;
+            }
+
             if (dataGrid[startY][startX] === 0) {
                 dataGrid[startY][startX] = 1;
                 // --- Start the recursion ---

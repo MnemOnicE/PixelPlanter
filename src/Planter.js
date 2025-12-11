@@ -227,13 +227,26 @@ export class Planter {
      * @private
      */
     #generateAllLayers() {
-        // First pass: Generate all data grids without masking
+        // First pass: Generate all data grids
         for (const layer of this.#layerStack) {
             const currentIndex = this.#layerStack.findIndex(l => l.id === layer.id);
             const readBelowGrid = this.#createCompositeGridForLayers(this.#layerStack.slice(0, currentIndex));
-            layer.generate(this, readBelowGrid);
+
+            let inputMask = null;
+            if (layer.maskLayerId) {
+                const maskLayer = this.getLayerById(layer.maskLayerId);
+                // STRICT CONSTRAINT: Mask layer must be BELOW the current layer (lower index)
+                const maskIndex = this.#layerStack.findIndex(l => l.id === layer.maskLayerId);
+                if (maskLayer && maskIndex < currentIndex && maskLayer.dataGrid && maskLayer.dataGrid.length > 0) {
+                    inputMask = maskLayer.dataGrid;
+                }
+            }
+
+            layer.generate(this, readBelowGrid, inputMask);
         }
-        // Second pass: Apply masks
+        // Second pass: Apply masks (Post-process clip)
+        // We keep this for generators that don't support smart masking yet,
+        // and to ensure hard edges even if the generator was "smart".
         for (const layer of this.#layerStack) {
             if (layer.maskLayerId) {
                 const maskLayer = this.getLayerById(layer.maskLayerId);
