@@ -227,13 +227,26 @@ export class Planter {
      * @private
      */
     #generateAllLayers() {
-        // First pass: Generate all data grids without masking
+        // First pass: Generate all data grids
         for (const layer of this.#layerStack) {
             const currentIndex = this.#layerStack.findIndex(l => l.id === layer.id);
             const readBelowGrid = this.#createCompositeGridForLayers(this.#layerStack.slice(0, currentIndex));
-            layer.generate(this, readBelowGrid);
+
+            let inputMask = null;
+            if (layer.maskLayerId) {
+                const maskLayer = this.getLayerById(layer.maskLayerId);
+                // STRICT CONSTRAINT: Mask layer must be BELOW the current layer (lower index)
+                const maskIndex = this.#layerStack.findIndex(l => l.id === layer.maskLayerId);
+                if (maskLayer && maskIndex < currentIndex && maskLayer.dataGrid && maskLayer.dataGrid.length > 0) {
+                    inputMask = maskLayer.dataGrid;
+                }
+            }
+
+            layer.generate(this, readBelowGrid, inputMask);
         }
-        // Second pass: Apply masks
+        // Second pass: Apply masks (Post-process clip)
+        // We keep this for generators that don't support smart masking yet,
+        // and to ensure hard edges even if the generator was "smart".
         for (const layer of this.#layerStack) {
             if (layer.maskLayerId) {
                 const maskLayer = this.getLayerById(layer.maskLayerId);
@@ -443,6 +456,47 @@ export class Planter {
                 }
                 layer.dataGrid[point.y][point.x] = value;
             }
+        }
+    }
+
+    /**
+     * Performs a flood fill on a specific layer.
+     * @param {number} layerId - The ID of the layer.
+     * @param {number} startX - The starting X coordinate.
+     * @param {number} startY - The starting Y coordinate.
+     * @param {number} newValue - The value to fill with.
+     */
+    floodFillLayer(layerId, startX, startY, newValue) {
+        const layer = this.getLayerById(layerId);
+        if (!layer) return;
+
+        const size = this.#globalConfig.size;
+        if (startX < 0 || startX >= size || startY < 0 || startY >= size) return;
+
+        // Initialize grid if empty
+        if (!layer.dataGrid || layer.dataGrid.length !== size) {
+            layer.dataGrid = Array.from({ length: size }, () => Array(size).fill(0));
+        }
+
+        const grid = layer.dataGrid;
+        const targetValue = grid[startY][startX];
+
+        if (targetValue === newValue) return;
+
+        const queue = [{ x: startX, y: startY }];
+
+        while (queue.length > 0) {
+            const { x, y } = queue.shift();
+
+            if (x < 0 || x >= size || y < 0 || y >= size) continue;
+            if (grid[y][x] !== targetValue) continue;
+
+            grid[y][x] = newValue;
+
+            queue.push({ x: x + 1, y: y });
+            queue.push({ x: x - 1, y: y });
+            queue.push({ x: x, y: y + 1 });
+            queue.push({ x: x, y: y - 1 });
         }
     }
 

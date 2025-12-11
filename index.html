@@ -315,8 +315,23 @@
         <button id="share-btn" class="hide-in-simple-mode">Share</button>
         <button id="edit-patterns-btn" class="hide-in-simple-mode">Edit Patterns</button>
         <hr class="hide-in-simple-mode">
-        <button id="stamp-tool-btn" class="hide-in-simple-mode">Stamp Tool</button>
-        <button id="brush-tool-btn" class="hide-in-simple-mode">Brush Tool</button>
+        <div class="control-group hide-in-simple-mode">
+            <label>Tools</label>
+            <div style="display: flex; gap: 5px; flex-wrap: wrap; align-items: center;">
+                <input type="radio" id="tool-brush" name="tool" value="brush" checked>
+                <label for="tool-brush" style="font-weight: normal; margin-right: 10px;">Brush</label>
+
+                <input type="radio" id="tool-eraser" name="tool" value="eraser">
+                <label for="tool-eraser" style="font-weight: normal; margin-right: 10px;">Eraser</label>
+
+                <input type="radio" id="tool-fill" name="tool" value="fill">
+                <label for="tool-fill" style="font-weight: normal;">Bucket</label>
+            </div>
+        </div>
+        <div class="control-group hide-in-simple-mode">
+            <label for="brush-size">Brush Size: <span id="brush-size-val">1</span></label>
+            <input type="range" id="brush-size" min="1" max="5" value="1">
+        </div>
         <button id="show-presets-btn" class="hide-in-simple-mode">Presets</button>
         <button id="show-factory-btn" class="hide-in-simple-mode">Asset Factory</button>
     </div>

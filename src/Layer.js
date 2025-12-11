@@ -89,7 +89,7 @@ export class Layer {
      * @param {number[][]} [readBelowGrid=null] - The composite grid of layers below this one (for context-aware modifiers).
      * @returns {Layer} The layer instance (for chaining).
      */
-    generate(planterInstance, readBelowGrid = null) {
+    generate(planterInstance, readBelowGrid = null, inputMask = null) {
         const prng = planterInstance.getPRNG(this.config.seed);
         const generator = planterInstance.getGeneratorInstance(this.config.generator);
 
@@ -99,7 +99,7 @@ export class Layer {
             return this;
         }
 
-        let grid = generator.run(this.config, prng);
+        let grid = generator.run(this.config, prng, inputMask);
 
         // --- MODIFIER PIPELINE now passes the context ---
         if (this.config.modifiers && this.config.modifiers.length > 0) {

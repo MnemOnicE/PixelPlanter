@@ -33,7 +33,7 @@ describe('Layer', () => {
 
         expect(mockPlanter.getPRNG).toHaveBeenCalledWith('test');
         expect(mockPlanter.getGeneratorInstance).toHaveBeenCalledWith('mock');
-        expect(mockGenerator.run).toHaveBeenCalledWith(layer.config, mockPRNG);
+        expect(mockGenerator.run).toHaveBeenCalledWith(layer.config, mockPRNG, null);
         expect(layer.dataGrid).toBe(mockGrid);
     });
 
