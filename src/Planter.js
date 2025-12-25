@@ -331,7 +331,8 @@ export class Planter {
         const tempContext = tempCanvas.getContext('2d');
 
         for (const layer of this.#layerStack) {
-            if (!layer.isVisible || layer.dataGrid.length === 0) continue;
+            // Zone layers are not rendered to the final image
+            if (!layer.isVisible || layer.dataGrid.length === 0 || layer.type === 'zone') continue;
 
             const palette = this.getPaletteInstance(layer.config.palette);
             if (!palette) {

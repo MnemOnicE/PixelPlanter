@@ -316,6 +316,10 @@ export class UIManager {
                 layer.isVisible = e.target.checked;
                 this.#planterInstance.generate();
                 this.#saveState();
+            } else if (e.target.matches('.layer-type-select')) {
+                layer.type = e.target.value;
+                this.#planterInstance.generate();
+                this.#saveState();
             } else if (e.target.matches('.layer-opacity-slider')) {
                 layer.opacity = parseFloat(e.target.value);
                 this.#planterInstance.generate();
@@ -498,6 +502,13 @@ export class UIManager {
                     </div>
                 </div>
                 <div class="layer-item-controls">
+                    <div>
+                        <label>Type</label>
+                        <select class="layer-type-select">
+                            <option value="normal" ${layer.type === 'normal' ? 'selected' : ''}>Normal</option>
+                            <option value="zone" ${layer.type === 'zone' ? 'selected' : ''}>Zone (Mask)</option>
+                        </select>
+                    </div>
                     <div>
                         <label>Opacity</label>
                         <input type="range" class="layer-opacity-slider" min="0" max="1" step="0.05" value="${layer.opacity}">
@@ -888,6 +899,7 @@ export class UIManager {
             opacity: layer.opacity,
             blendMode: layer.blendMode,
             maskLayerId: layer.maskLayerId,
+            type: layer.type,
         }));
         const jsonString = JSON.stringify(simplifiedStack, null, 2);
         const blob = new Blob([jsonString], { type: "application/json" });
@@ -916,6 +928,7 @@ export class UIManager {
             newLayer.opacity = layer.opacity;
             newLayer.blendMode = layer.blendMode;
             newLayer.maskLayerId = layer.maskLayerId; // IMPORTANT: Persist mask ID
+            newLayer.type = layer.type || 'normal';
             // Don't save the dataGrid in history, it can be regenerated.
             // newLayer.dataGrid = JSON.parse(JSON.stringify(layer.dataGrid));
             return newLayer;
@@ -938,6 +951,7 @@ export class UIManager {
             newLayer.opacity = simpleLayer.opacity;
             newLayer.blendMode = simpleLayer.blendMode;
             newLayer.maskLayerId = simpleLayer.maskLayerId;
+            newLayer.type = simpleLayer.type || 'normal';
             // Data grid will be regenerated.
             return newLayer;
         });
@@ -979,6 +993,7 @@ export class UIManager {
             opacity: layer.opacity,
             blendMode: layer.blendMode,
             maskLayerId: layer.maskLayerId,
+            type: layer.type,
         }));
         const jsonString = JSON.stringify(simplifiedStack);
         const base64String = btoa(encodeURIComponent(jsonString));
@@ -1039,6 +1054,7 @@ export class UIManager {
                 newLayer.opacity = simpleLayer.opacity || 1.0;
                 newLayer.blendMode = simpleLayer.blendMode || 'source-over';
                 newLayer.maskLayerId = simpleLayer.maskLayerId || null;
+                newLayer.type = simpleLayer.type || 'normal';
                 return newLayer;
             });
 
