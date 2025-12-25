@@ -51,6 +51,12 @@ export class Layer {
     maskLayerId = null;
 
     /**
+     * The type of the layer. 'normal' = rendered, 'zone' = hidden (used for masking/logic).
+     * @type {string}
+     */
+    type = 'normal';
+
+    /**
      * The display name of the layer.
      * @type {string}
      */
@@ -65,6 +71,7 @@ export class Layer {
      * @param {number} [initialConfig.opacity] - Initial opacity.
      * @param {string} [initialConfig.blendMode] - Initial blend mode.
      * @param {number} [initialConfig.maskLayerId] - Initial mask layer ID.
+     * @param {string} [initialConfig.type] - The type of layer ('normal' or 'zone').
      * @param {string} [initialConfig.generator] - The generator name.
      * @param {object[]} [initialConfig.modifiers] - List of modifier configs.
      * @param {number|string} [initialConfig.seed] - Seed for PRNG.
@@ -79,6 +86,7 @@ export class Layer {
         if (initialConfig.opacity !== undefined) this.opacity = initialConfig.opacity;
         if (initialConfig.blendMode !== undefined) this.blendMode = initialConfig.blendMode;
         if (initialConfig.maskLayerId !== undefined) this.maskLayerId = initialConfig.maskLayerId;
+        if (initialConfig.type !== undefined) this.type = initialConfig.type;
     }
 
     /**
