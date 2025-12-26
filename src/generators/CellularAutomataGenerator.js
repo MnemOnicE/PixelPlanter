@@ -57,25 +57,32 @@ export class CellularAutomataGenerator {
      * @param {number} [config.deathLimit=3] - Number of neighbors required for a live cell to die (less than this dies).
      * @param {number} [config.initialChance=0.45] - Probability of a cell starting as alive (0.0 - 1.0).
      * @param {SeededRandom} prng - The pseudo-random number generator.
+     * @param {number[][]} [inputMask] - Optional mask. If provided, generation is restricted to non-zero pixels in this mask.
      * @returns {number[][]} The generated grid.
      */
-    run({ size, iterations = 5, birthLimit = 4, deathLimit = 3, initialChance = 0.45 }, prng) {
+    run({ size, iterations = 5, birthLimit = 4, deathLimit = 3, initialChance = 0.45 }, prng, inputMask = null) {
         const gridSize = Math.floor(size);
         let grid = Array.from({ length: gridSize }, () => Array(gridSize).fill(0));
 
         // Initialize randomly
         for (let y = 0; y < gridSize; y++) {
             for (let x = 0; x < gridSize; x++) {
-                grid[y][x] = prng.next() < initialChance ? 1 : 0;
+                // If masked, ensure cells outside the mask stay 0
+                if (inputMask && inputMask[y][x] === 0) {
+                    grid[y][x] = 0;
+                } else {
+                    grid[y][x] = prng.next() < initialChance ? 1 : 0;
+                }
             }
         }
 
         // Simulation steps
         for (let i = 0; i < iterations; i++) {
-            grid = this.#doSimulationStep(grid, gridSize, birthLimit, deathLimit);
+            grid = this.#doSimulationStep(grid, gridSize, birthLimit, deathLimit, inputMask);
         }
 
         // Safety check: Ensure the grid is not empty (bug fix for small sizes)
+        // If masked, we only check inside the mask.
         let hasLife = false;
         for (let y = 0; y < gridSize; y++) {
             for (let x = 0; x < gridSize; x++) {
@@ -88,8 +95,11 @@ export class CellularAutomataGenerator {
         }
 
         if (!hasLife && gridSize > 0) {
+            // Only add safety pixel if it's inside the mask (or no mask)
             const mid = Math.floor(gridSize / 2);
-            grid[mid][mid] = 1;
+            if (!inputMask || inputMask[mid][mid] > 0) {
+                 grid[mid][mid] = 1;
+            }
         }
 
         return grid;
@@ -102,13 +112,20 @@ export class CellularAutomataGenerator {
      * @param {number} size - The grid size.
      * @param {number} birthLimit - Threshold for cell birth.
      * @param {number} deathLimit - Threshold for cell death.
+     * @param {number[][]} [inputMask] - Optional mask.
      * @returns {number[][]} The new grid state.
      * @private
      */
-    #doSimulationStep(oldGrid, size, birthLimit, deathLimit) {
+    #doSimulationStep(oldGrid, size, birthLimit, deathLimit, inputMask) {
         const newGrid = Array.from({ length: size }, () => Array(size).fill(0));
         for (let y = 0; y < size; y++) {
             for (let x = 0; x < size; x++) {
+                // If masked out, skip processing and keep it 0
+                if (inputMask && inputMask[y][x] === 0) {
+                    newGrid[y][x] = 0;
+                    continue;
+                }
+
                 const neighbors = this.#countNeighbors(oldGrid, x, y, size);
                 if (oldGrid[y][x] === 1) {
                     if (neighbors < deathLimit) {
