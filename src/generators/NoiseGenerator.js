@@ -39,9 +39,10 @@ export class NoiseGenerator {
      * @param {number} [config.noiseScale=20] - Controls the zoom level of the noise. Higher values zoom out (more detail).
      * @param {number} [config.noiseThreshold=0.5] - The cutoff value (0-1). Values above this become active pixels.
      * @param {SeededRandom} prng - The pseudo-random number generator.
+     * @param {number[][]} [inputMask] - Optional mask. If provided, generation is restricted to non-zero pixels in this mask.
      * @returns {number[][]} A 2D array representing the generated noise grid.
      */
-    run({ size, noiseScale = 20, noiseThreshold = 0.5 }, prng) {
+    run({ size, noiseScale = 20, noiseThreshold = 0.5 }, prng, inputMask = null) {
         // Create an empty grid to store our data.
         const dataGrid = Array.from({ length: size }, () => Array(size).fill(0));
 
@@ -56,6 +57,11 @@ export class NoiseGenerator {
         // Loop over every cell in the grid.
         for (let y = 0; y < size; y++) {
             for (let x = 0; x < size; x++) {
+                // If a mask is provided and the mask pixel is 0, skip generation for this pixel (it remains 0).
+                if (inputMask && inputMask[y][x] === 0) {
+                    continue;
+                }
+
                 // Calculate the coordinates to sample from the noise field.
                 const sampleX = (x / size) * noiseScale + xOffset;
                 const sampleY = (y / size) * noiseScale + yOffset;
