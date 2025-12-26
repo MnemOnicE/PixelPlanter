@@ -484,20 +484,23 @@ export class Planter {
 
         if (targetValue === newValue) return;
 
-        const queue = [{ x: startX, y: startY }];
+        const queue = [startX, startY];
+        let head = 0;
 
-        while (queue.length > 0) {
-            const { x, y } = queue.shift();
+        while (head < queue.length) {
+            const x = queue[head++];
+            const y = queue[head++];
 
             if (x < 0 || x >= size || y < 0 || y >= size) continue;
             if (grid[y][x] !== targetValue) continue;
 
             grid[y][x] = newValue;
 
-            queue.push({ x: x + 1, y: y });
-            queue.push({ x: x - 1, y: y });
-            queue.push({ x: x, y: y + 1 });
-            queue.push({ x: x, y: y - 1 });
+            // Push neighbors
+            if (x + 1 < size && grid[y][x + 1] === targetValue) { queue.push(x + 1, y); }
+            if (x - 1 >= 0 && grid[y][x - 1] === targetValue) { queue.push(x - 1, y); }
+            if (y + 1 < size && grid[y + 1][x] === targetValue) { queue.push(x, y + 1); }
+            if (y - 1 >= 0 && grid[y - 1][x] === targetValue) { queue.push(x, y - 1); }
         }
     }
 

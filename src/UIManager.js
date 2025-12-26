@@ -318,6 +318,12 @@ export class UIManager {
                 this.#saveState();
             } else if (e.target.matches('.layer-type-select')) {
                 layer.type = e.target.value;
+                // Update UI visually without full re-render
+                if (layer.type === 'zone') {
+                    layerItem.classList.add('zone-layer');
+                } else {
+                    layerItem.classList.remove('zone-layer');
+                }
                 this.#planterInstance.generate();
                 this.#saveState();
             } else if (e.target.matches('.layer-opacity-slider')) {
@@ -483,6 +489,9 @@ export class UIManager {
         [...layerStack].reverse().forEach(layer => {
             const item = document.createElement('div');
             item.className = 'layer-item';
+            if (layer.type === 'zone') {
+                item.classList.add('zone-layer');
+            }
             item.dataset.layerId = layer.id;
             if (layer.id === this.#activeLayerId) {
                 item.classList.add('active');
