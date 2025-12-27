@@ -355,7 +355,9 @@ export class UIManager {
              this.#controls.brushSizeVal.textContent = this.#activeBrushSize;
         });
 
-        this.#canvasContainer.addEventListener('mousedown', e => {
+        this.#canvasContainer.addEventListener('pointerdown', e => {
+            e.preventDefault(); // Prevent scrolling on touch devices
+            this.#canvasContainer.setPointerCapture(e.pointerId);
             if (this.#activeTool === 'fill') {
                 this.#handleFloodFill(e);
             } else {
@@ -363,9 +365,17 @@ export class UIManager {
                 this.#handleBrushStroke(e);
             }
         });
-        this.#canvasContainer.addEventListener('mousemove', e => { if (this.#isBrushing) this.#handleBrushStroke(e); });
-        this.#canvasContainer.addEventListener('mouseup', () => this.#isBrushing = false);
-        this.#canvasContainer.addEventListener('mouseleave', () => this.#isBrushing = false);
+        this.#canvasContainer.addEventListener('pointermove', e => {
+            if (this.#isBrushing) {
+                e.preventDefault();
+                this.#handleBrushStroke(e);
+            }
+        });
+        this.#canvasContainer.addEventListener('pointerup', (e) => {
+            this.#isBrushing = false;
+            this.#canvasContainer.releasePointerCapture(e.pointerId);
+        });
+        this.#canvasContainer.addEventListener('pointerleave', () => this.#isBrushing = false);
 
         this.#controls.showPresetsBtn.addEventListener('click', () => this.#handleShowPresets());
         this.#closePresetsBtn.addEventListener('click', () => this.#presetsModal.style.display = 'none');
