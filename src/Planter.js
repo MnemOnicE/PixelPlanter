@@ -98,6 +98,18 @@ export class Planter {
     }
 
     /**
+     * Renders all layers to the final canvas without regenerating data grids.
+     * Useful for restoring state from history where data is already present.
+     *
+     * @returns {Planter} The instance for chaining.
+     */
+    render() {
+        this.#finalContext.clearRect(0, 0, this.#finalCanvas.width, this.#finalCanvas.height);
+        this.#renderAllLayers();
+        return this;
+    }
+
+    /**
      * Initializes the canvas element and context.
      * @private
      */
