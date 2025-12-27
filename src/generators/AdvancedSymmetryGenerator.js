@@ -8,6 +8,14 @@
  */
 export class AdvancedSymmetryGenerator {
     /**
+     * Indicates that this generator is structural and should be preserved during low-variance batch generation.
+     * @returns {boolean}
+     */
+    get isStructural() {
+        return true;
+    }
+
+    /**
      * Runs the generation algorithm.
      *
      * @param {object} config - The configuration object.
