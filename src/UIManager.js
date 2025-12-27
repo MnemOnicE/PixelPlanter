@@ -948,8 +948,8 @@ export class UIManager {
             newLayer.blendMode = layer.blendMode;
             newLayer.maskLayerId = layer.maskLayerId; // IMPORTANT: Persist mask ID
             newLayer.type = layer.type || 'normal';
-            // Don't save the dataGrid in history, it can be regenerated.
-            // newLayer.dataGrid = JSON.parse(JSON.stringify(layer.dataGrid));
+            // Persist the dataGrid in history to preserve manual edits.
+            newLayer.dataGrid = JSON.parse(JSON.stringify(layer.dataGrid));
             return newLayer;
         });
         this.#historyManager.addState({ layers: state, activeLayerId: this.#activeLayerId });
@@ -971,14 +971,14 @@ export class UIManager {
             newLayer.blendMode = simpleLayer.blendMode;
             newLayer.maskLayerId = simpleLayer.maskLayerId;
             newLayer.type = simpleLayer.type || 'normal';
-            // Data grid will be regenerated.
+            newLayer.dataGrid = simpleLayer.dataGrid || [];
             return newLayer;
         });
         this.#planterInstance.setLayerStack(newLayerStack);
         this.#activeLayerId = state.activeLayerId;
         const newActiveLayer = this.#planterInstance.getLayerById(this.#activeLayerId) || newLayerStack[newLayerStack.length - 1];
         this.#setActiveLayer(newActiveLayer ? newActiveLayer.id : null);
-        this.#planterInstance.generate();
+        this.#planterInstance.render();
     }
 
     /**

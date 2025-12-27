@@ -16,13 +16,14 @@ jest.unstable_mockModule('../src/Planter.js', () => ({
         getLayerById: jest.fn().mockReturnValue({ id: 1, config: { modifiers: [] } }),
         generate: jest.fn(),
         setLayerStack: jest.fn(),
-        getLayerStack: () => [],
+        getLayerStack: jest.fn().mockReturnValue([]),
         getGenerator: jest.fn(),
         getModifier: jest.fn(),
         getPatternNames: jest.fn().mockReturnValue([]),
         moveLayer: jest.fn(),
         removeLayer: jest.fn(),
         drawOnLayer: jest.fn(),
+        render: jest.fn(),
     })),
 }));
 
@@ -133,5 +134,82 @@ describe('UIManager Preset Loading', () => {
         expect(planterInstance.setLayerStack).toHaveBeenCalled();
         const callArg = planterInstance.setLayerStack.mock.calls[0][0];
         expect(callArg[0].name).toBe('Test Layer');
+    });
+
+    it('should preserve dataGrid on undo', async () => {
+        // Setup initial state with a manual dataGrid modification
+        const manualGrid = [[1, 0], [0, 1]];
+        const stateWithData = {
+            activeLayerId: 1,
+            layers: [{
+                id: 1,
+                name: 'Manual Layer',
+                config: { generator: 'noise', seed: '123' },
+                dataGrid: manualGrid,
+                isVisible: true,
+                type: 'normal'
+            }]
+        };
+
+        // Manually push to history (accessing private member via loose JavaScript, or just use addState)
+        // Since historyManager is private, we can't access it easily.
+        // But we can trick UIManager by overwriting its save behavior or just simulating a restore.
+        // Actually, we can trigger saveState by calling an action.
+
+        // Let's use the mock Planter to verify setLayerStack receives the grid.
+        // We need to inject a state into history.
+        // UIManager doesn't expose history.
+        // But we can trigger a save by generating.
+
+        // Wait, the easiest way to test this without exposing internals is to rely on the fact
+        // that restoreState calls setLayerStack.
+        // But we can't easily inject a history state with dataGrid from the outside
+        // because saveState is what creates it.
+        // And saveState creates it from planter.getLayerStack().
+
+        // So:
+        // 1. Mock planter.getLayerStack() to return a layer WITH dataGrid.
+        // 2. Call an action that triggers saveState (e.g. handleGenerateActiveLayer).
+        // 3. Undo (which will go back to previous state).
+        // Wait, undo goes BACK. We need at least 2 states.
+
+        const planterInstance = Planter.mock.results[0].value;
+
+        // State 1: Empty
+        planterInstance.getLayerStack.mockReturnValue([{ id: 1, config: {}, dataGrid: [] }]);
+        uiManager.handleGenerateActiveLayer(); // Saves State 1
+
+        // State 2: With Data
+        const dataGrid = [[9,9],[9,9]];
+        planterInstance.getLayerStack.mockReturnValue([{
+            id: 1,
+            config: { generator: 'noise' },
+            dataGrid: dataGrid,
+            isVisible: true,
+            opacity: 1,
+            blendMode: 'source-over',
+            maskLayerId: null,
+            type: 'normal'
+        }]);
+        uiManager.handleGenerateActiveLayer(); // Saves State 2
+
+        // Now Undo -> Should go back to State 1?
+        // Wait, if we are at State 2, Undo goes to State 1.
+        // We want to verify State 2 has the dataGrid saved.
+        // So we should Undo, then Redo?
+
+        const undoBtn = document.getElementById('undo-btn');
+        undoBtn.click(); // Back to State 1
+
+        const redoBtn = document.getElementById('redo-btn');
+        redoBtn.click(); // Forward to State 2
+
+        // Check if setLayerStack was called with the dataGrid from State 2
+        // The last call to setLayerStack should correspond to the redo.
+        const lastCallArgs = planterInstance.setLayerStack.mock.lastCall[0];
+        expect(lastCallArgs[0].dataGrid).toEqual(dataGrid);
+
+        // And expect render to be called instead of generate
+        expect(planterInstance.render).toHaveBeenCalled();
     });
 });
