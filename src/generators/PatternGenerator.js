@@ -32,9 +32,10 @@ export class PatternGenerator {
      * @param {number} [config.x=50] - X offset percentage (0-100).
      * @param {number} [config.y=50] - Y offset percentage (0-100).
      * @param {SeededRandom} prng - The pseudo-random number generator (unused but part of signature).
+     * @param {number[][]} [inputMask] - Optional mask. If provided, generation is restricted to non-zero pixels in this mask.
      * @returns {number[][]} The generated grid.
      */
-    run({ size, patternData, x, y }, prng) {
+    run({ size, patternData, x, y }, prng, inputMask = null) {
         const dataGrid = Array.from({ length: size }, () => Array(size).fill(0));
 
         if (!patternData) {
@@ -63,6 +64,11 @@ export class PatternGenerator {
 
                 // Bounds check
                 if (gridX >= 0 && gridX < size && gridY >= 0 && gridY < size) {
+                    // Check mask
+                    if (inputMask && inputMask[gridY][gridX] === 0) {
+                        continue;
+                    }
+
                     if (patternData[pY][pX] > 0) {
                         dataGrid[gridY][gridX] = 1;
                     }

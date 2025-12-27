@@ -15,9 +15,10 @@ export class SymmetryGenerator {
      * @param {number} config.size - The width and height of the grid.
      * @param {boolean} [config.allowBlank=false] - If true, allows the generator to produce a completely empty grid.
      * @param {SeededRandom} prng - The pseudo-random number generator instance.
+     * @param {number[][]} [inputMask] - Optional mask. If provided, generation is restricted to non-zero pixels in this mask.
      * @returns {number[][]} A 2D array of numbers (0 for off, 1 for on).
      */
-    run({ size, allowBlank = false }, prng) {
+    run({ size, allowBlank = false }, prng, inputMask = null) {
         const dataGrid = Array.from({ length: size }, () => Array(size).fill(0));
         const midPoint = Math.ceil(size / 2);
 
@@ -26,7 +27,11 @@ export class SymmetryGenerator {
         if (!allowBlank) {
             const guaranteedY = Math.floor(prng.next() * size);
             const guaranteedX = Math.floor(prng.next() * midPoint);
-            dataGrid[guaranteedY][guaranteedX] = 1;
+
+            // Respect mask for guaranteed pixel
+            if (!inputMask || inputMask[guaranteedY][guaranteedX] !== 0) {
+                dataGrid[guaranteedY][guaranteedX] = 1;
+            }
         }
 
         // Iterate through the left half of the grid
@@ -36,6 +41,14 @@ export class SymmetryGenerator {
                 if (!allowBlank && dataGrid[y][x] === 1) {
                     continue;
                 }
+
+                // Check mask for left side
+                if (inputMask && inputMask[y][x] === 0) {
+                    // Skip processing this pixel if it is masked out.
+                    // Note: We skip consuming the PRNG here, consistent with other generators (like RecursiveGrowth).
+                    continue;
+                }
+
                 const value = prng.next() < 0.5 ? 1 : 0;
                 dataGrid[y][x] = value;
             }
@@ -45,7 +58,13 @@ export class SymmetryGenerator {
         for (let y = 0; y < size; y++) {
             for (let x = 0; x < midPoint; x++) {
                 const mirrorX = size - 1 - x;
-                dataGrid[y][mirrorX] = dataGrid[y][x];
+
+                // If the target (mirror) pixel is masked, ensure it is 0.
+                if (inputMask && inputMask[y][mirrorX] === 0) {
+                    dataGrid[y][mirrorX] = 0;
+                } else {
+                    dataGrid[y][mirrorX] = dataGrid[y][x];
+                }
             }
         }
 
