@@ -53,6 +53,7 @@
         }
         canvas {
             border: 1px solid #ccc;
+            image-rendering: pixelated;
         }
         /* Add some new styles for our UI panel */
         #controls {
@@ -238,8 +239,14 @@
                 flex-direction: column;
                 align-items: center; /* Center items for a better mobile view */
             }
+            #canvas-container {
+                max-width: 100%;
+                overflow: auto;
+                display: flex;
+                justify-content: center;
+            }
             canvas {
-                max-w-width: 100%;
+                max-width: 100%;
                 height: auto; /* Maintain aspect ratio */
             }
         }
