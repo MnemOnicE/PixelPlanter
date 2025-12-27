@@ -204,9 +204,6 @@ export class Planter {
         sheetCanvas.height = sheetHeight;
         const ctx = sheetCanvas.getContext('2d');
 
-        // Heuristic for "structural" generators that shouldn't change on low variance
-        const structuralGenerators = ['simple-symmetry', 'advanced-symmetry', 'recursive-growth'];
-
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
                 const variationIndex = (r * cols) + c;
@@ -214,7 +211,10 @@ export class Planter {
                 if (variationIndex > 0) {
                      this.#layerStack.forEach(layer => {
                         const original = originalLayerConfigs.find(l => l.id === layer.id);
-                        const isStructural = structuralGenerators.includes(original.config.generator);
+
+                        const generatorInstance = this.getGeneratorInstance(original.config.generator);
+                        // Default to false if property is missing
+                        const isStructural = generatorInstance && generatorInstance.isStructural === true;
 
                         // If variance is high (>50), change everything.
                         // If variance is low, preserve structural layers.

@@ -32,6 +32,14 @@ export class RecursiveGrowthGenerator {
     };
 
     /**
+     * Indicates that this generator is structural and should be preserved during low-variance batch generation.
+     * @returns {boolean}
+     */
+    get isStructural() {
+        return true;
+    }
+
+    /**
      * Runs the recursive growth generation.
      *
      * @param {object} config - The configuration object.
