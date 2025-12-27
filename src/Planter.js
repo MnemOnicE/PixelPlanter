@@ -38,6 +38,20 @@ export class Planter {
     #finalContext;
 
     /**
+     * A temporary canvas reused for rendering individual layers.
+     * @type {HTMLCanvasElement}
+     * @private
+     */
+    #tempCanvas;
+
+    /**
+     * The context for the temporary canvas.
+     * @type {CanvasRenderingContext2D}
+     * @private
+     */
+    #tempContext;
+
+    /**
      * The stack of layers that make up the image.
      * @type {Layer[]}
      * @private
@@ -120,6 +134,13 @@ export class Planter {
         this.#finalCanvas.height = canvasSize;
         this.#finalContext = this.#finalCanvas.getContext('2d');
         this.#finalContext.imageSmoothingEnabled = false;
+
+        // Initialize reusable temporary canvas
+        this.#tempCanvas = document.createElement('canvas');
+        this.#tempCanvas.width = canvasSize;
+        this.#tempCanvas.height = canvasSize;
+        this.#tempContext = this.#tempCanvas.getContext('2d');
+        // No need for imageSmoothingEnabled setting on temp canvas as we draw rects
     }
 
     /**
@@ -337,10 +358,13 @@ export class Planter {
      * @private
      */
     #renderAllLayers() {
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = this.#finalCanvas.width;
-        tempCanvas.height = this.#finalCanvas.height;
-        const tempContext = tempCanvas.getContext('2d');
+        // Safety check: Ensure temp canvas size matches final canvas
+        if (this.#tempCanvas.width !== this.#finalCanvas.width || this.#tempCanvas.height !== this.#finalCanvas.height) {
+            this.#tempCanvas.width = this.#finalCanvas.width;
+            this.#tempCanvas.height = this.#finalCanvas.height;
+            // Context persists, but might need state reset if we were relying on defaults?
+            // drawColorGridToContext sets fillStyle and calls clearRect, so we are safe.
+        }
 
         for (const layer of this.#layerStack) {
             // Zone layers are not rendered to the final image
@@ -353,13 +377,12 @@ export class Planter {
             }
             const colorGrid = palette.map(layer.dataGrid);
 
-            this.#drawColorGridToContext(tempContext, colorGrid, this.#globalConfig);
+            // This method clears the context before drawing
+            this.#drawColorGridToContext(this.#tempContext, colorGrid, this.#globalConfig);
 
             this.#finalContext.globalAlpha = layer.opacity;
             this.#finalContext.globalCompositeOperation = layer.blendMode;
-            this.#finalContext.drawImage(tempCanvas, 0, 0);
-
-            tempContext.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+            this.#finalContext.drawImage(this.#tempCanvas, 0, 0);
         }
 
         this.#finalContext.globalAlpha = 1.0;
