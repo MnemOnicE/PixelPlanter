@@ -30,6 +30,17 @@ export class PathfinderModifier {
         pathStraightness: {
             label: 'Path Straightness',
             type: 'slider', min: 0.1, max: 0.9, step: 0.1, defaultValue: 0.7
+        },
+        searchMethod: {
+            label: 'Search Method',
+            type: 'select',
+            options: ['smart', 'quick', 'precise'],
+            defaultValue: 'smart'
+        },
+        useDynamicGrid: {
+            label: 'Dynamic Grid',
+            type: 'checkbox',
+            defaultValue: false
         }
     };
 
@@ -42,21 +53,38 @@ export class PathfinderModifier {
      * @param {number} [config.pathCount=3] - Number of paths to generate.
      * @param {number} [config.pathWidth=1] - Width of the path brush.
      * @param {number} [config.pathStraightness=0.7] - Bias towards continuing in the same direction (0-1).
+     * @param {string} [config.searchMethod='smart'] - 'quick', 'precise', or 'smart'.
+     * @param {boolean} [config.useDynamicGrid=false] - Whether new paths respect changes made by previous paths in the same batch.
      * @param {SeededRandom} prng - The pseudo-random number generator.
      * @returns {number[][]} A new grid with paths applied.
      */
-    apply(dataGrid, { mode = 'additive', pathCount = 3, pathWidth = 1, pathStraightness = 0.7 }, prng) {
+    apply(dataGrid, {
+        mode = 'additive',
+        pathCount = 3,
+        pathWidth = 1,
+        pathStraightness = 0.7,
+        searchMethod = 'smart',
+        useDynamicGrid = false
+    }, prng) {
+        // Create the output grid. If dynamic grid is NOT used, we need a reference to the original state
+        // for checking start conditions, but we always draw to outputGrid.
+        // Actually, if dynamicGrid is FALSE, we verify against dataGrid (original).
+        // If TRUE, we verify against outputGrid (current state).
         const outputGrid = JSON.parse(JSON.stringify(dataGrid));
         const size = dataGrid.length;
 
         for (let i = 0; i < pathCount; i++) {
-            // --- SMART LOGIC: Choose starting point based on mode ---
-            let startPoint;
-            if (mode === 'subtractive') {
-                startPoint = this.#findSolidSpot(dataGrid, prng);
-            } else { // Additive mode
-                startPoint = this.#findEmptySpot(dataGrid, prng);
-            }
+            // Select the grid to search for a starting point
+            const searchGrid = useDynamicGrid ? outputGrid : dataGrid;
+
+            // Determine what value we are looking for
+            // Additive: starts on empty (0)
+            // Subtractive: starts on solid (>0)
+            const targetPredicate = mode === 'subtractive'
+                ? (val) => val > 0
+                : (val) => val === 0;
+
+            const startPoint = this.#findSpot(searchGrid, targetPredicate, searchMethod, prng);
 
             if (startPoint === null) continue;
 
@@ -67,7 +95,7 @@ export class PathfinderModifier {
             const pathLength = size * 1.5;
 
             for (let step = 0; step < pathLength; step++) {
-                // --- SMART LOGIC: Draw or Carve based on mode ---
+                // --- Draw or Carve ---
                 if (mode === 'subtractive') {
                     this.#drawBrush(outputGrid, currentPoint, pathWidth, 0); // Draw with value '0' to erase.
                 } else {
@@ -83,8 +111,12 @@ export class PathfinderModifier {
 
                 const nextPoint = { x: currentPoint.x + nextMove.dx, y: currentPoint.y + nextMove.dy };
 
-                // --- SMART LOGIC: Check validity based on mode ---
-                if (this.#isValidMove(dataGrid, nextPoint, mode)) {
+                // --- Check validity ---
+                // If using dynamic grid, we check the CURRENT state (outputGrid).
+                // If not, we check the ORIGINAL state (dataGrid).
+                const checkGrid = useDynamicGrid ? outputGrid : dataGrid;
+
+                if (this.#isValidMove(checkGrid, nextPoint, mode)) {
                     currentPoint = nextPoint;
                 } else {
                     break;
@@ -96,49 +128,69 @@ export class PathfinderModifier {
     }
 
     /**
-     * Finds a random coordinate that is "solid" (value > 0).
+     * Finds a spot on the grid matching the predicate using the specified strategy.
      * @param {number[][]} grid - The grid to search.
+     * @param {function} predicate - Function returning true for valid cell values.
+     * @param {string} method - 'quick', 'precise', or 'smart'.
      * @param {SeededRandom} prng - Random number generator.
      * @returns {object|null} The coordinate {x, y} or null if not found.
-     * @private
      */
-    #findSolidSpot(grid, prng) {
-        const size = grid.length;
-        let attempts = 0;
-        const maxAttempts = size * size;
-
-        while (attempts < maxAttempts) {
-            const x = Math.floor(prng.next() * size);
-            const y = Math.floor(prng.next() * size);
-            if (grid[y][x] > 0) {
-                return { x, y };
-            }
-            attempts++;
+    #findSpot(grid, predicate, method, prng) {
+        if (method === 'quick') {
+            return this.#findSpotRandom(grid, predicate, prng);
+        } else if (method === 'precise') {
+            return this.#findSpotExhaustive(grid, predicate, prng);
+        } else {
+            // Smart: Try random, fallback to exhaustive
+            const randomAttempt = this.#findSpotRandom(grid, predicate, prng, 50); // Limit random attempts
+            if (randomAttempt) return randomAttempt;
+            return this.#findSpotExhaustive(grid, predicate, prng);
         }
-        return null; // Return null if no solid spot is found
     }
 
     /**
-     * Finds a random coordinate that is "empty" (value === 0).
-     * @param {number[][]} grid - The grid to search.
-     * @param {SeededRandom} prng - Random number generator.
-     * @returns {object|null} The coordinate {x, y} or null if not found.
-     * @private
+     * Finds a spot using random sampling (Rejection Sampling).
+     * @param {number[][]} grid - The grid.
+     * @param {function} predicate - Validation function.
+     * @param {SeededRandom} prng - PRNG.
+     * @param {number} [maxAttempts] - Optional limit. Defaults to size*size.
      */
-    #findEmptySpot(grid, prng) {
+    #findSpotRandom(grid, predicate, prng, maxAttempts) {
         const size = grid.length;
+        const limit = maxAttempts || (size * size);
         let attempts = 0;
-        const maxAttempts = size * size;
 
-        while (attempts < maxAttempts) {
+        while (attempts < limit) {
             const x = Math.floor(prng.next() * size);
             const y = Math.floor(prng.next() * size);
-            if (grid[y][x] === 0) {
+            if (predicate(grid[y][x])) {
                 return { x, y };
             }
             attempts++;
         }
-        return null; // Return null if no empty spot is found
+        return null;
+    }
+
+    /**
+     * Finds a spot by scanning all pixels (Exhaustive Search).
+     * @param {number[][]} grid - The grid.
+     * @param {function} predicate - Validation function.
+     * @param {SeededRandom} prng - PRNG.
+     */
+    #findSpotExhaustive(grid, predicate, prng) {
+        const size = grid.length;
+        const candidates = [];
+
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                if (predicate(grid[y][x])) {
+                    candidates.push({ x, y });
+                }
+            }
+        }
+
+        if (candidates.length === 0) return null;
+        return candidates[Math.floor(prng.next() * candidates.length)];
     }
 
     /**
