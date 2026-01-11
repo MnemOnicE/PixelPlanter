@@ -3,399 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Planter Workbench</title>
+    <title>Pixel Planter Studio</title>
+    <!-- Onboarding Driver -->
     <link rel="stylesheet" href="/node_modules/driver.js/dist/driver.css">
-    <style>
-        /* --- Styles for Simple/Advanced Mode --- */
-        .simple-mode .hide-in-simple-mode {
-            display: none !important;
-        }
-
-        #mode-toggle-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 15px;
-            padding: 8px;
-            background-color: #e9ecef;
-            border-radius: 20px;
-        }
-
-        .mode-toggle-label {
-            cursor: pointer;
-            padding: 5px 10px;
-            border-radius: 15px;
-            transition: background-color 0.3s, color 0.3s;
-            font-weight: bold;
-            color: #495057;
-        }
-
-        #mode-toggle {
-            display: none;
-        }
-
-        #mode-toggle:checked + .mode-toggle-label.advanced,
-        #mode-toggle:not(:checked) + .mode-toggle-label.simple {
-            background-color: #007bff;
-            color: white;
-        }
-        /* Keep your existing styles */
-        body {
-            background-color: #f0f0f0;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start; /* Align to top to see controls */
-            height: 100vh;
-            margin: 0;
-            padding: 20px;
-            gap: 20px; /* Add space between controls and canvas */
-        }
-        canvas {
-            border: 1px solid #ccc;
-            image-rendering: pixelated;
-        }
-        /* Add some new styles for our UI panel */
-        #controls {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            padding: 20px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            font-family: sans-serif;
-        }
-        .control-group {
-            display: flex;
-            flex-direction: column;
-        }
-        label {
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #333;
-        }
-        .tooltip {
-            position: relative;
-            display: inline-block;
-        }
-
-        .tooltip .tooltip-text {
-            visibility: hidden;
-            width: 200px;
-            background-color: #555;
-            color: #fff;
-            text-align: center;
-            border-radius: 6px;
-            padding: 5px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -100px;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .tooltip:hover .tooltip-text {
-            visibility: visible;
-            opacity: 1;
-        }
-        select, input, button {
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            cursor: pointer;
-            border: none;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 100;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.4);
-        }
-        .modal-content {
-            background-color: #fefefe;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 500px;
-        }
-        .close-button {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-        .close-button:hover,
-        .close-button:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        #pattern-grid-container {
-            display: grid;
-            width: 200px;
-            height: 200px;
-            border: 1px solid #ccc;
-            margin-bottom: 10px;
-        }
-        .pattern-cell {
-            border: 1px solid #eee;
-            cursor: pointer;
-        }
-        .pattern-cell.active {
-            background-color: #333;
-        }
-
-        #layer-panel {
-            border-top: 1px solid #eee;
-            border-bottom: 1px solid #eee;
-            padding: 10px 0;
-        }
-        #layer-list {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .layer-item {
-            display: grid;
-            grid-template-columns: auto 1fr auto;
-            gap: 5px;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            align-items: center;
-            cursor: pointer;
-        }
-        .layer-item.active {
-            border-color: #007bff;
-            background-color: #f0f8ff;
-        }
-        .layer-item.zone-layer {
-            border-left: 5px solid #ffc107; /* Amber border for zones */
-            background-color: #fff3cd; /* Light amber background */
-        }
-        .layer-item-controls {
-            grid-column: 1 / -1;
-            display: none;
-            flex-direction: column;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        .layer-item.active .layer-item-controls {
-            display: flex;
-        }
-        .layer-item-name {
-            font-weight: bold;
-        }
-
-        #preset-gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 15px;
-            padding-top: 15px;
-        }
-        .preset-item {
-            cursor: pointer;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            text-align: center;
-            transition: box-shadow 0.2s;
-        }
-        .preset-item:hover {
-            box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
-        }
-        .preset-item img {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            background-color: #eee;
-            border-top-left-radius: 4px;
-            border-top-right-radius: 4px;
-        }
-        .preset-item-name {
-            padding: 8px;
-            font-weight: bold;
-        }
-
-        /* Responsive styles for mobile */
-        @media (max-width: 768px) {
-            body {
-                flex-direction: column;
-                align-items: center; /* Center items for a better mobile view */
-            }
-            #canvas-container {
-                max-width: 100%;
-                overflow: auto;
-                display: flex;
-                justify-content: center;
-            }
-            canvas {
-                max-width: 100%;
-                height: auto; /* Maintain aspect ratio */
-            }
-        }
-    </style>
+    <!-- FontAwesome for Icons (using CDN for simplicity/standard) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Studio Styles -->
+    <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
 
-    <div id="controls">
-        <div id="mode-toggle-container">
-            <input type="checkbox" id="mode-toggle">
-            <label for="mode-toggle" class="mode-toggle-label simple">Simple</label>
-            <label for="mode-toggle" class="mode-toggle-label advanced">Advanced</label>
-        </div>
-        <div class="control-group">
-            <label for="generator-select">Generator</label>
-            <select id="generator-select">
+    <div id="app-container">
+
+        <!-- LEFT SIDEBAR: GENERATORS & TOOLS -->
+        <aside id="sidebar-left">
+            <h3><i class="fa-solid fa-seedling"></i> Generator</h3>
+
+            <div class="control-group">
+                <label for="generator-select">Algorithm</label>
+                <select id="generator-select"></select>
+            </div>
+
+            <div id="generator-params">
+                <!-- Dynamic Parameters injected here -->
+            </div>
+
+            <div class="control-group">
+                <label for="symmetry-select">Symmetry</label>
+                <select id="symmetry-select">
+                    <option value="none">None</option>
+                    <option value="vertical">Vertical</option>
+                    <option value="horizontal">Horizontal</option>
+                    <option value="quad">Quad</option>
                 </select>
-        </div>
+            </div>
 
-        <div class="control-group" id="generator-params">
-        </div>
-
-        <div class="control-group .hide-in-simple-mode">
-            <label for="symmetry-select">Symmetry Mode</label>
-            <select id="symmetry-select">
-                <option value="none">None</option>
-                <option value="vertical">Vertical</option>
-                <option value="horizontal">Horizontal</option>
-                <option value="quad">Quad</option>
-            </select>
-        </div>
-
-        <div class="control-group">
-            <label for="seed-input">Seed</label>
-            <input type="text" id="seed-input" placeholder="Leave blank for random">
-        </div>
-
-        <div class="control-group">
-            <label for="palette-select">Palette</label>
-            <select id="palette-select">
-                </select>
-        </div>
-
-        <div class="control-group">
-            <label for="size-input">Grid Size</label>
-            <input type="number" id="size-input" value="32" min="8" max="128">
-        </div>
-
-        <div class="control-group">
-            <label for="pixel-size-input">Pixel Scale</label>
-            <input type="number" id="pixel-size-input" value="15" min="1" max="50">
-        </div>
-
-        <div class="control-group hide-in-simple-mode">
-            <label>Modifiers</label>
-            <div id="modifiers-container">
+            <div class="control-group">
+                <label for="seed-input">Seed</label>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="seed-input" placeholder="Random">
+                    <button id="randomize-btn" class="secondary" title="Roll Dice"><i class="fa-solid fa-dice"></i></button>
                 </div>
-        </div>
-
-        <div class="control-group hide-in-simple-mode" id="modifier-params">
-        </div>
-
-        <hr class="hide-in-simple-mode">
-        <div id="layer-panel" class="hide-in-simple-mode">
-            <h3>Layers</h3>
-            <div id="layer-list"></div>
-            <button id="add-layer-btn">+ Add Layer</button>
-        </div>
-        <hr class="hide-in-simple-mode">
-
-        <button id="generate-btn">Regenerate Active Layer</button>
-        <button id="randomize-btn">Roll the Dice</button>
-        <button id="undo-btn" class="hide-in-simple-mode">Undo</button>
-        <button id="redo-btn" class="hide-in-simple-mode">Redo</button>
-        <button id="save-btn">Save Artwork</button>
-        <button id="export-json-btn" class="hide-in-simple-mode">Export JSON</button>
-        <button id="share-btn" class="hide-in-simple-mode">Share</button>
-        <button id="edit-patterns-btn" class="hide-in-simple-mode">Edit Patterns</button>
-        <hr class="hide-in-simple-mode">
-        <div class="control-group hide-in-simple-mode">
-            <label>Tools</label>
-            <div style="display: flex; gap: 5px; flex-wrap: wrap; align-items: center;">
-                <input type="radio" id="tool-brush" name="tool" value="brush" checked>
-                <label for="tool-brush" style="font-weight: normal; margin-right: 10px;">Brush</label>
-
-                <input type="radio" id="tool-eraser" name="tool" value="eraser">
-                <label for="tool-eraser" style="font-weight: normal; margin-right: 10px;">Eraser</label>
-
-                <input type="radio" id="tool-fill" name="tool" value="fill">
-                <label for="tool-fill" style="font-weight: normal;">Bucket</label>
             </div>
-        </div>
-        <div class="control-group hide-in-simple-mode">
-            <label for="brush-size">Brush Size: <span id="brush-size-val">1</span></label>
-            <input type="range" id="brush-size" min="1" max="5" value="1">
-        </div>
-        <button id="show-presets-btn" class="hide-in-simple-mode">Presets</button>
-        <button id="show-factory-btn" class="hide-in-simple-mode">Asset Factory</button>
-    </div>
 
-    <div id="canvas-container">
-    </div>
+            <hr>
 
-    <div id="pattern-editor-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2>Pattern Editor</h2>
-            <div id="pattern-grid-container">
-                <!-- Grid will be generated by JS -->
+            <h3><i class="fa-solid fa-palette"></i> Style</h3>
+
+            <div class="control-group">
+                <label for="palette-select">Palette</label>
+                <select id="palette-select"></select>
             </div>
-            <input type="text" id="pattern-name-input" placeholder="Pattern Name">
-            <button id="save-pattern-btn">Save Pattern</button>
-        </div>
+
+            <div class="control-group">
+                <label for="size-input">Grid Size</label>
+                <input type="number" id="size-input" value="32" min="8" max="128">
+            </div>
+
+            <div class="control-group">
+                <label for="pixel-size-input">Pixel Scale</label>
+                <input type="number" id="pixel-size-input" value="10" min="1" max="50">
+            </div>
+
+            <hr>
+
+            <h3><i class="fa-solid fa-paintbrush"></i> Tools</h3>
+            <div class="control-group">
+                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                    <!-- Tool Radios hidden visually, styled via labels if needed, but here we keep standard inputs for functionality -->
+                    <label class="radio-btn"><input type="radio" id="tool-brush" name="tool" value="brush" checked> Brush</label>
+                    <label class="radio-btn"><input type="radio" id="tool-eraser" name="tool" value="eraser"> Eraser</label>
+                    <label class="radio-btn"><input type="radio" id="tool-fill" name="tool" value="fill"> Fill</label>
+                </div>
+            </div>
+            <div class="control-group">
+                <label for="brush-size">Size: <span id="brush-size-val">1</span></label>
+                <input type="range" id="brush-size" min="1" max="5" value="1">
+            </div>
+
+            <button id="generate-btn" style="margin-top: auto;">REGENERATE (Space)</button>
+        </aside>
+
+
+        <!-- MAIN STAGE: CANVAS -->
+        <main id="stage">
+            <div id="canvas-container">
+                <!-- Canvas injected here -->
+            </div>
+        </main>
+
+
+        <!-- RIGHT SIDEBAR: LAYERS & MODIFIERS -->
+        <aside id="sidebar-right">
+            <h3><i class="fa-solid fa-layer-group"></i> Layers</h3>
+
+            <div id="layer-panel">
+                <div id="layer-list"></div>
+                <button id="add-layer-btn" class="secondary" style="margin-top: 10px;">+ New Layer</button>
+            </div>
+
+            <hr>
+
+            <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Modifiers</h3>
+            <div id="modifiers-container" style="max-height: 150px; overflow-y: auto; border: 1px solid var(--border); padding: 5px; margin-bottom: 10px;">
+                <!-- Modifiers injected here -->
+            </div>
+            <div id="modifier-params">
+                <!-- Modifier params injected here -->
+            </div>
+
+            <hr>
+
+            <h3>Actions</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <button id="undo-btn" class="secondary"><i class="fa-solid fa-rotate-left"></i> Undo</button>
+                <button id="redo-btn" class="secondary"><i class="fa-solid fa-rotate-right"></i> Redo</button>
+            </div>
+
+            <button id="save-btn"><i class="fa-solid fa-download"></i> Save Image</button>
+            <button id="export-json-btn" class="secondary" style="margin-top: 5px;">Export JSON</button>
+            <button id="share-btn" class="secondary" style="margin-top: 5px;">Share Link</button>
+
+            <div style="display: flex; gap: 5px; margin-top: 10px;">
+                <button id="show-presets-btn" class="secondary">Presets</button>
+                <button id="show-factory-btn" class="secondary">Factory</button>
+            </div>
+
+            <!-- Elements hidden in Studio mode but kept for compatibility or specific tools -->
+            <button id="edit-patterns-btn" class="hidden">Edit Patterns</button>
+            <input type="checkbox" id="mode-toggle" class="hidden" checked> <!-- Force "Advanced" mode logically -->
+
+        </aside>
+
+        <!-- MOBILE BOTTOM TOOLBAR -->
+        <nav id="mobile-toolbar">
+            <button class="toolbar-btn" id="toggle-left-sidebar">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Settings</span>
+            </button>
+            <button class="toolbar-btn" id="generate-btn-mobile" style="color: var(--accent);">
+                <i class="fa-solid fa-play"></i>
+                <span>Run</span>
+            </button>
+            <button class="toolbar-btn" id="toggle-right-sidebar">
+                <i class="fa-solid fa-layer-group"></i>
+                <span>Layers</span>
+            </button>
+        </nav>
+
     </div>
 
+    <!-- MODALS -->
     <div id="presets-modal" class="modal">
         <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2>Community Presets</h2>
-            <div id="preset-gallery">
-                <!-- Gallery items will be injected here by JS -->
-            </div>
+            <span class="close-button" style="float:right; cursor:pointer; font-size: 1.5em;">&times;</span>
+            <h2>Presets</h2>
+            <div id="preset-gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;"></div>
         </div>
     </div>
 
     <div id="factory-modal" class="modal">
         <div class="modal-content">
-            <span class="close-button">&times;</span>
+            <span class="close-button" style="float:right; cursor:pointer; font-size: 1.5em;">&times;</span>
             <h2>Asset Factory</h2>
-            <p>Generate a sprite sheet of variations.</p>
             <div class="control-group">
-                <label for="factory-rows">Rows</label>
-                <input type="number" id="factory-rows" value="4" min="1" max="16">
+                <label>Rows</label><input type="number" id="factory-rows" value="4">
             </div>
             <div class="control-group">
-                <label for="factory-cols">Columns</label>
-                <input type="number" id="factory-cols" value="4" min="1" max="16">
+                <label>Cols</label><input type="number" id="factory-cols" value="4">
             </div>
             <div class="control-group">
-                <label for="factory-padding">Padding (px)</label>
-                <input type="number" id="factory-padding" value="2" min="0" max="10">
+                <label>Padding</label><input type="number" id="factory-padding" value="2">
             </div>
             <div class="control-group">
-                <label for="factory-variance">Variance</label>
-                <input type="range" id="factory-variance" min="0" max="100" value="20" title="How much the seed changes per item">
+                <label>Variance</label><input type="range" id="factory-variance" min="0" max="100" value="20">
             </div>
-            <button id="factory-generate-btn">Download Sprite Sheet</button>
+            <button id="factory-generate-btn">Download Sheet</button>
         </div>
     </div>
+
     <script type="module" src="main.js"></script>
 </body>
 </html>

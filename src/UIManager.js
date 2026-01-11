@@ -244,6 +244,14 @@ export class UIManager {
         this.#controls.toolRadios = document.querySelectorAll('input[name="tool"]');
         this.#controls.brushSize = document.getElementById('brush-size');
         this.#controls.brushSizeVal = document.getElementById('brush-size-val');
+
+        // Mobile Controls
+        this.#controls.toggleLeftSidebarBtn = document.getElementById('toggle-left-sidebar');
+        this.#controls.toggleRightSidebarBtn = document.getElementById('toggle-right-sidebar');
+        this.#controls.mobileGenerateBtn = document.getElementById('generate-btn-mobile');
+        this.#controls.sidebarLeft = document.getElementById('sidebar-left');
+        this.#controls.sidebarRight = document.getElementById('sidebar-right');
+        this.#controls.stage = document.getElementById('stage');
     }
 
     /**
@@ -402,6 +410,54 @@ export class UIManager {
             }
         });
         this.#controls.factoryGenerateBtn.addEventListener('click', () => this.#handleGenerateBatch());
+
+        // Mobile Sidebar Toggles
+        if (this.#controls.toggleLeftSidebarBtn) {
+            this.#controls.toggleLeftSidebarBtn.addEventListener('click', () => {
+                this.#controls.sidebarLeft.classList.toggle('active');
+                this.#controls.toggleLeftSidebarBtn.classList.toggle('active');
+                // Close other sidebar
+                this.#controls.sidebarRight.classList.remove('active');
+                this.#controls.toggleRightSidebarBtn.classList.remove('active');
+            });
+        }
+
+        if (this.#controls.toggleRightSidebarBtn) {
+            this.#controls.toggleRightSidebarBtn.addEventListener('click', () => {
+                this.#controls.sidebarRight.classList.toggle('active');
+                this.#controls.toggleRightSidebarBtn.classList.toggle('active');
+                // Close other sidebar
+                this.#controls.sidebarLeft.classList.remove('active');
+                this.#controls.toggleLeftSidebarBtn.classList.remove('active');
+            });
+        }
+
+        if (this.#controls.mobileGenerateBtn) {
+            this.#controls.mobileGenerateBtn.addEventListener('click', () => {
+                this.handleGenerateActiveLayer();
+                // Close sidebars to see result
+                this.#controls.sidebarLeft.classList.remove('active');
+                this.#controls.sidebarRight.classList.remove('active');
+                this.#controls.toggleLeftSidebarBtn.classList.remove('active');
+                this.#controls.toggleRightSidebarBtn.classList.remove('active');
+            });
+        }
+
+        // Close sidebars when clicking on stage (mobile UX)
+        if (this.#controls.stage) {
+            this.#controls.stage.addEventListener('click', (e) => {
+                // Only if not interacting with canvas (though canvas is in stage)
+                // Actually, if we are painting, we probably want to see the canvas, so closing sidebars is good.
+                // But we don't want to close if we are just clicking a zoom button (if we had one).
+                // For now, clicking outside sidebars closes them.
+                if (window.innerWidth <= 900) {
+                   this.#controls.sidebarLeft.classList.remove('active');
+                   this.#controls.sidebarRight.classList.remove('active');
+                   this.#controls.toggleLeftSidebarBtn.classList.remove('active');
+                   this.#controls.toggleRightSidebarBtn.classList.remove('active');
+                }
+            });
+        }
     }
 
     /**
