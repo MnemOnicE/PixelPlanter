@@ -1,0 +1,305 @@
+:root {
+    --bg-dark: #1e1e1e;
+    --bg-panel: #252526;
+    --bg-input: #3c3c3c;
+    --text-main: #d4d4d4;
+    --text-muted: #aaaaaa;
+    --accent: #007acc;
+    --accent-hover: #0062a3;
+    --border: #3e3e42;
+    --sidebar-width: 300px;
+    --header-height: 50px; /* If we add a header later */
+    --toolbar-height: 60px; /* Mobile toolbar height */
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    height: 100vh;
+    overflow: hidden; /* Prevent body scroll, scrolling happens in panels */
+}
+
+/* --- Layout Grid (Desktop) --- */
+#app-container {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr var(--sidebar-width);
+    grid-template-rows: 1fr;
+    height: 100%;
+    width: 100%;
+}
+
+/* --- Sidebars --- */
+aside {
+    background-color: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    gap: 15px;
+}
+
+#sidebar-left {
+    border-left: none;
+    grid-column: 1;
+}
+
+#sidebar-right {
+    border-right: none;
+    grid-column: 3;
+}
+
+/* --- Main Stage --- */
+#stage {
+    grid-column: 2;
+    background-color: #111; /* Darker background for canvas contrast */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    padding: 20px;
+}
+
+#canvas-container {
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    background-image:
+        linear-gradient(45deg, #1a1a1a 25%, transparent 25%),
+        linear-gradient(-45deg, #1a1a1a 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1a1a1a 75%),
+        linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+canvas {
+    display: block;
+    image-rendering: pixelated;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* --- Common UI Elements --- */
+h2, h3, h4 {
+    margin-top: 0;
+    color: var(--text-main);
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.control-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+input[type="text"],
+input[type="number"],
+select {
+    width: 100%;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    padding: 8px;
+    border-radius: 4px;
+}
+
+input[type="range"] {
+    width: 100%;
+}
+
+button {
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s;
+    width: 100%;
+    text-align: center;
+}
+
+button:hover {
+    background-color: var(--accent-hover);
+}
+
+button.secondary {
+    background-color: var(--bg-input);
+    color: var(--text-main);
+}
+
+button.secondary:hover {
+    background-color: #4a4a4a;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 15px 0;
+    width: 100%;
+}
+
+/* --- Layer List Items --- */
+.layer-item {
+    background-color: var(--bg-input);
+    border: 1px solid var(--border);
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.layer-item.active {
+    border-color: var(--accent);
+    background-color: #2d2d30;
+}
+
+.layer-item-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.layer-name-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-weight: bold;
+}
+
+/* --- Mobile Specifics --- */
+#mobile-toolbar {
+    display: none; /* Hidden on desktop */
+}
+
+/* --- Media Queries for Mobile --- */
+@media (max-width: 900px) {
+    #app-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr var(--toolbar-height);
+    }
+
+    /* Stage takes full width/height minus toolbar */
+    #stage {
+        grid-column: 1;
+        grid-row: 1;
+        padding-bottom: 80px; /* Space for toolbar so content isn't covered */
+    }
+
+    /* Sidebars become drawers */
+    aside {
+        position: fixed;
+        top: 0;
+        bottom: var(--toolbar-height); /* Stop above toolbar */
+        width: 85%; /* Mostly full width */
+        max-width: 350px;
+        z-index: 100;
+        transition: transform 0.3s ease-in-out;
+        box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    }
+
+    #sidebar-left {
+        left: 0;
+        transform: translateX(-100%);
+        border-right: 1px solid var(--border);
+    }
+
+    #sidebar-right {
+        right: 0;
+        transform: translateX(100%);
+        border-left: 1px solid var(--border);
+    }
+
+    /* Active states for drawers */
+    #sidebar-left.active {
+        transform: translateX(0);
+    }
+
+    #sidebar-right.active {
+        transform: translateX(0);
+    }
+
+    /* Mobile Toolbar */
+    #mobile-toolbar {
+        display: flex;
+        grid-row: 2;
+        background-color: var(--bg-panel);
+        border-top: 1px solid var(--border);
+        justify-content: space-around;
+        align-items: center;
+        padding: 0 10px;
+        z-index: 200;
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        height: var(--toolbar-height);
+    }
+
+    .toolbar-btn {
+        background: transparent;
+        color: var(--text-main);
+        flex: 1;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-size: 0.8em;
+    }
+
+    .toolbar-btn i {
+        font-size: 1.2em;
+        margin-bottom: 4px;
+    }
+
+    .toolbar-btn.active {
+        color: var(--accent);
+        background-color: rgba(255,255,255,0.05);
+    }
+}
+
+/* Utility to hide things intended for simple mode if we still use that concept,
+   though the Studio design kinda merges them. */
+.hidden {
+    display: none !important;
+}
+
+/* --- Modals --- */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.7);
+    backdrop-filter: blur(2px);
+}
+
+.modal-content {
+    background-color: var(--bg-panel);
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid var(--border);
+    width: 90%;
+    max-width: 500px;
+    border-radius: 8px;
+    color: var(--text-main);
+}
