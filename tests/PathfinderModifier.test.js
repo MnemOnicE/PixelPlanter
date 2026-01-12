@@ -1,5 +1,4 @@
 
-import { jest } from '@jest/globals';
 import { PathfinderModifier } from '../src/modifiers/PathfinderModifier.js';
 import { SeededRandom } from '../src/utils/PRNG.js';
 
@@ -12,22 +11,26 @@ describe('PathfinderModifier', () => {
         modifier = new PathfinderModifier();
         prng = new SeededRandom('test-seed');
         // Create a 10x10 empty grid
-        grid = Array(10).fill(0).map(() => Array(10).fill(0));
+        grid = Array(10)
+            .fill(0)
+            .map(() => Array(10).fill(0));
     });
 
     it('should generate paths with default parameters', () => {
         const result = modifier.apply(grid, {}, prng);
         // Check if any pixels were modified (additive mode adds 1s)
-        const hasChange = result.flat().some(val => val === 1);
+        const hasChange = result.flat().some((val) => val === 1);
         expect(hasChange).toBe(true);
     });
 
     it('should support subtractive mode', () => {
         // Create a full grid
-        const fullGrid = Array(10).fill(0).map(() => Array(10).fill(1));
+        const fullGrid = Array(10)
+            .fill(0)
+            .map(() => Array(10).fill(1));
         const result = modifier.apply(fullGrid, { mode: 'subtractive' }, prng);
         // Check if any pixels were erased (set to 0)
-        const hasChange = result.flat().some(val => val === 0);
+        const hasChange = result.flat().some((val) => val === 0);
         expect(hasChange).toBe(true);
     });
 
@@ -41,7 +44,9 @@ describe('PathfinderModifier', () => {
 
     it('should find the only available spot in Precise mode', () => {
         // Create a grid that is full except for one spot at 5,5
-        const almostFullGrid = Array(10).fill(0).map(() => Array(10).fill(1));
+        const almostFullGrid = Array(10)
+            .fill(0)
+            .map(() => Array(10).fill(1));
         almostFullGrid[5][5] = 0;
 
         // Additive mode looks for empty spots (0).
@@ -50,12 +55,16 @@ describe('PathfinderModifier', () => {
 
         // We use a fixed seed that might miss it with random sampling if we were unlucky,
         // but 'precise' guarantees it.
-        const result = modifier.apply(almostFullGrid, {
-            mode: 'additive',
-            pathCount: 1,
-            searchMethod: 'precise',
-            pathLength: 1 // Minimal path to just verify start point
-        }, prng);
+        const result = modifier.apply(
+            almostFullGrid,
+            {
+                mode: 'additive',
+                pathCount: 1,
+                searchMethod: 'precise',
+                pathLength: 1, // Minimal path to just verify start point
+            },
+            prng,
+        );
 
         // If it found the spot, it would have drawn there (making it 1)
         expect(result[5][5]).toBe(1);

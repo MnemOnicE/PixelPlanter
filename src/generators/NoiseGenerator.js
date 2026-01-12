@@ -2,7 +2,7 @@
  * @file NoiseGenerator.js
  * @description Generates a grid based on Simplex Noise.
  */
-import { createNoise2D } from '/node_modules/simplex-noise/dist/esm/simplex-noise.js';
+import { createNoise2D } from 'simplex-noise';
 
 /**
  * Generates organic-looking patterns using Simplex Noise.
@@ -19,7 +19,7 @@ export class NoiseGenerator {
             min: 1,
             max: 50,
             step: 1,
-            defaultValue: 20
+            defaultValue: 20,
         },
         noiseThreshold: {
             label: 'Threshold', // The cutoff point to decide if a pixel is on or off.
@@ -27,9 +27,9 @@ export class NoiseGenerator {
             min: 0.1,
             max: 0.9,
             step: 0.05,
-            defaultValue: 0.5
-        }
-    }
+            defaultValue: 0.5,
+        },
+    };
 
     /**
      * Runs the noise generation algorithm.

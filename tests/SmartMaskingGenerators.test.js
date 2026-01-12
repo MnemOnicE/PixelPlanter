@@ -1,4 +1,3 @@
-
 import { SymmetryGenerator } from '../src/generators/SymmetryGenerator.js';
 import { AdvancedSymmetryGenerator } from '../src/generators/AdvancedSymmetryGenerator.js';
 import { PatternGenerator } from '../src/generators/PatternGenerator.js';
@@ -11,7 +10,7 @@ describe('Smart Masking Implementation for All Generators', () => {
     const inputMask = Array.from({ length: size }, (_, y) =>
         Array.from({ length: size }, (_, x) => {
             return x < size / 2 ? 1 : 0;
-        })
+        }),
     );
 
     test('SymmetryGenerator strictly respects inputMask', () => {

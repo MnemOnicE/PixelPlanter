@@ -1,4 +1,3 @@
-
 import { Planter } from '../src/Planter.js';
 import { Layer } from '../src/Layer.js';
 
@@ -10,7 +9,7 @@ describe('Zone Layer (Smart Regions)', () => {
         const zoneLayer = planter.addLayer({
             generator: 'noise',
             palette: 'monochrome', // usually produces black/white
-            seed: 'zone-seed'
+            seed: 'zone-seed',
         });
         zoneLayer.type = 'zone';
 
@@ -49,12 +48,12 @@ describe('Zone Layer (Smart Regions)', () => {
         // Layer 1: Normal, Solid fill (using noise with high threshold or just manual draw)
         const layer1 = planter.addLayer({ generator: 'noise', palette: 'monochrome' });
         // Manually fill layer 1
-        planter.drawOnLayer(layer1.id, [{x:0, y:0}], 1);
+        planter.drawOnLayer(layer1.id, [{ x: 0, y: 0 }], 1);
 
         // Layer 2: Zone, Solid fill
         const layer2 = planter.addLayer({ generator: 'noise', palette: 'monochrome' });
         layer2.type = 'zone';
-        planter.drawOnLayer(layer2.id, [{x:0, y:0}], 1);
+        planter.drawOnLayer(layer2.id, [{ x: 0, y: 0 }], 1);
 
         planter.generate();
 
@@ -75,14 +74,14 @@ describe('Zone Layer (Smart Regions)', () => {
         zoneLayer.name = 'Zone';
         // Clear grid first (noise might fill it)
         zoneLayer.dataGrid = Array.from({ length: 10 }, () => Array(10).fill(0));
-        planter.drawOnLayer(zoneLayer.id, [{x: 5, y: 5}], 1); // Only 5,5 is active
+        planter.drawOnLayer(zoneLayer.id, [{ x: 5, y: 5 }], 1); // Only 5,5 is active
 
         // Create Normal Layer (The Content)
         // We want it full, so we use noise with low threshold or just fill it manually
         const contentLayer = planter.addLayer({
             generator: 'noise',
             palette: 'monochrome',
-            maskLayerId: zoneLayer.id // Apply mask!
+            maskLayerId: zoneLayer.id, // Apply mask!
         });
 
         // The mask logic in Planter.js applies the mask AFTER generation.
@@ -93,16 +92,16 @@ describe('Zone Layer (Smart Regions)', () => {
 
         // OPTION: We can overwrite the `generate` method of the content layer instance for this test
         // to prevent it from resetting our manual dataGrid.
-        contentLayer.generate = function(planter, readBelow, inputMask) {
+        contentLayer.generate = function (planter, readBelow, inputMask) {
             // Do nothing, preserving manual dataGrid
-             this.dataGrid = Array.from({ length: 10 }, () => Array(10).fill(1));
-             return this;
+            this.dataGrid = Array.from({ length: 10 }, () => Array(10).fill(1));
+            return this;
         };
 
         // AND we also need to prevent the zone layer from regenerating its grid
-        zoneLayer.generate = function(planter, readBelow, inputMask) {
-             // Preserve existing grid (which has our manual dot)
-             return this;
+        zoneLayer.generate = function (planter, readBelow, inputMask) {
+            // Preserve existing grid (which has our manual dot)
+            return this;
         };
 
         planter.generate();

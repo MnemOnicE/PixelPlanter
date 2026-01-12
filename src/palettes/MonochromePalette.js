@@ -20,9 +20,9 @@ export class MonochromePalette {
 
         // Use the .map() array method for a clean transformation.
         // This iterates through each row of the dataGrid.
-        return dataGrid.map(row => {
+        return dataGrid.map((row) => {
             // Then iterates through each value in the current row.
-            return row.map(value => {
+            return row.map((value) => {
                 // If value is 0, return white. Otherwise, for any non-zero value, return black.
                 return value === 0 ? colors[0] : colors[1];
             });

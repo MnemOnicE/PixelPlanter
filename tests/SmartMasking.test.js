@@ -1,4 +1,3 @@
-
 import { RecursiveGrowthGenerator } from '../src/generators/RecursiveGrowthGenerator.js';
 import { SeededRandom } from '../src/utils/PRNG.js';
 
@@ -14,15 +13,15 @@ describe('Smart Masking (Recursive Growth)', () => {
             Array.from({ length: size }, (_, x) => {
                 const centerX = size / 2;
                 const centerY = size / 2;
-                return (Math.abs(x - centerX) < 2 && Math.abs(y - centerY) < 2) ? 1 : 0;
-            })
+                return Math.abs(x - centerX) < 2 && Math.abs(y - centerY) < 2 ? 1 : 0;
+            }),
         );
 
         // Configure to start points (some might be outside, some inside)
         const config = {
             size: size,
             startPoints: 50, // High number to ensure we hit the mask
-            maxDepth: 10
+            maxDepth: 10,
         };
 
         const result = generator.run(config, prng, inputMask);

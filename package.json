@@ -1,40 +1,47 @@
 {
-  "name": "pixel-planter",
-  "version": "0.1.0",
-  "description": "A modular, lightweight JavaScript library for creating generative pixel art.",
-  "type": "module",
-  "main": "dist/pixel-planter.js",
-  "module": "src/index.js",
-  "scripts": {
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/your-username/pixel-planter.git"
-  },
-  "keywords": [
-    "pixel-art",
-    "generative",
-    "art",
-    "gamedev",
-    "creative-coding"
-  ],
-  "author": "Seth",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/your-username/pixel-planter/issues"
-  },
-  "homepage": "https://github.com/your-username/pixel-planter#readme",
-  "dependencies": {
-    "driver.js": "^1.3.6",
-    "simplex-noise": "^4.0.3"
-  },
-  "devDependencies": {
-    "@babel/preset-env": "^7.28.5",
-    "babel-jest": "^30.2.0",
-    "jest": "^30.2.0",
-    "jest-canvas-mock": "^2.5.2",
-    "jest-environment-jsdom": "^30.2.0",
-    "jsdom": "^27.4.0"
-  }
+    "name": "pixel-planter",
+    "version": "0.1.0",
+    "description": "A modular, lightweight JavaScript library for creating generative pixel art.",
+    "type": "module",
+    "main": "dist/pixel-planter.js",
+    "module": "src/index.js",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "test": "vitest"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/your-username/pixel-planter.git"
+    },
+    "keywords": [
+        "pixel-art",
+        "generative",
+        "art",
+        "gamedev",
+        "creative-coding"
+    ],
+    "author": "Seth",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/your-username/pixel-planter/issues"
+    },
+    "homepage": "https://github.com/your-username/pixel-planter#readme",
+    "dependencies": {
+        "driver.js": "^1.3.6",
+        "simplex-noise": "^4.0.3"
+    },
+    "devDependencies": {
+        "@babel/preset-env": "^7.28.5",
+        "@vitest/ui": "^4.0.17",
+        "eslint": "^9.39.2",
+        "eslint-config-prettier": "^10.1.8",
+        "globals": "^17.0.0",
+        "jsdom": "^27.4.0",
+        "prettier": "^3.7.4",
+        "vite": "^7.3.1",
+        "vitest": "^4.0.17",
+        "vitest-canvas-mock": "^1.1.3"
+    }
 }

@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+
 import { Planter } from '../src/Planter.js';
 
 describe('Layer Movement Bug', () => {

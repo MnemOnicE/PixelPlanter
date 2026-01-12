@@ -22,7 +22,7 @@ export class OutlineModifier {
         if (width === 0) return [];
 
         // Create a deep copy of the original dataGrid to serve as our output grid.
-        const outputGrid = dataGrid.map(row => [...row]);
+        const outputGrid = dataGrid.map((row) => [...row]);
 
         // Define the value to use for the outline.
         // Assuming > 0 is "on", we use 2 to distinguish or just ensure it's on.
@@ -36,14 +36,14 @@ export class OutlineModifier {
                 if (dataGrid[y][x] === 0) {
                     // Check its four direct neighbors (up, down, left, right).
                     const neighbors = [
-                        y > 0 && dataGrid[y - 1][x],         // Up
+                        y > 0 && dataGrid[y - 1][x], // Up
                         y < height - 1 && dataGrid[y + 1][x], // Down
-                        x > 0 && dataGrid[y][x - 1],         // Left
-                        x < width - 1 && dataGrid[y][x + 1]    // Right
+                        x > 0 && dataGrid[y][x - 1], // Left
+                        x < width - 1 && dataGrid[y][x + 1], // Right
                     ];
 
                     // IF any neighbor has a value > 0 (it's part of the shape):
-                    if (neighbors.some(neighborValue => neighborValue > 0)) {
+                    if (neighbors.some((neighborValue) => neighborValue > 0)) {
                         // This empty cell is on the border of the shape.
                         // In the `outputGrid` at position (y, x), set the value to `outlineValue`.
                         outputGrid[y][x] = outlineValue;

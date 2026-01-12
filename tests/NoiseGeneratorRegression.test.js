@@ -1,5 +1,4 @@
 
-import { jest } from '@jest/globals';
 import { NoiseGenerator } from '../src/generators/NoiseGenerator.js';
 import { SeededRandom } from '../src/utils/PRNG.js';
 

@@ -2,34 +2,34 @@
  * @file test.js
  * @description Unit tests for UIManager and preset loading logic.
  */
-import { jest } from '@jest/globals';
-import 'jest-environment-jsdom';
+
+
 
 // Mock the Planter class to isolate UIManager tests
-jest.unstable_mockModule('../src/Planter.js', () => ({
-    Planter: jest.fn().mockImplementation(() => ({
+vi.mock('../src/Planter.js', () => ({
+    Planter: vi.fn().mockImplementation(() => ({
         getCanvas: () => document.createElement('canvas'),
         getGeneratorNames: () => ['noise'],
         getPaletteNames: () => ['monochrome'],
         getModifierNames: () => ['outline'],
-        addLayer: jest.fn().mockReturnValue({ id: 1, config: { modifiers: [] } }),
-        getLayerById: jest.fn().mockReturnValue({ id: 1, config: { modifiers: [] } }),
-        generate: jest.fn(),
-        setLayerStack: jest.fn(),
-        getLayerStack: jest.fn().mockReturnValue([]),
-        getGenerator: jest.fn(),
-        getModifier: jest.fn(),
-        getPatternNames: jest.fn().mockReturnValue([]),
-        moveLayer: jest.fn(),
-        removeLayer: jest.fn(),
-        drawOnLayer: jest.fn(),
-        render: jest.fn(),
+        addLayer: vi.fn().mockReturnValue({ id: 1, config: { modifiers: [] } }),
+        getLayerById: vi.fn().mockReturnValue({ id: 1, config: { modifiers: [] } }),
+        generate: vi.fn(),
+        setLayerStack: vi.fn(),
+        getLayerStack: vi.fn().mockReturnValue([]),
+        getGenerator: vi.fn(),
+        getModifier: vi.fn(),
+        getPatternNames: vi.fn().mockReturnValue([]),
+        moveLayer: vi.fn(),
+        removeLayer: vi.fn(),
+        drawOnLayer: vi.fn(),
+        render: vi.fn(),
     })),
 }));
 
 // Mock the driver.js library
-jest.unstable_mockModule('driver.js', () => ({
-    driver: jest.fn().mockReturnValue({ drive: jest.fn() }),
+vi.mock('driver.js', () => ({
+    driver: vi.fn().mockReturnValue({ drive: vi.fn() }),
 }));
 
 // Import dynamically after mocks
@@ -97,27 +97,37 @@ describe('UIManager Preset Loading', () => {
     });
 
     it('should load presets and update the layer stack when a preset is clicked', async () => {
-        const configObj = [{
-            config: {size: 32, pixelSize: 15, generator: "noise", palette: "monochrome", seed: "1234", modifiers: []},
-            name: "Test Layer",
-            isVisible: true,
-            opacity: 1,
-            blendMode: "source-over",
-            maskLayerId: null
-        }];
+        const configObj = [
+            {
+                config: {
+                    size: 32,
+                    pixelSize: 15,
+                    generator: 'noise',
+                    palette: 'monochrome',
+                    seed: '1234',
+                    modifiers: [],
+                },
+                name: 'Test Layer',
+                isVisible: true,
+                opacity: 1,
+                blendMode: 'source-over',
+                maskLayerId: null,
+            },
+        ];
         const configStr = btoa(encodeURIComponent(JSON.stringify(configObj)));
         // Note: UIManager uses decodeURIComponent(atob(configStr)) so we must encodeURIComponent before btoa.
 
         global.fetch = jest.fn(() =>
             Promise.resolve({
-                json: () => Promise.resolve([
-                    {
-                        name: 'Test Preset',
-                        preview: '',
-                        config: configStr,
-                    },
-                ]),
-            })
+                json: () =>
+                    Promise.resolve([
+                        {
+                            name: 'Test Preset',
+                            preview: '',
+                            config: configStr,
+                        },
+                    ]),
+            }),
         );
 
         const showPresetsBtn = document.getElementById('show-presets-btn');
@@ -138,17 +148,22 @@ describe('UIManager Preset Loading', () => {
 
     it('should preserve dataGrid on undo', async () => {
         // Setup initial state with a manual dataGrid modification
-        const manualGrid = [[1, 0], [0, 1]];
+        const manualGrid = [
+            [1, 0],
+            [0, 1],
+        ];
         const stateWithData = {
             activeLayerId: 1,
-            layers: [{
-                id: 1,
-                name: 'Manual Layer',
-                config: { generator: 'noise', seed: '123' },
-                dataGrid: manualGrid,
-                isVisible: true,
-                type: 'normal'
-            }]
+            layers: [
+                {
+                    id: 1,
+                    name: 'Manual Layer',
+                    config: { generator: 'noise', seed: '123' },
+                    dataGrid: manualGrid,
+                    isVisible: true,
+                    type: 'normal',
+                },
+            ],
         };
 
         // Manually push to history (accessing private member via loose JavaScript, or just use addState)
@@ -180,17 +195,22 @@ describe('UIManager Preset Loading', () => {
         uiManager.handleGenerateActiveLayer(); // Saves State 1
 
         // State 2: With Data
-        const dataGrid = [[9,9],[9,9]];
-        planterInstance.getLayerStack.mockReturnValue([{
-            id: 1,
-            config: { generator: 'noise' },
-            dataGrid: dataGrid,
-            isVisible: true,
-            opacity: 1,
-            blendMode: 'source-over',
-            maskLayerId: null,
-            type: 'normal'
-        }]);
+        const dataGrid = [
+            [9, 9],
+            [9, 9],
+        ];
+        planterInstance.getLayerStack.mockReturnValue([
+            {
+                id: 1,
+                config: { generator: 'noise' },
+                dataGrid: dataGrid,
+                isVisible: true,
+                opacity: 1,
+                blendMode: 'source-over',
+                maskLayerId: null,
+                type: 'normal',
+            },
+        ]);
         uiManager.handleGenerateActiveLayer(); // Saves State 2
 
         // Now Undo -> Should go back to State 1?

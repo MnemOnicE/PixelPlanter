@@ -30,7 +30,7 @@ export class ParticleModifier {
 
         // If there's no grid below us, we can't simulate gravity. Return the original.
         if (readBelowGrid === null) {
-            console.warn("ParticleModifier requires a layer below it to function.");
+            console.warn('ParticleModifier requires a layer below it to function.');
             return outputGrid;
         }
 

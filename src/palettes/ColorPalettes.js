@@ -33,8 +33,8 @@ export class VaporwavePalette {
         const backgroundColor = this.colors[0];
         const foregroundColors = this.colors.slice(1); // All colors except the first
 
-        return dataGrid.map(row => {
-            return row.map(value => {
+        return dataGrid.map((row) => {
+            return row.map((value) => {
                 // If the pixel is "off" (0), use the background color.
                 if (value === 0) {
                     return backgroundColor;
@@ -46,7 +46,6 @@ export class VaporwavePalette {
         });
     }
 }
-
 
 /**
  * A palette with earthy greens and browns.
@@ -76,8 +75,8 @@ export class ForestPalette {
         const backgroundColor = this.colors[0];
         const foregroundColors = this.colors.slice(1);
 
-        return dataGrid.map(row => {
-            return row.map(value => {
+        return dataGrid.map((row) => {
+            return row.map((value) => {
                 if (value === 0) return backgroundColor;
                 const randomIndex = Math.floor(Math.random() * foregroundColors.length);
                 return foregroundColors[randomIndex];

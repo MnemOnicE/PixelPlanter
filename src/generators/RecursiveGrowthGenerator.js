@@ -28,7 +28,7 @@ export class RecursiveGrowthGenerator {
             max: 15,
             step: 1,
             defaultValue: 5,
-        }
+        },
     };
 
     /**
@@ -70,7 +70,7 @@ export class RecursiveGrowthGenerator {
                 { nx: x, ny: y - 1 }, // Up
                 { nx: x, ny: y + 1 }, // Down
                 { nx: x - 1, ny: y }, // Left
-                { nx: x + 1, ny: y }  // Right
+                { nx: x + 1, ny: y }, // Right
             ];
 
             for (const neighbor of neighbors) {
@@ -78,8 +78,10 @@ export class RecursiveGrowthGenerator {
                 if (prng.next() > 0.5) {
                     // Check if the neighbor is within bounds and currently empty
                     if (
-                        neighbor.nx >= 0 && neighbor.nx < size &&
-                        neighbor.ny >= 0 && neighbor.ny < size &&
+                        neighbor.nx >= 0 &&
+                        neighbor.nx < size &&
+                        neighbor.ny >= 0 &&
+                        neighbor.ny < size &&
                         dataGrid[neighbor.ny][neighbor.nx] === 0
                     ) {
                         // Check mask constraint: if mask exists and pixel is 0, do not grow
