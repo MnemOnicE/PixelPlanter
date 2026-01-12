@@ -11,7 +11,7 @@ describe('CellularAutomataGenerator Fix Verification', () => {
             iterations: 5,
             birthLimit: 5, // High birth limit that causes empty grids currently
             deathLimit: 3,
-            initialChance: 0.45
+            initialChance: 0.45,
         };
 
         for (let i = 0; i < 100; i++) {
@@ -41,7 +41,7 @@ describe('CellularAutomataGenerator Fix Verification', () => {
         const generator = new CellularAutomataGenerator();
         const config = {
             size: 5.5,
-            iterations: 2
+            iterations: 2,
         };
         const prng = new SeededRandom(123);
         // Should not throw

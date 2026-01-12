@@ -2,8 +2,8 @@
  * @file Planter.test.js
  * @description Integration/Unit tests for the Planter class.
  */
-import { jest } from '@jest/globals';
-import 'jest-environment-jsdom';
+
+
 import { Planter } from '../src/Planter.js';
 import { Layer } from '../src/Layer.js';
 
@@ -48,20 +48,20 @@ describe('Planter', () => {
             generator: 'noise',
             palette: 'monochrome',
             noiseThreshold: 0,
-            name: 'Mask'
+            name: 'Mask',
         });
 
         const targetLayer = planter.addLayer({
             generator: 'noise',
             palette: 'monochrome',
             maskLayerId: maskLayer.id,
-            name: 'Target'
+            name: 'Target',
         });
 
         // Use a mock generator to have deterministic output
         const MockGenerator = class {
             run({ value }) {
-                return Array.from({length: 10}, () => Array(10).fill(value));
+                return Array.from({ length: 10 }, () => Array(10).fill(value));
             }
         };
         // Register mock generator
@@ -76,13 +76,13 @@ describe('Planter', () => {
         planter.generate();
 
         const flatTarget = targetLayer.dataGrid.flat();
-        expect(flatTarget.every(v => v === 0)).toBe(true);
+        expect(flatTarget.every((v) => v === 0)).toBe(true);
 
         // Change mask to all 1s (allowing)
         maskLayer.config.value = 1;
         planter.generate();
 
         const flatTarget2 = targetLayer.dataGrid.flat();
-        expect(flatTarget2.every(v => v === 1)).toBe(true);
+        expect(flatTarget2.every((v) => v === 1)).toBe(true);
     });
 });

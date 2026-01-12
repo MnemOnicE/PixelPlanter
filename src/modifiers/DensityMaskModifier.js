@@ -26,7 +26,7 @@ export class DensityMaskModifier {
             type: 'select',
             options: ['none', 'left-heavy', 'right-heavy', 'top-heavy', 'bottom-heavy'],
             defaultValue: 'none',
-        }
+        },
     };
 
     /**
@@ -40,25 +40,26 @@ export class DensityMaskModifier {
      * @returns {number[][]} A new, modified 2D array.
      */
     apply(dataGrid, config = {}, prng) {
-        const outputGrid = dataGrid.map(row => [...row]);
-        const density = (config.density === undefined || config.density === null) ? 0.8 : config.density;
+        const outputGrid = dataGrid.map((row) => [...row]);
+        const density = config.density === undefined || config.density === null ? 0.8 : config.density;
         const asymmetry = config.asymmetry || 'none';
         const size = dataGrid.length;
 
         for (let y = 0; y < size; y++) {
             for (let x = 0; x < size; x++) {
-                if (outputGrid[y][x] > 0) { // If the pixel is "on"
+                if (outputGrid[y][x] > 0) {
+                    // If the pixel is "on"
                     let cullProbability = 1.0 - density;
 
                     // Adjust cullProbability based on the asymmetry mode
                     if (asymmetry === 'left-heavy') {
                         cullProbability += (x / size) * 0.5;
                     } else if (asymmetry === 'right-heavy') {
-                        cullProbability += (1.0 - (x / size)) * 0.5;
+                        cullProbability += (1.0 - x / size) * 0.5;
                     } else if (asymmetry === 'top-heavy') {
                         cullProbability += (y / size) * 0.5;
                     } else if (asymmetry === 'bottom-heavy') {
-                        cullProbability += (1.0 - (y / size)) * 0.5;
+                        cullProbability += (1.0 - y / size) * 0.5;
                     }
 
                     if (prng.next() < cullProbability) {

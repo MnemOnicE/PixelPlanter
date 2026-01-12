@@ -2,7 +2,7 @@
  * @file Layer.test.js
  * @description Unit tests for the Layer class.
  */
-import { jest } from '@jest/globals';
+
 import { Layer } from '../src/Layer.js';
 
 describe('Layer', () => {
@@ -19,14 +19,14 @@ describe('Layer', () => {
 
         const mockGrid = [[1]];
         const mockGenerator = {
-            run: jest.fn().mockReturnValue(mockGrid)
+            run: vi.fn().mockReturnValue(mockGrid),
         };
         const mockPRNG = {};
 
         const mockPlanter = {
-            getPRNG: jest.fn().mockReturnValue(mockPRNG),
-            getGeneratorInstance: jest.fn().mockReturnValue(mockGenerator),
-            getModifierInstance: jest.fn()
+            getPRNG: vi.fn().mockReturnValue(mockPRNG),
+            getGeneratorInstance: vi.fn().mockReturnValue(mockGenerator),
+            getModifierInstance: vi.fn(),
         };
 
         layer.generate(mockPlanter);
@@ -41,20 +41,20 @@ describe('Layer', () => {
         const layer = new Layer({
             generator: 'mock',
             seed: 'test',
-            modifiers: [{ name: 'mod1', val: 10 }]
+            modifiers: [{ name: 'mod1', val: 10 }],
         });
 
         const initialGrid = [[1]];
         const modifiedGrid = [[2]];
 
         const mockGenerator = { run: () => initialGrid };
-        const mockModifier = { apply: jest.fn().mockReturnValue(modifiedGrid) };
+        const mockModifier = { apply: vi.fn().mockReturnValue(modifiedGrid) };
         const mockPRNG = {};
 
         const mockPlanter = {
             getPRNG: () => mockPRNG,
             getGeneratorInstance: () => mockGenerator,
-            getModifierInstance: jest.fn().mockReturnValue(mockModifier)
+            getModifierInstance: vi.fn().mockReturnValue(mockModifier),
         };
 
         layer.generate(mockPlanter);

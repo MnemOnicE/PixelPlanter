@@ -54,7 +54,7 @@ export class AdvancedSymmetryGenerator {
             }
         } else if (symmetryMode === 'radial') {
             // For radial, we generate a 1D array of values from center to edge
-            const radialSource = Array.from({ length: midX }, () => prng.next() < 0.5 ? 1 : 0);
+            const radialSource = Array.from({ length: midX }, () => (prng.next() < 0.5 ? 1 : 0));
             const centerX = (size - 1) / 2;
             const centerY = (size - 1) / 2;
             for (let y = 0; y < size; y++) {
@@ -115,12 +115,12 @@ export class AdvancedSymmetryGenerator {
                 // Note: We need to mirror the *entire* top half (including what we just mirrored left-to-right)
                 for (let y = 0; y < midY; y++) {
                     for (let x = 0; x < size; x++) {
-                         const mirrorY = size - 1 - y;
-                         if (inputMask && inputMask[mirrorY][x] === 0) {
-                             dataGrid[mirrorY][x] = 0;
-                         } else {
-                             dataGrid[mirrorY][x] = dataGrid[y][x];
-                         }
+                        const mirrorY = size - 1 - y;
+                        if (inputMask && inputMask[mirrorY][x] === 0) {
+                            dataGrid[mirrorY][x] = 0;
+                        } else {
+                            dataGrid[mirrorY][x] = dataGrid[y][x];
+                        }
                     }
                 }
                 break;

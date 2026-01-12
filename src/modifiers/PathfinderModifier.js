@@ -17,31 +17,43 @@ export class PathfinderModifier {
             label: 'Mode',
             type: 'select',
             options: ['additive', 'subtractive'],
-            defaultValue: 'additive'
+            defaultValue: 'additive',
         },
         pathCount: {
             label: 'Number of Paths',
-            type: 'slider', min: 1, max: 10, step: 1, defaultValue: 3
+            type: 'slider',
+            min: 1,
+            max: 10,
+            step: 1,
+            defaultValue: 3,
         },
         pathWidth: {
             label: 'Path Width',
-            type: 'slider', min: 1, max: 5, step: 1, defaultValue: 1
+            type: 'slider',
+            min: 1,
+            max: 5,
+            step: 1,
+            defaultValue: 1,
         },
         pathStraightness: {
             label: 'Path Straightness',
-            type: 'slider', min: 0.1, max: 0.9, step: 0.1, defaultValue: 0.7
+            type: 'slider',
+            min: 0.1,
+            max: 0.9,
+            step: 0.1,
+            defaultValue: 0.7,
         },
         searchMethod: {
             label: 'Search Method',
             type: 'select',
             options: ['smart', 'quick', 'precise'],
-            defaultValue: 'smart'
+            defaultValue: 'smart',
         },
         useDynamicGrid: {
             label: 'Dynamic Grid',
             type: 'checkbox',
-            defaultValue: false
-        }
+            defaultValue: false,
+        },
     };
 
     /**
@@ -58,14 +70,18 @@ export class PathfinderModifier {
      * @param {SeededRandom} prng - The pseudo-random number generator.
      * @returns {number[][]} A new grid with paths applied.
      */
-    apply(dataGrid, {
-        mode = 'additive',
-        pathCount = 3,
-        pathWidth = 1,
-        pathStraightness = 0.7,
-        searchMethod = 'smart',
-        useDynamicGrid = false
-    }, prng) {
+    apply(
+        dataGrid,
+        {
+            mode = 'additive',
+            pathCount = 3,
+            pathWidth = 1,
+            pathStraightness = 0.7,
+            searchMethod = 'smart',
+            useDynamicGrid = false,
+        },
+        prng,
+    ) {
         // Create the output grid. If dynamic grid is NOT used, we need a reference to the original state
         // for checking start conditions, but we always draw to outputGrid.
         // Actually, if dynamicGrid is FALSE, we verify against dataGrid (original).
@@ -80,9 +96,7 @@ export class PathfinderModifier {
             // Determine what value we are looking for
             // Additive: starts on empty (0)
             // Subtractive: starts on solid (>0)
-            const targetPredicate = mode === 'subtractive'
-                ? (val) => val > 0
-                : (val) => val === 0;
+            const targetPredicate = mode === 'subtractive' ? (val) => val > 0 : (val) => val === 0;
 
             const startPoint = this.#findSpot(searchGrid, targetPredicate, searchMethod, prng);
 
@@ -157,7 +171,7 @@ export class PathfinderModifier {
      */
     #findSpotRandom(grid, predicate, prng, maxAttempts) {
         const size = grid.length;
-        const limit = maxAttempts || (size * size);
+        const limit = maxAttempts || size * size;
         let attempts = 0;
 
         while (attempts < limit) {
@@ -201,8 +215,14 @@ export class PathfinderModifier {
      */
     #getBiasedMove(direction) {
         const moves = {
-            'up': { dx: 0, dy: -1 }, 'down': { dx: 0, dy: 1 }, 'left': { dx: -1, dy: 0 }, 'right': { dx: 1, dy: 0 },
-            'up-left': { dx: -1, dy: -1 }, 'up-right': { dx: 1, dy: -1 }, 'down-left': { dx: -1, dy: 1 }, 'down-right': { dx: 1, dy: 1 }
+            up: { dx: 0, dy: -1 },
+            down: { dx: 0, dy: 1 },
+            left: { dx: -1, dy: 0 },
+            right: { dx: 1, dy: 0 },
+            'up-left': { dx: -1, dy: -1 },
+            'up-right': { dx: 1, dy: -1 },
+            'down-left': { dx: -1, dy: 1 },
+            'down-right': { dx: 1, dy: 1 },
         };
         return moves[direction] || { dx: 0, dy: 0 };
     }
@@ -215,8 +235,14 @@ export class PathfinderModifier {
      */
     #getRandomMove(prng) {
         const moves = [
-            { dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 },
-            { dx: -1, dy: -1 }, { dx: 1, dy: -1 }, { dx: -1, dy: 1 }, { dx: 1, dy: 1 }
+            { dx: 0, dy: -1 },
+            { dx: 0, dy: 1 },
+            { dx: -1, dy: 0 },
+            { dx: 1, dy: 0 },
+            { dx: -1, dy: -1 },
+            { dx: 1, dy: -1 },
+            { dx: -1, dy: 1 },
+            { dx: 1, dy: 1 },
         ];
         return moves[Math.floor(prng.next() * moves.length)];
     }

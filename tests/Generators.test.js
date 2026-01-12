@@ -2,7 +2,7 @@
  * @file Generators.test.js
  * @description Unit tests for generator classes (CellularAutomataGenerator, NoiseGenerator).
  */
-import { jest } from '@jest/globals';
+
 import { CellularAutomataGenerator } from '../src/generators/CellularAutomataGenerator.js';
 import { NoiseGenerator } from '../src/generators/NoiseGenerator.js';
 import { SeededRandom } from '../src/utils/PRNG.js';
@@ -46,7 +46,7 @@ describe('NoiseGenerator', () => {
     it('should return 0s and 1s', () => {
         const grid = generator.run({ size: 10 }, prng);
         const flat = grid.flat();
-        const valid = flat.every(v => v === 0 || v === 1);
+        const valid = flat.every((v) => v === 0 || v === 1);
         expect(valid).toBe(true);
     });
 });

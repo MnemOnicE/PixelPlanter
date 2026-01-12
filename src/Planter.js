@@ -189,15 +189,15 @@ export class Planter {
      */
     generateBatch({ rows = 4, cols = 4, padding = 0, variance = 20 }) {
         // Backup current layer configs
-        const originalLayerConfigs = this.#layerStack.map(layer => ({
+        const originalLayerConfigs = this.#layerStack.map((layer) => ({
             id: layer.id,
-            config: JSON.parse(JSON.stringify(layer.config))
+            config: JSON.parse(JSON.stringify(layer.config)),
         }));
 
         const spriteWidth = this.#finalCanvas.width;
         const spriteHeight = this.#finalCanvas.height;
-        const sheetWidth = (spriteWidth * cols) + (padding * (cols - 1));
-        const sheetHeight = (spriteHeight * rows) + (padding * (rows - 1));
+        const sheetWidth = spriteWidth * cols + padding * (cols - 1);
+        const sheetHeight = spriteHeight * rows + padding * (rows - 1);
 
         const sheetCanvas = document.createElement('canvas');
         sheetCanvas.width = sheetWidth;
@@ -206,11 +206,11 @@ export class Planter {
 
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
-                const variationIndex = (r * cols) + c;
+                const variationIndex = r * cols + c;
 
                 if (variationIndex > 0) {
-                     this.#layerStack.forEach(layer => {
-                        const original = originalLayerConfigs.find(l => l.id === layer.id);
+                    this.#layerStack.forEach((layer) => {
+                        const original = originalLayerConfigs.find((l) => l.id === layer.id);
 
                         const generatorInstance = this.getGeneratorInstance(original.config.generator);
                         // Default to false if property is missing
@@ -219,15 +219,15 @@ export class Planter {
                         // If variance is high (>50), change everything.
                         // If variance is low, preserve structural layers.
                         if (variance > 50 || !isStructural) {
-                             // Modify seed
-                             // We use the original seed + variation index to be deterministic for this batch
-                             layer.config.seed = `${original.config.seed}-${variationIndex}`;
+                            // Modify seed
+                            // We use the original seed + variation index to be deterministic for this batch
+                            layer.config.seed = `${original.config.seed}-${variationIndex}`;
                         }
-                     });
+                    });
                 } else {
                     // Index 0: Ensure it's the original config
-                    this.#layerStack.forEach(layer => {
-                        const original = originalLayerConfigs.find(l => l.id === layer.id);
+                    this.#layerStack.forEach((layer) => {
+                        const original = originalLayerConfigs.find((l) => l.id === layer.id);
                         layer.config = JSON.parse(JSON.stringify(original.config));
                     });
                 }
@@ -241,11 +241,11 @@ export class Planter {
         }
 
         // Restore original configuration
-        this.#layerStack.forEach(layer => {
-             const original = originalLayerConfigs.find(l => l.id === layer.id);
-             if (original) {
-                 layer.config = original.config;
-             }
+        this.#layerStack.forEach((layer) => {
+            const original = originalLayerConfigs.find((l) => l.id === layer.id);
+            if (original) {
+                layer.config = original.config;
+            }
         });
 
         // Restore the single view
@@ -262,14 +262,14 @@ export class Planter {
     #generateAllLayers() {
         // First pass: Generate all data grids
         for (const layer of this.#layerStack) {
-            const currentIndex = this.#layerStack.findIndex(l => l.id === layer.id);
+            const currentIndex = this.#layerStack.findIndex((l) => l.id === layer.id);
             const readBelowGrid = this.#createCompositeGridForLayers(this.#layerStack.slice(0, currentIndex));
 
             let inputMask = null;
             if (layer.maskLayerId) {
                 const maskLayer = this.getLayerById(layer.maskLayerId);
                 // STRICT CONSTRAINT: Mask layer must be BELOW the current layer (lower index)
-                const maskIndex = this.#layerStack.findIndex(l => l.id === layer.maskLayerId);
+                const maskIndex = this.#layerStack.findIndex((l) => l.id === layer.maskLayerId);
                 if (maskLayer && maskIndex < currentIndex && maskLayer.dataGrid && maskLayer.dataGrid.length > 0) {
                     inputMask = maskLayer.dataGrid;
                 }
@@ -299,7 +299,7 @@ export class Planter {
      * @private
      */
     #generateLayerWithContext(layer, allLayers) {
-        const currentIndex = allLayers.findIndex(l => l.id === layer.id);
+        const currentIndex = allLayers.findIndex((l) => l.id === layer.id);
         const readBelowGrid = this.#createCompositeGridForLayers(allLayers.slice(0, currentIndex));
         layer.generate(this, readBelowGrid);
     }
@@ -359,7 +359,10 @@ export class Planter {
      */
     #renderAllLayers() {
         // Safety check: Ensure temp canvas size matches final canvas
-        if (this.#tempCanvas.width !== this.#finalCanvas.width || this.#tempCanvas.height !== this.#finalCanvas.height) {
+        if (
+            this.#tempCanvas.width !== this.#finalCanvas.width ||
+            this.#tempCanvas.height !== this.#finalCanvas.height
+        ) {
             this.#tempCanvas.width = this.#finalCanvas.width;
             this.#tempCanvas.height = this.#finalCanvas.height;
             // Context persists, but might need state reset if we were relying on defaults?
@@ -429,7 +432,7 @@ export class Planter {
      * @param {number} layerId - The ID of the layer to remove.
      */
     removeLayer(layerId) {
-        this.#layerStack = this.#layerStack.filter(layer => layer.id !== layerId);
+        this.#layerStack = this.#layerStack.filter((layer) => layer.id !== layerId);
     }
 
     /**
@@ -438,13 +441,19 @@ export class Planter {
      * @param {string} direction - 'up' or 'down'.
      */
     moveLayer(layerId, direction) {
-        const index = this.#layerStack.findIndex(l => l.id === layerId);
+        const index = this.#layerStack.findIndex((l) => l.id === layerId);
         if (index === -1) return;
 
         if (direction === 'up' && index < this.#layerStack.length - 1) {
-            [this.#layerStack[index], this.#layerStack[index + 1]] = [this.#layerStack[index + 1], this.#layerStack[index]];
+            [this.#layerStack[index], this.#layerStack[index + 1]] = [
+                this.#layerStack[index + 1],
+                this.#layerStack[index],
+            ];
         } else if (direction === 'down' && index > 0) {
-            [this.#layerStack[index], this.#layerStack[index - 1]] = [this.#layerStack[index - 1], this.#layerStack[index]];
+            [this.#layerStack[index], this.#layerStack[index - 1]] = [
+                this.#layerStack[index - 1],
+                this.#layerStack[index],
+            ];
         }
     }
 
@@ -455,7 +464,7 @@ export class Planter {
      */
     getLayerById(id) {
         // Make sure to handle number and string conversions
-        return this.#layerStack.find(l => l.id == id);
+        return this.#layerStack.find((l) => l.id == id);
     }
 
     /**
@@ -532,10 +541,18 @@ export class Planter {
             grid[y][x] = newValue;
 
             // Push neighbors
-            if (x + 1 < size && grid[y][x + 1] === targetValue) { queue.push(x + 1, y); }
-            if (x - 1 >= 0 && grid[y][x - 1] === targetValue) { queue.push(x - 1, y); }
-            if (y + 1 < size && grid[y + 1][x] === targetValue) { queue.push(x, y + 1); }
-            if (y - 1 >= 0 && grid[y - 1][x] === targetValue) { queue.push(x, y - 1); }
+            if (x + 1 < size && grid[y][x + 1] === targetValue) {
+                queue.push(x + 1, y);
+            }
+            if (x - 1 >= 0 && grid[y][x - 1] === targetValue) {
+                queue.push(x - 1, y);
+            }
+            if (y + 1 < size && grid[y + 1][x] === targetValue) {
+                queue.push(x, y + 1);
+            }
+            if (y - 1 >= 0 && grid[y - 1][x] === targetValue) {
+                queue.push(x, y - 1);
+            }
         }
     }
 
@@ -556,105 +573,139 @@ export class Planter {
      * @param {string|number} seed - The seed.
      * @returns {SeededRandom} The PRNG instance.
      */
-    getPRNG(seed) { return new SeededRandom(seed); }
+    getPRNG(seed) {
+        return new SeededRandom(seed);
+    }
 
     /**
      * Gets the final canvas element.
      * @returns {HTMLCanvasElement} The canvas.
      */
-    getCanvas() { return this.#finalCanvas; }
+    getCanvas() {
+        return this.#finalCanvas;
+    }
 
     /**
      * Gets a generator instance by name.
      * @param {string} name - The generator name.
      * @returns {object|undefined} The generator instance.
      */
-    getGeneratorInstance(name) { return this.#generatorRegistry.get(name); }
+    getGeneratorInstance(name) {
+        return this.#generatorRegistry.get(name);
+    }
 
     /**
      * Gets a modifier instance by name.
      * @param {string} name - The modifier name.
      * @returns {object|undefined} The modifier instance.
      */
-    getModifierInstance(name) { return this.#modifierRegistry.get(name); }
+    getModifierInstance(name) {
+        return this.#modifierRegistry.get(name);
+    }
 
     /**
      * Gets a palette instance by name.
      * @param {string} name - The palette name.
      * @returns {object|undefined} The palette instance.
      */
-    getPaletteInstance(name) { return this.#paletteRegistry.get(name); }
+    getPaletteInstance(name) {
+        return this.#paletteRegistry.get(name);
+    }
 
     /**
      * Gets the constructor/class of a generator by name.
      * @param {string} name - The generator name.
      * @returns {class|null} The generator class.
      */
-    getGenerator(name) { const i = this.getGeneratorInstance(name); return i ? i.constructor : null; }
+    getGenerator(name) {
+        const i = this.getGeneratorInstance(name);
+        return i ? i.constructor : null;
+    }
 
     /**
      * Gets the constructor/class of a modifier by name.
      * @param {string} name - The modifier name.
      * @returns {class|null} The modifier class.
      */
-    getModifier(name) { const i = this.getModifierInstance(name); return i ? i.constructor : null; }
+    getModifier(name) {
+        const i = this.getModifierInstance(name);
+        return i ? i.constructor : null;
+    }
 
     /**
      * Gets the list of registered generator names.
      * @returns {string[]} List of names.
      */
-    getGeneratorNames() { return Array.from(this.#generatorRegistry.keys()); }
+    getGeneratorNames() {
+        return Array.from(this.#generatorRegistry.keys());
+    }
 
     /**
      * Gets the list of registered palette names.
      * @returns {string[]} List of names.
      */
-    getPaletteNames() { return Array.from(this.#paletteRegistry.keys()); }
+    getPaletteNames() {
+        return Array.from(this.#paletteRegistry.keys());
+    }
 
     /**
      * Gets the list of registered modifier names.
      * @returns {string[]} List of names.
      */
-    getModifierNames() { return Array.from(this.#modifierRegistry.keys()); }
+    getModifierNames() {
+        return Array.from(this.#modifierRegistry.keys());
+    }
 
     /**
      * Gets a registered pattern by name.
      * @param {string} name - The pattern name.
      * @returns {object|null} The pattern object or null.
      */
-    getPattern(name) { return this.#patternRegistry.get(name) || null; }
+    getPattern(name) {
+        return this.#patternRegistry.get(name) || null;
+    }
 
     /**
      * Gets the list of registered pattern names.
      * @returns {string[]} List of names.
      */
-    getPatternNames() { return Array.from(this.#patternRegistry.keys()); }
+    getPatternNames() {
+        return Array.from(this.#patternRegistry.keys());
+    }
 
     /**
      * Registers a generator.
      * @param {string} name - The name.
      * @param {object} instance - The generator instance.
      */
-    registerGenerator(name, instance) { this.#generatorRegistry.set(name, instance); }
+    registerGenerator(name, instance) {
+        this.#generatorRegistry.set(name, instance);
+    }
 
     /**
      * Registers a palette.
      * @param {string} name - The name.
      * @param {object} instance - The palette instance.
      */
-    registerPalette(name, instance) { this.#paletteRegistry.set(name, instance); }
+    registerPalette(name, instance) {
+        this.#paletteRegistry.set(name, instance);
+    }
 
     /**
      * Registers a modifier.
      * @param {string} name - The name.
      * @param {object} instance - The modifier instance.
      */
-    registerModifier(name, instance) { this.#modifierRegistry.set(name, instance); }
+    registerModifier(name, instance) {
+        this.#modifierRegistry.set(name, instance);
+    }
 
     /**
      * Registers a pattern.
      * @param {string} name - The name.
      * @param {object} instance - The pattern instance.
      */
-    registerPattern(name, instance) { this.#patternRegistry.set(name, instance); }
+    registerPattern(name, instance) {
+        this.#patternRegistry.set(name, instance);
+    }
 }

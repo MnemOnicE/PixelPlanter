@@ -2,8 +2,8 @@
  * @file BatchGeneration.test.js
  * @description Tests for the Asset Factory / Batch Generation feature.
  */
-import { jest } from '@jest/globals';
-import 'jest-environment-jsdom';
+
+
 import { Planter } from '../src/Planter.js';
 
 describe('Planter Batch Generation', () => {
@@ -22,8 +22,8 @@ describe('Planter Batch Generation', () => {
 
         // Sprite size: 10 * 1 = 10px
         const spriteSize = 10;
-        const expectedWidth = (spriteSize * cols) + (padding * (cols - 1));
-        const expectedHeight = (spriteSize * rows) + (padding * (rows - 1));
+        const expectedWidth = spriteSize * cols + padding * (cols - 1);
+        const expectedHeight = spriteSize * rows + padding * (rows - 1);
 
         const sheet = planter.generateBatch({ rows, cols, padding, variance: 20 });
 

@@ -12,22 +12,22 @@ When using an AI tool for any development task (e.g., code generation, documenta
 
 ### **Google Gemini (Model: Gemini 1.5 Pro)**
 
--   **Date:** 2025-09-15
--   **Contributor:** Seth
--   **Task:**
-    -   Brainstormed the core modular architecture for the project.
-    -   Generated initial documentation templates for `README.md`, `AGENTS.md`, `CHANGELOG.md`, `BUGS.md`, and `ROADMAP.md`.
-    -   Provided foundational ideas for generative algorithms (Symmetry, Perlin Noise, Cellular Automata).
+- **Date:** 2025-09-15
+- **Contributor:** Seth
+- **Task:**
+    - Brainstormed the core modular architecture for the project.
+    - Generated initial documentation templates for `README.md`, `AGENTS.md`, `CHANGELOG.md`, `BUGS.md`, and `ROADMAP.md`.
+    - Provided foundational ideas for generative algorithms (Symmetry, Perlin Noise, Cellular Automata).
 
 ### **Jules (AI Agent)**
 
--   **Date:** 2025-11-28
--   **Task:**
-    -   Implemented the **Asset Factory** feature (sprite sheet generation).
-    -   Updated `Planter.js` with `generateBatch` method.
-    -   Updated `UIManager.js` and `index.html` to include Asset Factory UI.
-    -   Fixed ESM import paths for `driver.js` and `simplex-noise` to work in browser environment.
-    -   Added `BatchGeneration.test.js` and verified core engine tests.
-    -   Updated `ROADMAP.md`.
+- **Date:** 2025-11-28
+- **Task:**
+    - Implemented the **Asset Factory** feature (sprite sheet generation).
+    - Updated `Planter.js` with `generateBatch` method.
+    - Updated `UIManager.js` and `index.html` to include Asset Factory UI.
+    - Fixed ESM import paths for `driver.js` and `simplex-noise` to work in browser environment.
+    - Added `BatchGeneration.test.js` and verified core engine tests.
+    - Updated `ROADMAP.md`.
 
 ---

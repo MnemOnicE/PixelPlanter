@@ -1,4 +1,3 @@
-
 import { NoiseGenerator } from '../src/generators/NoiseGenerator.js';
 import { CellularAutomataGenerator } from '../src/generators/CellularAutomataGenerator.js';
 import { SeededRandom } from '../src/utils/PRNG.js';
@@ -8,9 +7,7 @@ describe('Smart Regions (Masking)', () => {
     const prng = new SeededRandom('test-seed');
 
     // Create a mask: left half 1, right half 0
-    const mask = Array.from({ length: size }, (_, y) =>
-        Array.from({ length: size }, (_, x) => (x < size / 2 ? 1 : 0))
-    );
+    const mask = Array.from({ length: size }, (_, y) => Array.from({ length: size }, (_, x) => (x < size / 2 ? 1 : 0)));
 
     test('NoiseGenerator respects inputMask', () => {
         const generator = new NoiseGenerator();

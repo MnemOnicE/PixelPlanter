@@ -22,7 +22,7 @@ export class SeededRandom {
      * @type {number}
      * @private
      */
-    #m = 2**31;
+    #m = 2 ** 31;
 
     /**
      * The multiplier constant for the LCG.

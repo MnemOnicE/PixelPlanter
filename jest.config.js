@@ -1,4 +1,4 @@
 export default {
-  testEnvironment: 'jsdom',
-  setupFiles: ['jest-canvas-mock'],
+    testEnvironment: 'jsdom',
+    setupFiles: ['jest-canvas-mock'],
 };

@@ -1,6 +1,5 @@
-
 import { Planter } from '../src/Planter.js';
-import 'jest-environment-jsdom';
+
 
 describe('Drawing Tools', () => {
     let planter;
@@ -23,9 +22,14 @@ describe('Drawing Tools', () => {
         // 0 0 0 0 0
 
         const ringPoints = [
-            {x:1, y:1}, {x:2, y:1}, {x:3, y:1},
-            {x:1, y:2},             {x:3, y:2},
-            {x:1, y:3}, {x:2, y:3}, {x:3, y:3}
+            { x: 1, y: 1 },
+            { x: 2, y: 1 },
+            { x: 3, y: 1 },
+            { x: 1, y: 2 },
+            { x: 3, y: 2 },
+            { x: 1, y: 3 },
+            { x: 2, y: 3 },
+            { x: 3, y: 3 },
         ];
 
         for (const p of ringPoints) {
@@ -46,11 +50,14 @@ describe('Drawing Tools', () => {
     });
 
     test('drawOnLayer modifies grid correctly', () => {
-         const layer = planter.addLayer({ generator: 'noise' });
-         const points = [{x: 5, y: 5}, {x: 6, y: 6}];
-         planter.drawOnLayer(layer.id, points, 9);
-         expect(layer.dataGrid[5][5]).toBe(9);
-         expect(layer.dataGrid[6][6]).toBe(9);
-         expect(layer.dataGrid[5][6]).toBe(0); // Unchanged
+        const layer = planter.addLayer({ generator: 'noise' });
+        const points = [
+            { x: 5, y: 5 },
+            { x: 6, y: 6 },
+        ];
+        planter.drawOnLayer(layer.id, points, 9);
+        expect(layer.dataGrid[5][5]).toBe(9);
+        expect(layer.dataGrid[6][6]).toBe(9);
+        expect(layer.dataGrid[5][6]).toBe(0); // Unchanged
     });
 });

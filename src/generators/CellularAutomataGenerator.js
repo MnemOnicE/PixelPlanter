@@ -19,7 +19,7 @@ export class CellularAutomataGenerator {
             min: 1,
             max: 20,
             step: 1,
-            defaultValue: 5
+            defaultValue: 5,
         },
         birthLimit: {
             label: 'Birth Limit',
@@ -27,7 +27,7 @@ export class CellularAutomataGenerator {
             min: 1,
             max: 8,
             step: 1,
-            defaultValue: 4
+            defaultValue: 4,
         },
         deathLimit: {
             label: 'Death Limit',
@@ -35,7 +35,7 @@ export class CellularAutomataGenerator {
             min: 1,
             max: 8,
             step: 1,
-            defaultValue: 3
+            defaultValue: 3,
         },
         initialChance: {
             label: 'Initial Chance',
@@ -43,9 +43,9 @@ export class CellularAutomataGenerator {
             min: 0.1,
             max: 0.9,
             step: 0.05,
-            defaultValue: 0.45
-        }
-    }
+            defaultValue: 0.45,
+        },
+    };
 
     /**
      * Runs the cellular automata simulation.
@@ -98,7 +98,7 @@ export class CellularAutomataGenerator {
             // Only add safety pixel if it's inside the mask (or no mask)
             const mid = Math.floor(gridSize / 2);
             if (!inputMask || inputMask[mid][mid] > 0) {
-                 grid[mid][mid] = 1;
+                grid[mid][mid] = 1;
             }
         }
 
