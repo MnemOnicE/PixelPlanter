@@ -15,7 +15,7 @@ export class OutlineModifier {
      * @param {object} [config={}] - An object for modifier-specific settings (unused here but standard signature).
      * @returns {number[][]} A new, modified 2D array with outlines applied.
      */
-    apply(dataGrid, config = {}) {
+    apply(dataGrid, config = {}, prng = null, readBelowGrid = null, activeMask = null) {
         const height = dataGrid.length;
         if (height === 0) return [];
         const width = dataGrid[0].length;
@@ -32,6 +32,11 @@ export class OutlineModifier {
         // Iterate over every cell (y, x) in the original `dataGrid`.
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
+                // If there's an active mask, only apply outline if the current cell is within the mask.
+                if (activeMask && activeMask[y] && activeMask[y][x] === 0) {
+                    continue; // Skip masked-out areas
+                }
+
                 // IF the current cell's value is 0 (it's empty space):
                 if (dataGrid[y][x] === 0) {
                     // Check its four direct neighbors (up, down, left, right).
