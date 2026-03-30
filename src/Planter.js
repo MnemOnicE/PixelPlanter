@@ -16,6 +16,7 @@ import { OutlineModifier } from './modifiers/OutlineModifier.js';
 import { DensityMaskModifier } from './modifiers/DensityMaskModifier.js';
 import { PathfinderModifier } from './modifiers/PathfinderModifier.js';
 import { ParticleModifier } from './modifiers/ParticleModifier.js';
+import { FilterModifier } from './modifiers/FilterModifier.js';
 
 /**
  * The main engine class.
@@ -163,6 +164,7 @@ export class Planter {
         this.registerModifier('density-mask', new DensityMaskModifier());
         this.registerModifier('pathfinder', new PathfinderModifier());
         this.registerModifier('particle-deposition', new ParticleModifier());
+        this.registerModifier('filter', new FilterModifier());
     }
 
     /**
