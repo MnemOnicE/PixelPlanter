@@ -32,7 +32,6 @@ export class OutlineModifier {
         // Iterate over every cell (y, x) in the original `dataGrid`.
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
-                // IF the current cell's value is 0 (it's empty space):
                 // If there's an active mask, only apply outline if the current cell is within the mask.
                 if (activeMask && activeMask[y] && activeMask[y][x] === 0) {
                     continue; // Skip masked-out areas
