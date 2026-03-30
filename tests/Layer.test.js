@@ -60,7 +60,7 @@ describe('Layer', () => {
         layer.generate(mockPlanter);
 
         expect(mockPlanter.getModifierInstance).toHaveBeenCalledWith('mod1');
-        expect(mockModifier.apply).toHaveBeenCalledWith(initialGrid, { name: 'mod1', val: 10 }, mockPRNG, null);
+        expect(mockModifier.apply).toHaveBeenCalledWith(initialGrid, { name: 'mod1', val: 10 }, mockPRNG, null, null);
         expect(layer.dataGrid).toBe(modifiedGrid);
     });
 });
