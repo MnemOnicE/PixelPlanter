@@ -34,16 +34,12 @@ export class DespeckleModifier {
      * @param {number[][]} activeMask - Optional mask array.
      * @returns {number[][]} A new, cleaned up 2D array.
      */
-    apply(dataGrid, config = {}, prng = null, readBelowGrid = null, activeMask = null) {
+    apply(dataGrid, config = {}, _prng = null, _readBelowGrid = null, activeMask = null) {
         const height = dataGrid.length;
         if (height === 0) return [];
         const width = dataGrid[0].length;
         if (width === 0) return [];
 
-        // eslint-disable-next-line no-unused-vars
-        const _p = prng;
-        // eslint-disable-next-line no-unused-vars
-        const _r = readBelowGrid;
         const maxIslandSize = config.maxIslandSize !== undefined ? config.maxIslandSize : 1;
 
         // Deep copy the input grid
