@@ -16,6 +16,12 @@ export class OutlineModifier {
      * @returns {number[][]} A new, modified 2D array with outlines applied.
      */
     apply(dataGrid, config = {}, prng = null, readBelowGrid = null, activeMask = null) {
+        // eslint-disable-next-line no-unused-vars
+        const _c = config;
+        // eslint-disable-next-line no-unused-vars
+        const _p = prng;
+        // eslint-disable-next-line no-unused-vars
+        const _r = readBelowGrid;
         const height = dataGrid.length;
         if (height === 0) return [];
         const width = dataGrid[0].length;
