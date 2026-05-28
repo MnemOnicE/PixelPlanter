@@ -35,7 +35,7 @@ export class SeededRandom {
         if (typeof seed === 'string') {
             // Hash the string to a 32-bit unsigned integer, then convert to BigInt
             seedBigInt = BigInt(this.#hashCode(seed) >>> 0);
-        } else if (typeof seed === 'number') {
+        } else if (typeof seed === 'number' && Number.isFinite(seed)) {
             // Take the integer part of the number, ensure it's positive and fits in 32 bits
             seedBigInt = BigInt(Math.floor(Math.abs(seed))) & 0xFFFFFFFFn;
         } else {
