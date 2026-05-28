@@ -70,10 +70,15 @@ export class GameSpriteGenerator {
         }, prng);
 
         // 2. Apply symmetry to the random noise BEFORE CA
-        const mirroredNoise = this.symmetryGen.run({
-            size,
-            mirrorAxis: 'vertical'
-        }, prng, null, structureNoise);
+        const mirroredNoise = Array.from({ length: size }, () => Array(size).fill(0));
+        const midPoint = Math.ceil(size / 2);
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < midPoint; x++) {
+                const val = structureNoise[y][x];
+                mirroredNoise[y][x] = val;
+                mirroredNoise[y][size - 1 - x] = val;
+            }
+        }
 
         // 3. Apply CA to meld the mirrored noise into a cohesive silhouette
         // (Initial chance is ignored here because we are passing mirroredNoise as a mask?
