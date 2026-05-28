@@ -57,7 +57,7 @@ export class DespeckleModifier {
                 // If it's an "on" pixel and we haven't checked it yet
                 if (outputGrid[y][x] > 0 && !visited[y][x]) {
                     // Find all connected pixels in this cluster
-                    const cluster = this.#floodFill(outputGrid, x, y, width, height, visited);
+                    const cluster = this.#floodFill(outputGrid, x, y, width, height, visited, activeMask);
 
                     // If the cluster size is less than or equal to the threshold, remove it
                     if (cluster.length <= maxIslandSize) {
