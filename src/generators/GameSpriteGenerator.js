@@ -107,8 +107,8 @@ export class GameSpriteGenerator {
             for (let x = 0; x < size; x++) {
                 if (silhouette[y][x] > 0) {
                     // It's part of the ship/creature
-                    // We give the base silhouette a value of 1, and textured areas a value of 2
-                    composited[y][x] = texture[y][x] > 0 ? 2 : 1;
+                    // We give the base silhouette a value of 1, and textured areas a value of 3 (to distinguish from outline value 2)
+                    composited[y][x] = texture[y][x] > 0 ? 3 : 1;
                 }
             }
         }
