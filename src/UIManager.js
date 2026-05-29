@@ -741,16 +741,16 @@ export class UIManager {
             const item = document.createElement('div');
             item.className = 'preset-item';
             item.dataset.config = preset.config;
-                        const nameDiv = document.createElement('div');
-            nameDiv.className = 'preset-name';
+            const img = document.createElement('img');
+            img.src = preset.preview;
+            img.alt = preset.name;
+            img.loading = 'lazy';
+            item.appendChild(img);
+
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'preset-item-name';
             nameDiv.textContent = preset.name;
-
-            const descDiv = document.createElement('div');
-            descDiv.className = 'preset-desc';
-            descDiv.textContent = preset.description;
-
             item.appendChild(nameDiv);
-            item.appendChild(descDiv);
             this.#presetGallery.appendChild(item);
         });
     }
