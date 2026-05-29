@@ -1,35 +1,93 @@
-export class LayerPanel {
-    #planter;
-    #container;
-    #onLayerAction;
+import re
 
-    constructor(planter, container, onLayerAction) {
-        this.#planter = planter;
-        this.#container = container;
-        this.#onLayerAction = onLayerAction;
-        this.#attachEventListeners();
-    }
+with open('src/UIManager.js', 'r') as f:
+    content = f.read()
 
-    render() {
-        const layerStack = this.#planter.getLayerStack();
-        this.#container.textContent = '';
+# Instead of literal match, we use regex substitution again because it's more robust to whitespace.
 
-        [...layerStack].reverse().forEach((layer) => {
-            const item = document.createElement('div');
-            item.className = 'layer-item';
-            if (layer.type === 'zone') {
-                item.classList.add('zone-layer');
-            }
-            item.dataset.layerId = layer.id;
-            // Note: Active state is managed by CSS based on a class we need to apply
-            // But we don't have the activeLayerId here directly unless passed or queried.
-            // For now, let's rely on the parent to update the 'active' class or pass it in.
-            // Better: Pass activeLayerId to render.
+content = re.sub(r'this\.#presetGallery\.innerHTML = \'<p>Could not load presets\.<\/p>\';',
+'''this.#presetGallery.textContent = '';
+                const p = document.createElement('p');
+                p.textContent = 'Could not load presets.';
+                this.#presetGallery.appendChild(p);''', content)
+
+content = re.sub(r'this\.#presetGallery\.innerHTML = \'\';', 'this.#presetGallery.textContent = \'\';', content)
+
+content = re.sub(r'item\.innerHTML = `[^`]+`;',
+'''            const nameDiv = document.createElement('div');
+            nameDiv.className = 'preset-name';
+            nameDiv.textContent = preset.name;
+
+            const descDiv = document.createElement('div');
+            descDiv.className = 'preset-desc';
+            descDiv.textContent = preset.description;
+
+            item.appendChild(nameDiv);
+            item.appendChild(descDiv);''', content)
+
+content = re.sub(r'this\.#controls\.generatorSelect\.innerHTML = names[^;]+;',
+'''        this.#controls.generatorSelect.textContent = '';
+        names.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            this.#controls.generatorSelect.appendChild(opt);
+        });''', content)
+
+content = re.sub(r'this\.#controls\.paletteSelect\.innerHTML = names[^;]+;',
+'''        this.#controls.paletteSelect.textContent = '';
+        names.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            this.#controls.paletteSelect.appendChild(opt);
+        });''', content)
+
+content = re.sub(r'this\.#modifiersContainer\.innerHTML = names[^;]+;',
+'''        this.#modifiersContainer.textContent = '';
+        names.forEach(name => {
+            const label = document.createElement('label');
+            label.className = 'modifier-checkbox';
+
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.setAttribute('data-modifier-name', name);
+
+            label.appendChild(input);
+            label.appendChild(document.createTextNode(' ' + name));
+            this.#modifiersContainer.appendChild(label);
+        });''', content)
+
+with open('src/UIManager.js', 'w') as f:
+    f.write(content)
+
+with open('src/ui/SettingsPanel.js', 'r') as f:
+    sp_content = f.read()
+
+sp_content = sp_content.replace('this.#generatorParamsContainer.innerHTML = \'\';', 'this.#generatorParamsContainer.textContent = \'\';')
+sp_content = sp_content.replace('this.#modifierParamsContainer.innerHTML = \'\';', 'this.#modifierParamsContainer.textContent = \'\';')
+
+sp_content = re.sub(r'input\.innerHTML = options[^;]+;',
+'''                input.textContent = '';
+                options.forEach(opt => {
+                    const optionEl = document.createElement('option');
+                    optionEl.value = opt;
+                    optionEl.textContent = opt;
+                    if (opt === currentValue) optionEl.selected = true;
+                    input.appendChild(optionEl);
+                });''', sp_content)
+
+with open('src/ui/SettingsPanel.js', 'w') as f:
+    f.write(sp_content)
 
 
+with open('src/ui/LayerPanel.js', 'r') as f:
+    lp_content = f.read()
 
+lp_content = lp_content.replace('this.#container.innerHTML = \'\';', 'this.#container.textContent = \'\';')
 
-                        const dragHandle = document.createElement('div');
+lp_content = re.sub(r'item\.innerHTML = `[^`]+`;',
+'''            const dragHandle = document.createElement('div');
             dragHandle.className = 'layer-drag-handle';
             dragHandle.textContent = '≡';
 
@@ -97,7 +155,7 @@ export class LayerPanel {
             optNoMask.textContent = 'No Mask';
             maskSelect.appendChild(optNoMask);
 
-            const planter = this.#planter;
+            const planter = this.#callbacks.getPlanter();
             const stack = planter.getLayerStack();
             const currentIndex = stack.findIndex((l) => l.id === layer.id);
             const lowerLayers = stack.slice(0, currentIndex);
@@ -134,69 +192,10 @@ export class LayerPanel {
 
             item.appendChild(dragHandle);
             item.appendChild(contentDiv);
-            item.appendChild(actionsDiv);
-            this.#container.appendChild(item);
-        });
-    }
+            item.appendChild(actionsDiv);''', lp_content)
 
-    updateActiveState(activeLayerId) {
-        const items = this.#container.querySelectorAll('.layer-item');
-        items.forEach(item => {
-            if (Number(item.dataset.layerId) === activeLayerId) {
-                item.classList.add('active');
-            } else {
-                item.classList.remove('active');
-            }
-        });
-    }
+lp_content = re.sub(r'const maskOptionsHtml = [^;]+;', '', lp_content)
 
-    #attachEventListeners() {
-        this.#container.addEventListener('click', (e) => {
-            const layerItem = e.target.closest('.layer-item');
-            if (!layerItem) return;
-            const layerId = Number(layerItem.dataset.layerId);
 
-            if (e.target.matches('.layer-delete-btn')) {
-                this.#onLayerAction('delete', layerId);
-            } else if (e.target.matches('.layer-move-up-btn')) {
-                this.#onLayerAction('moveUp', layerId);
-            } else if (e.target.matches('.layer-move-down-btn')) {
-                this.#onLayerAction('moveDown', layerId);
-            } else if (e.target.matches('.copy-mods-btn')) {
-                this.#onLayerAction('copyMods', layerId);
-            } else if (e.target.matches('.paste-mods-btn')) {
-                this.#onLayerAction('pasteMods', layerId);
-            } else if (!e.target.matches('input, select, button')) {
-                this.#onLayerAction('select', layerId);
-            }
-        });
-
-        this.#container.addEventListener('input', (e) => {
-            const layerItem = e.target.closest('.layer-item');
-            if (!layerItem) return;
-            const layerId = Number(layerItem.dataset.layerId);
-
-            if (e.target.matches('.layer-visible-toggle')) {
-                this.#onLayerAction('toggleVisibility', layerId, e.target.checked);
-            } else if (e.target.matches('.layer-type-select')) {
-                 // Update visually immediately
-                 if (e.target.value === 'zone') {
-                    layerItem.classList.add('zone-layer');
-                 } else {
-                    layerItem.classList.remove('zone-layer');
-                 }
-                 this.#onLayerAction('updateType', layerId, e.target.value);
-            } else if (e.target.matches('.layer-opacity-slider')) {
-                this.#onLayerAction('updateOpacity', layerId, parseFloat(e.target.value));
-            } else if (e.target.matches('.layer-blend-mode-select')) {
-                this.#onLayerAction('updateBlendMode', layerId, e.target.value);
-            } else if (e.target.matches('.layer-name-input')) {
-                this.#onLayerAction('updateName', layerId, e.target.value);
-            } else if (e.target.matches('.layer-mask-select')) {
-                const value = e.target.value;
-                const maskId = value === 'none' ? null : Number(value);
-                this.#onLayerAction('updateMask', layerId, maskId);
-            }
-        });
-    }
-}
+with open('src/ui/LayerPanel.js', 'w') as f:
+    f.write(lp_content)

@@ -25,7 +25,7 @@ export class FilterModifier {
      * @param {number[][]} [activeMask] - An existing mask passed down from a parent logic block.
      * @returns {number[][]} A new 2D mask array (1s and 0s) where the condition is met.
      */
-    apply(dataGrid, config = {}, prng, readBelowGrid = null, activeMask = null) {
+    apply(dataGrid, config = {}, prng, _readBelowGrid = null, activeMask = null) {
         const height = dataGrid.length;
         if (height === 0) return [];
         const width = dataGrid[0].length;
