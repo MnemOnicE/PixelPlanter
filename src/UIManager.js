@@ -132,7 +132,6 @@ export class UIManager {
      * @type {boolean}
      * @private
      */
-    #isBrushing = false;
 
     /**
      * Clipboard for copying modifier configurations.
@@ -509,7 +508,7 @@ export class UIManager {
 
         const { x: canvasX, y: canvasY } = data;
         const layer = this.#planterInstance.getLayerById(this.#activeLayerId);
-        const { size, pixelSize } = layer.config;
+        const { pixelSize } = layer.config;
 
         const gridX = Math.floor(canvasX / pixelSize);
         const gridY = Math.floor(canvasY / pixelSize);
@@ -722,7 +721,10 @@ export class UIManager {
                 this.#populatePresetGallery(presets);
             } catch (error) {
                 console.error('Failed to load presets:', error);
-                this.#presetGallery.innerHTML = '<p>Could not load presets.</p>';
+                this.#presetGallery.textContent = '';
+                const p = document.createElement('p');
+                p.textContent = 'Could not load presets.';
+                this.#presetGallery.appendChild(p);
             }
         }
         this.#presetsModal.style.display = 'block';
@@ -734,15 +736,21 @@ export class UIManager {
      * @private
      */
     #populatePresetGallery(presets) {
-        this.#presetGallery.innerHTML = '';
+        this.#presetGallery.textContent = '';
         presets.forEach((preset) => {
             const item = document.createElement('div');
             item.className = 'preset-item';
             item.dataset.config = preset.config;
-            item.innerHTML = `
-                <img src="${preset.preview}" alt="${preset.name}" loading="lazy">
-                <div class="preset-item-name">${preset.name}</div>
-            `;
+                        const nameDiv = document.createElement('div');
+            nameDiv.className = 'preset-name';
+            nameDiv.textContent = preset.name;
+
+            const descDiv = document.createElement('div');
+            descDiv.className = 'preset-desc';
+            descDiv.textContent = preset.description;
+
+            item.appendChild(nameDiv);
+            item.appendChild(descDiv);
             this.#presetGallery.appendChild(item);
         });
     }
@@ -858,9 +866,13 @@ export class UIManager {
      */
     #populateGeneratorOptions() {
         const names = this.#planterInstance.getGeneratorNames();
-        this.#controls.generatorSelect.innerHTML = names
-            .map((name) => `<option value="${name}">${name}</option>`)
-            .join('');
+                this.#controls.generatorSelect.textContent = '';
+        names.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            this.#controls.generatorSelect.appendChild(opt);
+        });
     }
 
     /**
@@ -869,9 +881,13 @@ export class UIManager {
      */
     #populatePaletteOptions() {
         const names = this.#planterInstance.getPaletteNames();
-        this.#controls.paletteSelect.innerHTML = names
-            .map((name) => `<option value="${name}">${name}</option>`)
-            .join('');
+                this.#controls.paletteSelect.textContent = '';
+        names.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            this.#controls.paletteSelect.appendChild(opt);
+        });
     }
 
     /**
@@ -880,16 +896,19 @@ export class UIManager {
      */
     #populateModifierOptions() {
         const names = this.#planterInstance.getModifierNames();
-        this.#modifiersContainer.innerHTML = names
-            .map(
-                (name) => `
-            <div>
-                <input type="checkbox" id="mod-${name}" data-modifier-name="${name}">
-                <label for="mod-${name}">${name}</label>
-            </div>
-        `,
-            )
-            .join('');
+                this.#modifiersContainer.textContent = '';
+        names.forEach(name => {
+            const label = document.createElement('label');
+            label.className = 'modifier-checkbox';
+
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.setAttribute('data-modifier-name', name);
+
+            label.appendChild(input);
+            label.appendChild(document.createTextNode(' ' + name));
+            this.#modifiersContainer.appendChild(label);
+        });
     }
 
     /**

@@ -1,28 +1,27 @@
 export class SettingsPanel {
-    #container;
+
     #generatorParamsContainer;
     #modifierParamsContainer;
     #planter;
-    #onChange;
 
-    constructor(planter, generatorContainer, modifierContainer, onChange) {
+
+    constructor(planter, generatorContainer, modifierContainer) {
         this.#planter = planter;
         this.#generatorParamsContainer = generatorContainer;
         this.#modifierParamsContainer = modifierContainer;
-        this.#onChange = onChange;
         this.#attachEventListeners();
     }
 
     updateGeneratorParamsUI(generatorName, config) {
         const generatorClass = this.#planter.getGenerator(generatorName);
-        this.#generatorParamsContainer.innerHTML = '';
+        this.#generatorParamsContainer.textContent = '';
         if (generatorClass && generatorClass.params) {
             this.#buildControls(this.#generatorParamsContainer, generatorClass.params, generatorName, config);
         }
     }
 
     updateModifierParamsUI(modifiersConfig) {
-        this.#modifierParamsContainer.innerHTML = '';
+        this.#modifierParamsContainer.textContent = '';
         if (!modifiersConfig) return;
         modifiersConfig.forEach((modConfig) => {
             const modifierClass = this.#planter.getModifier(modConfig.name);
@@ -93,9 +92,14 @@ export class SettingsPanel {
                     paramConfig.optionsSource === 'patterns'
                         ? this.#planter.getPatternNames()
                         : paramConfig.options || [];
-                input.innerHTML = options
-                    .map((opt) => `<option value="${opt}" ${opt == currentValue ? 'selected' : ''}>${opt}</option>`)
-                    .join('');
+                                input.textContent = '';
+                options.forEach(opt => {
+                    const optionEl = document.createElement('option');
+                    optionEl.value = opt;
+                    optionEl.textContent = opt;
+                    if (opt === currentValue) optionEl.selected = true;
+                    input.appendChild(optionEl);
+                });
             }
             if (input) {
                 input.dataset.paramOwner = ownerName;

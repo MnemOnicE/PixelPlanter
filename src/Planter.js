@@ -293,18 +293,7 @@ export class Planter {
         }
     }
 
-    /**
-     * Helper to generate a single layer with context.
-     * (Currently unused directly but kept for completeness).
-     * @param {Layer} layer - The layer to generate.
-     * @param {Layer[]} allLayers - The full stack of layers.
-     * @private
-     */
-    #generateLayerWithContext(layer, allLayers) {
-        const currentIndex = allLayers.findIndex((l) => l.id === layer.id);
-        const readBelowGrid = this.#createCompositeGridForLayers(allLayers.slice(0, currentIndex));
-        layer.generate(this, readBelowGrid);
-    }
+
 
     /**
      * Applies a mask to a target grid.
@@ -313,6 +302,9 @@ export class Planter {
      * @param {number[][]} targetGrid - The grid to modify.
      * @param {number[][]} maskGrid - The grid to use as a mask.
      * @private
+     */
+    /**
+     * Applies a mask to a target grid.
      */
     #applyMask(targetGrid, maskGrid) {
         const size = this.#globalConfig.size;
