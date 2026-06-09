@@ -262,6 +262,7 @@ export class UIManager {
     #bindDOM() {
         this.#controls.generatorSelect = document.getElementById('generator-select');
         this.#controls.paletteSelect = document.getElementById('palette-select');
+        this.#controls.paletteSwatches = document.getElementById('palette-swatches');
         this.#controls.sizeInput = document.getElementById('size-input');
         this.#controls.pixelSizeInput = document.getElementById('pixel-size-input');
         this.#controls.seedInput = document.getElementById('seed-input');
@@ -363,6 +364,8 @@ export class UIManager {
              this.#canvasInput.setSymmetryMode(this.#activeSymmetryMode);
         });
 
+        this.#controls.paletteSelect.addEventListener('change', () => this.#updatePaletteSwatches());
+
         this.#controls.toolRadios.forEach((radio) => {
             radio.addEventListener('change', (e) => {
                 this.#activeTool = e.target.value;
@@ -400,6 +403,18 @@ export class UIManager {
             }
         });
         this.#controls.factoryGenerateBtn.addEventListener('click', () => this.#handleGenerateBatch());
+
+
+        // Collapsible sections
+        document.querySelectorAll('.collapsible').forEach(header => {
+            header.addEventListener('click', () => {
+                header.classList.toggle('collapsed');
+                const content = header.nextElementSibling;
+                if (content && content.classList.contains('section-content')) {
+                    content.classList.toggle('collapsed');
+                }
+            });
+        });
 
         // Mobile Sidebar Toggles
         if (this.#controls.toggleLeftSidebarBtn) {
@@ -555,6 +570,11 @@ export class UIManager {
                 break;
             case 'moveDown':
                 this.#planterInstance.moveLayer(layerId, 'down');
+                this.#renderLayerPanel();
+                this.#saveState();
+                break;
+            case 'reorder':
+                this.#planterInstance.reorderLayer(layerId, value);
                 this.#renderLayerPanel();
                 this.#saveState();
                 break;
@@ -829,6 +849,7 @@ export class UIManager {
         const config = layer.config;
         this.#controls.generatorSelect.value = config.generator;
         this.#controls.paletteSelect.value = config.palette;
+        this.#updatePaletteSwatches();
         this.#controls.seedInput.value = config.seed;
         this.#updateGeneratorParamsUI(config.generator, config);
         const allModifierCheckboxes = this.#modifiersContainer.querySelectorAll('input[type="checkbox"]');
@@ -879,6 +900,28 @@ export class UIManager {
      * Populates the palette select dropdown.
      * @private
      */
+
+    /**
+     * Updates the color swatches below the palette dropdown.
+     * @private
+     */
+    #updatePaletteSwatches() {
+        if (!this.#controls.paletteSwatches) return;
+        this.#controls.paletteSwatches.textContent = '';
+        const selectedPaletteName = this.#controls.paletteSelect.value;
+        const paletteInstance = this.#planterInstance.getPaletteInstance(selectedPaletteName);
+
+        if (paletteInstance && paletteInstance.colors) {
+            paletteInstance.colors.forEach(colorHex => {
+                const swatch = document.createElement('div');
+                swatch.className = 'swatch';
+                swatch.style.backgroundColor = colorHex;
+                swatch.title = colorHex;
+                this.#controls.paletteSwatches.appendChild(swatch);
+            });
+        }
+    }
+
     #populatePaletteOptions() {
         const names = this.#planterInstance.getPaletteNames();
                 this.#controls.paletteSelect.textContent = '';
@@ -888,6 +931,7 @@ export class UIManager {
             opt.textContent = name;
             this.#controls.paletteSelect.appendChild(opt);
         });
+        this.#updatePaletteSwatches();
     }
 
     /**
