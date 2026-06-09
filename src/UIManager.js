@@ -997,29 +997,24 @@ export class UIManager {
         for (let idx = 0; idx < data.length; idx += 4) {
             const alpha = data[idx + 3] / 255;
             if (alpha > 0) {
-                const x = (idx / 4) % w;
-                const y = Math.floor((idx / 4) / w);
-                rects.push(`<rect x="${x}" y="${y}" width="1" height="1" fill="rgba(${data[idx]},${data[idx+1]},${data[idx+2]},${alpha})" />`);
+                rects.push(`<rect x="${(idx / 4) % w}" y="${Math.floor((idx / 4) / w)}" width="1" height="1" fill="rgba(${data[idx]},${data[idx+1]},${data[idx+2]},${alpha})" />`);
             }
         }
 
-        const svgBlob = new Blob([
-            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">\n`,
-            ...rects,
-            '\n</svg>'
-        ], { type: 'image/svg+xml' });
-
-        this.#downloadBlob(svgBlob, 'pixel-planter-export.svg');
+        this.#triggerFileDownload(
+            new Blob([`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">\n`, ...rects, '\n</svg>'], { type: 'image/svg+xml' }),
+            'pixel-planter-export.svg'
+        );
     }
 
-    #downloadBlob(blob, filename) {
+    #triggerFileDownload(blob, filename) {
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         URL.revokeObjectURL(url);
     }
 

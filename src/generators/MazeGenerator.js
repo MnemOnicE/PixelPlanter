@@ -38,89 +38,50 @@ export class MazeGenerator {
      * @returns {number[][]} A 2D array representing the generated maze.
      */
 
-    #createSolidGrid(size) {
-        const arr = [];
-        for (let i = 0; i < size; i++) {
-            arr.push(Array(size).fill(1));
-        }
-        return arr;
-    }
-
     run({ size, complexity = 5 }, prng, inputMask = null) {
-        const gridSize = Math.floor(size);
-        if (gridSize < 5) {
-            // Too small for a meaningful maze, return a solid block or empty
-            return this.#createSolidGrid(gridSize);
-        }
+        const dim = Math.round(size);
+        if (dim < 5) return Array(dim).fill(0).map(() => Array(dim).fill(1));
 
-        // Initialize grid with 1s (walls)
-        const grid = this.#createSolidGrid(gridSize);
+        const gridData = Array(dim).fill(0).map(() => Array(dim).fill(1));
 
-        // Start carving paths (0s)
-        // Maze generation typically works best on odd-sized grids if we consider paths and walls as 1 cell each.
-        // We will carve starting from (1, 1).
+        const pathNodes = [{ x: 1, y: 1 }];
+        gridData[1][1] = 0;
 
-        const stack = [];
-        let current = { x: 1, y: 1 };
-        grid[current.y][current.x] = 0; // 0 is path
-        stack.push(current);
+        const dirs = [[0, -2], [2, 0], [0, 2], [-2, 0]];
 
-        const directions = [
-            { dx: 0, dy: -2 }, // Up
-            { dx: 2, dy: 0 },  // Right
-            { dx: 0, dy: 2 },  // Down
-            { dx: -2, dy: 0 }  // Left
-        ];
+        while (pathNodes.length) {
+            const head = pathNodes[pathNodes.length - 1];
 
-        while (stack.length > 0) {
-            current = stack[stack.length - 1];
-
-            // Find unvisited neighbors
-            const unvisited = [];
-            directions.forEach(dir => {
-                const nx = current.x + dir.dx;
-                const ny = current.y + dir.dy;
-                if (nx > 0 && nx < gridSize - 1 && ny > 0 && ny < gridSize - 1 && grid[ny][nx] === 1) {
-                    unvisited.push(dir);
-                }
+            const valid = dirs.filter(([dx, dy]) => {
+                const nx = head.x + dx, ny = head.y + dy;
+                return nx > 0 && nx < dim - 1 && ny > 0 && ny < dim - 1 && gridData[ny][nx] === 1;
             });
 
-            if (unvisited.length > 0) {
-                // Choose a random unvisited neighbor
-                const dir = unvisited[Math.floor(prng.next() * unvisited.length)];
-
-                // Carve through the wall
-                grid[current.y + dir.dy / 2][current.x + dir.dx / 2] = 0;
-                // Carve the destination
-                grid[current.y + dir.dy][current.x + dir.dx] = 0;
-
-                stack.push({ x: current.x + dir.dx, y: current.y + dir.dy });
+            if (valid.length) {
+                const [dx, dy] = valid[Math.floor(prng.next() * valid.length)];
+                gridData[head.y + dy / 2][head.x + dx / 2] = 0;
+                gridData[head.y + dy][head.x + dx] = 0;
+                pathNodes.push({ x: head.x + dx, y: head.y + dy });
             } else {
-                stack.pop();
+                pathNodes.pop();
             }
         }
 
-        // Apply mask if provided
         if (inputMask) {
-            for (let y = 0; y < gridSize; y++) {
-                for (let x = 0; x < gridSize; x++) {
-                    if (inputMask[y][x] === 0) {
-                        grid[y][x] = 0;
-                    }
+            for (let r = 0; r < dim; r++) {
+                for (let c = 0; c < dim; c++) {
+                    if (inputMask[r][c] === 0) gridData[r][c] = 0;
                 }
             }
         }
 
-        // Add some complexity (randomly removing some walls to create loops)
-        const loopsToRemove = Math.floor((complexity / 10) * (gridSize * gridSize * 0.05));
-        for (let i = 0; i < loopsToRemove; i++) {
-            const rx = Math.floor(prng.next() * (gridSize - 2)) + 1;
-            const ry = Math.floor(prng.next() * (gridSize - 2)) + 1;
-            if (grid[ry][rx] === 1) {
-                grid[ry][rx] = 0;
-            }
+        const loops = Math.floor((complexity / 10) * (dim * dim * 0.05));
+        for (let k = 0; k < loops; k++) {
+            const rx = Math.floor(prng.next() * (dim - 2)) + 1;
+            const ry = Math.floor(prng.next() * (dim - 2)) + 1;
+            if (gridData[ry][rx] === 1) gridData[ry][rx] = 0;
         }
 
-        return grid;
+        return gridData;
     }
 }

@@ -17,10 +17,8 @@ describe('MazeGenerator', () => {
         const prng = new SeededRandom('test');
         const grid = generator.run({ size: 15, complexity: 5 }, prng);
 
-        const flatGrid = grid.flat();
-        const hasWalls = flatGrid.some(v => v === 1);
-        const hasPaths = flatGrid.some(v => v === 0);
-        expect(hasWalls).toBe(true);
-        expect(hasPaths).toBe(true);
+        const flattened = Array.prototype.concat.apply([], grid);
+        expect(flattened.indexOf(1)).not.toBe(-1);
+        expect(flattened.indexOf(0)).not.toBe(-1);
     });
 });
