@@ -307,3 +307,44 @@ hr {
     border-radius: 8px;
     color: var(--text-main);
 }
+
+/* --- Palette Swatches --- */
+.palette-swatches {
+    min-height: 15px; /* Prevent jumping when empty */
+}
+
+.swatch {
+    width: 15px;
+    height: 15px;
+    border-radius: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* --- Collapsible Sections --- */
+.collapsible {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.collapsible::after {
+    content: '\25BC'; /* Down arrow */
+    font-size: 0.8em;
+    transition: transform 0.3s;
+}
+
+.collapsible.collapsed::after {
+    transform: rotate(-90deg);
+}
+
+.section-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+}
+
+.section-content.collapsed {
+    display: none;
+}

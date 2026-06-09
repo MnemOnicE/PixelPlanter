@@ -452,6 +452,19 @@ export class Planter {
     }
 
     /**
+     * Reorders a layer by moving it to a specific index.
+     * @param {number} layerId - The ID of the layer to move.
+     * @param {number} targetIndex - The index to move it to.
+     */
+    reorderLayer(layerId, targetIndex) {
+        const index = this.#layerStack.findIndex((l) => l.id === layerId);
+        if (index === -1) return;
+
+        const [layer] = this.#layerStack.splice(index, 1);
+        this.#layerStack.splice(targetIndex, 0, layer);
+    }
+
+    /**
      * Retrieves a layer by its ID.
      * @param {number|string} id - The layer ID.
      * @returns {Layer|undefined} The layer instance or undefined.
