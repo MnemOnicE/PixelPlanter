@@ -20,43 +20,67 @@ export class SettingsPanel {
         }
     }
 
+
     updateModifierParamsUI(modifiersConfig) {
         this.#modifierParamsContainer.textContent = '';
         if (!modifiersConfig) return;
         modifiersConfig.forEach((modConfig) => {
-            const modifierClass = this.#planter.getModifier(modConfig.name);
-            if (modifierClass && modifierClass.params) {
-                const groupDiv = document.createElement('div');
-                groupDiv.className = 'modifier-param-group';
-                const groupLabel = document.createElement('h4');
-                groupLabel.textContent = `${modConfig.name} Settings`;
-                groupDiv.appendChild(groupLabel);
-                this.#buildControls(groupDiv, modifierClass.params, modConfig.name, modConfig);
-                this.#modifierParamsContainer.appendChild(groupDiv);
-            }
+            this.#renderModifierNode(modConfig, 0, this.#modifierParamsContainer);
         });
     }
 
+    #renderModifierNode(modConfig, depth, container) {
+        const modifierClass = this.#planter.getModifier(modConfig.name);
+        if (modifierClass) {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'modifier-param-group';
+            groupDiv.style.marginLeft = `${depth * 20}px`;
+            if (depth > 0) {
+                groupDiv.style.borderLeft = '2px solid var(--border)';
+                groupDiv.style.paddingLeft = '10px';
+            }
+
+            const groupLabel = document.createElement('h4');
+            groupLabel.textContent = `${modConfig.name} Settings`;
+            groupDiv.appendChild(groupLabel);
+
+            if (modifierClass.params) {
+                this.#buildControls(groupDiv, modifierClass.params, modConfig.name, modConfig);
+            }
+
+            if (modifierClass.isLogicBlock) {
+                const addBtn = document.createElement('button');
+                addBtn.textContent = '+ Add Child Modifier';
+                addBtn.className = 'secondary';
+                addBtn.style.marginTop = '5px';
+                addBtn.style.fontSize = '0.8em';
+                // Mock behavior for now
+                addBtn.onclick = () => alert('Advanced visual pipeline editor coming soon!');
+                groupDiv.appendChild(addBtn);
+            }
+
+            if (modConfig.children && modConfig.children.length > 0) {
+                const childrenContainer = document.createElement('div');
+                childrenContainer.className = 'children-container';
+                modConfig.children.forEach(child => {
+                    this.#renderModifierNode(child, depth + 1, childrenContainer);
+                });
+                groupDiv.appendChild(childrenContainer);
+            }
+
+            container.appendChild(groupDiv);
+        }
+    }
+
+
     getConfig() {
          const config = { modifiers: [] };
-         // We only grab dynamic params here.
-         // The parent UIManager still holds references to the main selects (generator, palette, etc.)
-         // Ideally, we'd move those here too, but let's start with the dynamic param containers.
-
          const genParamsInputs = this.#generatorParamsContainer.querySelectorAll('[data-param-name]');
          genParamsInputs.forEach((input) => {
              const key = input.dataset.paramName;
              const value = input.type === 'range' ? parseFloat(input.value) : input.value;
              config[key] = isNaN(value) ? input.value : value;
          });
-
-         // For modifiers, we need to know which ones are active.
-         // This information is currently in the modifiers checkboxes which are outside this panel's scope in the current DOM structure.
-         // However, the input parsing logic for modifiers depends on the DOM elements inside modifierParamsContainer.
-
-         // We will return a helper function or object to let the parent extract modifier params.
-         // Or, the parent passes in the active modifier names, and we extract the values.
-
          return config;
     }
 
@@ -92,7 +116,7 @@ export class SettingsPanel {
                     paramConfig.optionsSource === 'patterns'
                         ? this.#planter.getPatternNames()
                         : paramConfig.options || [];
-                                input.textContent = '';
+                input.textContent = '';
                 options.forEach(opt => {
                     const optionEl = document.createElement('option');
                     optionEl.value = opt;

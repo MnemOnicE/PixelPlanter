@@ -10,6 +10,7 @@ import { RecursiveGrowthGenerator } from './generators/RecursiveGrowthGenerator.
 import { PatternGenerator } from './generators/PatternGenerator.js';
 import { NoiseGenerator } from './generators/NoiseGenerator.js';
 import { CellularAutomataGenerator } from './generators/CellularAutomataGenerator.js';
+import { MazeGenerator } from './generators/MazeGenerator.js';
 import { MonochromePalette } from './palettes/MonochromePalette.js';
 import { VaporwavePalette, ForestPalette } from './palettes/ColorPalettes.js';
 import { OutlineModifier } from './modifiers/OutlineModifier.js';
@@ -155,6 +156,7 @@ export class Planter {
         this.registerGenerator('pattern', new PatternGenerator());
         this.registerGenerator('noise', new NoiseGenerator());
         this.registerGenerator('cellular-automata', new CellularAutomataGenerator());
+        this.registerGenerator('maze', new MazeGenerator());
 
         this.registerPalette('monochrome', new MonochromePalette());
         this.registerPalette('vaporwave', new VaporwavePalette());

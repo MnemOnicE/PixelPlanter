@@ -278,6 +278,7 @@ export class UIManager {
         this.#modifierParamsContainer = document.getElementById('modifier-params');
         this.#controls.saveBtn = document.getElementById('save-btn');
         this.#controls.exportJsonBtn = document.getElementById('export-json-btn');
+        this.#controls.exportSvgBtn = document.getElementById('export-svg-btn');
         this.#controls.undoBtn = document.getElementById('undo-btn');
         this.#controls.redoBtn = document.getElementById('redo-btn');
         this.#controls.shareBtn = document.getElementById('share-btn');
@@ -348,6 +349,7 @@ export class UIManager {
         this.#controls.randomizeBtn.addEventListener('click', () => this.#handleRandomizeAll());
         this.#controls.addLayerBtn.addEventListener('click', () => this.#handleAddLayer());
         this.#controls.exportJsonBtn.addEventListener('click', () => this.#handleExportJSON());
+        this.#controls.exportSvgBtn.addEventListener('click', () => this.#handleExportSVG());
         this.#controls.undoBtn.addEventListener('click', () => this.#handleUndo());
         this.#controls.redoBtn.addEventListener('click', () => this.#handleRedo());
         this.#controls.shareBtn.addEventListener('click', () => this.#handleShare());
@@ -972,35 +974,50 @@ export class UIManager {
      */
     #updateModifierParamsUI(modifiersConfig) {
         this.#settingsPanel.updateModifierParamsUI(modifiersConfig);
-
-        // --- FUTURE UI PREP: Visual Modifier Pipeline (Tree View) ---
-        // TODO: Replace the simple checkbox list above with a recursive tree renderer.
-        // Example structure for future implementation:
-        /*
-        function renderPipelineNode(nodeConfig, depth = 0) {
-            const indent = depth * 20;
-            let html = `<div style="margin-left: ${indent}px; border-left: 2px solid #ccc; padding-left: 10px;">`;
-            html += `<strong>${nodeConfig.name}</strong>`;
-
-            // Render settings for this node...
-
-            if (nodeConfig.children && nodeConfig.children.length > 0) {
-                html += '<div class="children-container">';
-                nodeConfig.children.forEach(child => {
-                    html += renderPipelineNode(child, depth + 1);
-                });
-                html += '</div>';
-            }
-            html += '</div>';
-            return html;
-        }
-        */
     }
 
     /**
      * Exports the current layer stack to a JSON file.
      * @private
      */
+
+    /**
+     * Exports the final canvas as an SVG file.
+     * @private
+     */
+    #handleExportSVG() {
+        const canvas = this.#planterInstance.getCanvas();
+        if (!canvas) return;
+
+        const w = canvas.width;
+        const h = canvas.height;
+        const data = canvas.getContext('2d').getImageData(0, 0, w, h).data;
+        const rects = [];
+
+        for (let idx = 0; idx < data.length; idx += 4) {
+            const alpha = data[idx + 3] / 255;
+            if (alpha > 0) {
+                rects.push(`<rect x="${(idx / 4) % w}" y="${Math.floor((idx / 4) / w)}" width="1" height="1" fill="rgba(${data[idx]},${data[idx+1]},${data[idx+2]},${alpha})" />`);
+            }
+        }
+
+        this.#triggerFileDownload(
+            new Blob([`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">\n`, ...rects, '\n</svg>'], { type: 'image/svg+xml' }),
+            'pixel-planter-export.svg'
+        );
+    }
+
+    #triggerFileDownload(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
     #handleExportJSON() {
         const layerStack = this.#planterInstance.getLayerStack();
         const simplifiedStack = layerStack.map((layer) => ({
