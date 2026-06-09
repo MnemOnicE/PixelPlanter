@@ -167,6 +167,15 @@ export class LayerPanel {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
             const layerItem = e.target.closest('.layer-item');
+
+            // Clear borders on all other items to prevent lingering borders/flicker
+            this.#container.querySelectorAll('.layer-item').forEach(item => {
+                if (item !== layerItem) {
+                    item.style.borderTop = '';
+                    item.style.borderBottom = '';
+                }
+            });
+
             if (layerItem) {
                 // Determine whether to insert above or below
                 const rect = layerItem.getBoundingClientRect();
@@ -197,10 +206,8 @@ export class LayerPanel {
                 targetItem.style.borderBottom = '';
             }
 
-            if (draggedLayerId !== null) {
-                const draggedElement = this.#container.querySelector('.layer-item[data-layer-id="' + draggedLayerId + '"]');
-                if (draggedElement) draggedElement.style.opacity = '1';
-            }
+            const draggedElement = this.#container.querySelector(`.layer-item[data-layer-id="${draggedLayerId}"]`);
+            if (draggedElement) draggedElement.style.opacity = '1';
 
             if (!targetItem || draggedLayerId === null) return;
 

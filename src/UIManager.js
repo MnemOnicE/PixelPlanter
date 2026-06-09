@@ -906,7 +906,7 @@ export class UIManager {
      * @private
      */
     #updatePaletteSwatches() {
-        if (!this.#controls.paletteSwatches || !this.#controls.paletteSelect) return;
+        if (!this.#controls.paletteSwatches) return;
         this.#controls.paletteSwatches.textContent = '';
         const selectedPaletteName = this.#controls.paletteSelect.value;
         const paletteInstance = this.#planterInstance.getPaletteInstance(selectedPaletteName);
