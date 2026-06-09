@@ -18,7 +18,9 @@ describe('MazeGenerator', () => {
         const grid = generator.run({ size: 15, complexity: 5 }, prng);
 
         const flatGrid = grid.flat();
-        expect(flatGrid.includes(1)).toBe(true);
-        expect(flatGrid.includes(0)).toBe(true);
+        const hasWalls = flatGrid.some(v => v === 1);
+        const hasPaths = flatGrid.some(v => v === 0);
+        expect(hasWalls).toBe(true);
+        expect(hasPaths).toBe(true);
     });
 });

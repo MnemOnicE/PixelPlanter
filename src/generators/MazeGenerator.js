@@ -37,15 +37,24 @@ export class MazeGenerator {
      * @param {number[][]} [inputMask] - Optional mask.
      * @returns {number[][]} A 2D array representing the generated maze.
      */
+
+    #createSolidGrid(size) {
+        const arr = [];
+        for (let i = 0; i < size; i++) {
+            arr.push(Array(size).fill(1));
+        }
+        return arr;
+    }
+
     run({ size, complexity = 5 }, prng, inputMask = null) {
         const gridSize = Math.floor(size);
         if (gridSize < 5) {
             // Too small for a meaningful maze, return a solid block or empty
-            return Array.from({ length: gridSize }, () => Array(gridSize).fill(1));
+            return this.#createSolidGrid(gridSize);
         }
 
         // Initialize grid with 1s (walls)
-        const grid = Array.from({ length: gridSize }, () => Array(gridSize).fill(1));
+        const grid = this.#createSolidGrid(gridSize);
 
         // Start carving paths (0s)
         // Maze generation typically works best on odd-sized grids if we consider paths and walls as 1 cell each.
