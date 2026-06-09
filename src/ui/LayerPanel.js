@@ -197,8 +197,10 @@ export class LayerPanel {
                 targetItem.style.borderBottom = '';
             }
 
-            const draggedElement = this.#container.querySelector(`.layer-item[data-layer-id="${draggedLayerId}"]`);
-            if (draggedElement) draggedElement.style.opacity = '1';
+            if (draggedLayerId !== null) {
+                const draggedElement = this.#container.querySelector('.layer-item[data-layer-id="' + draggedLayerId + '"]');
+                if (draggedElement) draggedElement.style.opacity = '1';
+            }
 
             if (!targetItem || draggedLayerId === null) return;
 
