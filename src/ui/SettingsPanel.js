@@ -30,6 +30,7 @@ export class SettingsPanel {
     }
 
     #renderModifierNode(modConfig, depth, container) {
+        if (!modConfig || !modConfig.name) return;
         const modifierClass = this.#planter.getModifier(modConfig.name);
         if (modifierClass) {
             const groupDiv = document.createElement('div');
