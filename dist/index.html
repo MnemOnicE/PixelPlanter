@@ -8,15 +8,15 @@
         <!-- FontAwesome for Icons (using CDN for simplicity/standard) -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
         <!-- Main Studio Styles -->
-      <script type="module" crossorigin src="/assets/index-BTUCG6lC.js"></script>
-      <link rel="stylesheet" crossorigin href="/assets/index-DJ5fKgk2.css">
+      <script type="module" crossorigin src="/assets/index-BPCYSWNv.js"></script>
+      <link rel="stylesheet" crossorigin href="/assets/index-Cgg0URiM.css">
     </head>
     <body>
         <div id="app-container">
             <!-- LEFT SIDEBAR: GENERATORS & TOOLS -->
             <aside id="sidebar-left">
-                <h3><i class="fa-solid fa-seedling"></i> Generator</h3>
-
+                <h3 class="collapsible"><i class="fa-solid fa-seedling"></i> Generator</h3>
+                <div class="section-content">
                 <div class="control-group">
                     <label for="generator-select">Algorithm</label>
                     <select id="generator-select"></select>
@@ -45,14 +45,16 @@
                         </button>
                     </div>
                 </div>
+                </div>
 
                 <hr />
 
-                <h3><i class="fa-solid fa-palette"></i> Style</h3>
-
+                <h3 class="collapsible"><i class="fa-solid fa-palette"></i> Style</h3>
+                <div class="section-content">
                 <div class="control-group">
                     <label for="palette-select">Palette</label>
                     <select id="palette-select"></select>
+                    <div id="palette-swatches" class="palette-swatches" style="display:flex; gap:2px; margin-top:5px; flex-wrap:wrap;"></div>
                 </div>
 
                 <div class="control-group">
@@ -64,10 +66,12 @@
                     <label for="pixel-size-input">Pixel Scale</label>
                     <input type="number" id="pixel-size-input" value="10" min="1" max="50" />
                 </div>
+                </div>
 
                 <hr />
 
-                <h3><i class="fa-solid fa-paintbrush"></i> Tools</h3>
+                <h3 class="collapsible"><i class="fa-solid fa-paintbrush"></i> Tools</h3>
+                <div class="section-content">
                 <div class="control-group">
                     <div style="display: flex; gap: 5px; flex-wrap: wrap">
                         <!-- Tool Radios hidden visually, styled via labels if needed, but here we keep standard inputs for functionality -->
@@ -86,6 +90,7 @@
                     <label for="brush-size">Size: <span id="brush-size-val">1</span></label>
                     <input type="range" id="brush-size" min="1" max="5" value="1" />
                 </div>
+                </div>
 
                 <button id="generate-btn" style="margin-top: auto">REGENERATE (Space)</button>
             </aside>
@@ -99,16 +104,18 @@
 
             <!-- RIGHT SIDEBAR: LAYERS & MODIFIERS -->
             <aside id="sidebar-right">
-                <h3><i class="fa-solid fa-layer-group"></i> Layers</h3>
-
+                <h3 class="collapsible"><i class="fa-solid fa-layer-group"></i> Layers</h3>
+                <div class="section-content">
                 <div id="layer-panel">
                     <div id="layer-list"></div>
                     <button id="add-layer-btn" class="secondary" style="margin-top: 10px">+ New Layer</button>
                 </div>
+                </div>
 
                 <hr />
 
-                <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Modifiers</h3>
+                <h3 class="collapsible"><i class="fa-solid fa-wand-magic-sparkles"></i> Modifiers</h3>
+                <div class="section-content">
                 <div
                     id="modifiers-container"
                     style="
@@ -124,10 +131,12 @@
                 <div id="modifier-params">
                     <!-- Modifier params injected here -->
                 </div>
+                </div>
 
                 <hr />
 
-                <h3>Actions</h3>
+                <h3 class="collapsible">Actions</h3>
+                <div class="section-content">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px">
                     <button id="undo-btn" class="secondary"><i class="fa-solid fa-rotate-left"></i> Undo</button>
                     <button id="redo-btn" class="secondary"><i class="fa-solid fa-rotate-right"></i> Redo</button>
@@ -135,11 +144,13 @@
 
                 <button id="save-btn"><i class="fa-solid fa-download"></i> Save Image</button>
                 <button id="export-json-btn" class="secondary" style="margin-top: 5px">Export JSON</button>
+                <button id="export-svg-btn" class="secondary" style="margin-top: 5px">Export SVG</button>
                 <button id="share-btn" class="secondary" style="margin-top: 5px">Share Link</button>
 
                 <div style="display: flex; gap: 5px; margin-top: 10px">
                     <button id="show-presets-btn" class="secondary">Presets</button>
                     <button id="show-factory-btn" class="secondary">Factory</button>
+                </div>
                 </div>
 
                 <!-- Elements hidden in Studio mode but kept for compatibility or specific tools -->
