@@ -68,18 +68,13 @@ export class MazeGenerator {
 
             // Find unvisited neighbors
             const unvisited = [];
-            for (const dir of directions) {
+            directions.forEach(dir => {
                 const nx = current.x + dir.dx;
                 const ny = current.y + dir.dy;
-
-                // Check bounds (must be inside grid, leaving an outer wall)
-                if (nx > 0 && nx < gridSize - 1 && ny > 0 && ny < gridSize - 1) {
-                    // Check if it's a wall (unvisited)
-                    if (grid[ny][nx] === 1) {
-                        unvisited.push(dir);
-                    }
+                if (nx > 0 && nx < gridSize - 1 && ny > 0 && ny < gridSize - 1 && grid[ny][nx] === 1) {
+                    unvisited.push(dir);
                 }
-            }
+            });
 
             if (unvisited.length > 0) {
                 // Choose a random unvisited neighbor
@@ -101,22 +96,10 @@ export class MazeGenerator {
             for (let y = 0; y < gridSize; y++) {
                 for (let x = 0; x < gridSize; x++) {
                     if (inputMask[y][x] === 0) {
-                        grid[y][x] = 0; // If masked out, force it to be 0
-                    } else if (inputMask[y][x] > 0) {
-                        // Invert the maze logic for visual consistency:
-                        // The maze algorithm uses 0 for path and 1 for walls.
-                        // Our standard expects 1 to be "drawn".
-                        // So walls = 1, paths = 0.
-                        // Masking means "only draw walls where mask is 1".
-                        if (grid[y][x] === 1) {
-                            grid[y][x] = 1;
-                        }
+                        grid[y][x] = 0;
                     }
                 }
             }
-        } else {
-             // Invert is not strictly needed since 1 is wall and 0 is path,
-             // which visually looks like a maze when drawn.
         }
 
         // Add some complexity (randomly removing some walls to create loops)

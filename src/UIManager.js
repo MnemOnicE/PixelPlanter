@@ -989,35 +989,34 @@ export class UIManager {
         const canvas = this.#planterInstance.getCanvas();
         if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
-        const width = canvas.width;
-        const height = canvas.height;
-        const imgData = ctx.getImageData(0, 0, width, height).data;
+        const w = canvas.width;
+        const h = canvas.height;
+        const data = canvas.getContext('2d').getImageData(0, 0, w, h).data;
+        const rects = [];
 
-        let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">\n`;
-
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                const i = (y * width + x) * 4;
-                const r = imgData[i];
-                const g = imgData[i + 1];
-                const b = imgData[i + 2];
-                const a = imgData[i + 3] / 255;
-
-                if (a > 0) {
-                    svgContent += `  <rect x="${x}" y="${y}" width="1" height="1" fill="rgba(${r},${g},${b},${a})" />\n`;
-                }
+        for (let idx = 0; idx < data.length; idx += 4) {
+            const alpha = data[idx + 3] / 255;
+            if (alpha > 0) {
+                const x = (idx / 4) % w;
+                const y = Math.floor((idx / 4) / w);
+                rects.push(`<rect x="${x}" y="${y}" width="1" height="1" fill="rgba(${data[idx]},${data[idx+1]},${data[idx+2]},${alpha})" />`);
             }
         }
 
-        svgContent += '</svg>';
+        const svgBlob = new Blob([
+            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">\n`,
+            ...rects,
+            '\n</svg>'
+        ], { type: 'image/svg+xml' });
 
-        const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+        this.#downloadBlob(svgBlob, 'pixel-planter-export.svg');
+    }
+
+    #downloadBlob(blob, filename) {
         const url = URL.createObjectURL(blob);
-
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'pixel-planter-export.svg';
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
