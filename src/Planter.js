@@ -418,7 +418,7 @@ export class Planter {
      */
     addLayer(config) {
         // Fallback size to global if missing or NaN
-        const size = (config.size === undefined || isNaN(config.size)) ? this.#globalConfig.size : config.size;
+        const size = (config.size === undefined || Number.isNaN(config.size)) ? this.#globalConfig.size : config.size;
         const fullConfig = { ...this.#globalConfig, ...config, size };
         const newLayer = new Layer(fullConfig);
         this.#layerStack.push(newLayer);

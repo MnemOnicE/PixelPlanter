@@ -80,7 +80,7 @@ export class SettingsPanel {
              const key = input.dataset.paramName;
              const isNumeric = input.type === 'number' || input.type === 'range';
              const value = isNumeric ? parseFloat(input.value) : input.value;
-             config[key] = isNaN(value) ? (isNumeric ? 0 : input.value) : value;
+             config[key] = Number.isNaN(value) ? (isNumeric ? 0 : input.value) : value;
          });
          return config;
     }
@@ -92,7 +92,7 @@ export class SettingsPanel {
             const key = input.dataset.paramName;
             const isNumeric = input.type === 'number' || input.type === 'range';
              const value = isNumeric ? parseFloat(input.value) : input.value;
-            modConfig[key] = isNaN(value) ? (isNumeric ? 0 : input.value) : value;
+            modConfig[key] = Number.isNaN(value) ? (isNumeric ? 0 : input.value) : value;
         });
         return modConfig;
     }
