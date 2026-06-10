@@ -184,8 +184,8 @@ export class UIManager {
         this.#bindDOM();
 
         const globalConfig = {
-            size: Number.isNaN(parseInt(this.#controls.sizeInput.value, 10)) ? 32 : parseInt(this.#controls.sizeInput.value, 10),
-            pixelSize: Number.isNaN(parseInt(this.#controls.pixelSizeInput.value, 10)) ? 20 : parseInt(this.#controls.pixelSizeInput.value, 10),
+            size: (() => { const val = parseInt(this.#controls.sizeInput.value, 10); return Number.isNaN(val) ? 32 : val; })(),
+            pixelSize: (() => { const val = parseInt(this.#controls.pixelSizeInput.value, 10); return Number.isNaN(val) ? 20 : val; })(),
         };
         this.#planterInstance = new Planter(globalConfig);
 
@@ -815,8 +815,8 @@ export class UIManager {
     #getConfigFromMainControls() {
         // Base config from main controls
         const config = {
-            size: Number.isNaN(parseInt(this.#controls.sizeInput.value, 10)) ? 32 : parseInt(this.#controls.sizeInput.value, 10),
-            pixelSize: Number.isNaN(parseInt(this.#controls.pixelSizeInput.value, 10)) ? 20 : parseInt(this.#controls.pixelSizeInput.value, 10),
+            size: (() => { const val = parseInt(this.#controls.sizeInput.value, 10); return Number.isNaN(val) ? 32 : val; })(),
+            pixelSize: (() => { const val = parseInt(this.#controls.pixelSizeInput.value, 10); return Number.isNaN(val) ? 20 : val; })(),
             generator: this.#controls.generatorSelect.value,
             palette: this.#controls.paletteSelect.value,
             seed: this.#controls.seedInput.value || Date.now().toString(),
@@ -1140,14 +1140,14 @@ export class UIManager {
      * @private
      */
     #handleGenerateBatch() {
-        const rowsInput = document.getElementById('factory-rows').value;
-        const rows = Number.isNaN(parseInt(rowsInput, 10)) ? 4 : parseInt(rowsInput, 10);
-        const colsInput = document.getElementById('factory-cols').value;
-        const cols = Number.isNaN(parseInt(colsInput, 10)) ? 4 : parseInt(colsInput, 10);
-        const paddingInput = document.getElementById('factory-padding').value;
-        const padding = Number.isNaN(parseInt(paddingInput, 10)) ? 0 : parseInt(paddingInput, 10);
-        const varianceInput = document.getElementById('factory-variance').value;
-        const variance = Number.isNaN(parseInt(varianceInput, 10)) ? 20 : parseInt(varianceInput, 10);
+        const rowsInput = parseInt(document.getElementById('factory-rows').value, 10);
+        const rows = Number.isNaN(rowsInput) ? 4 : rowsInput;
+        const colsInput = parseInt(document.getElementById('factory-cols').value, 10);
+        const cols = Number.isNaN(colsInput) ? 4 : colsInput;
+        const paddingInput = parseInt(document.getElementById('factory-padding').value, 10);
+        const padding = Number.isNaN(paddingInput) ? 0 : paddingInput;
+        const varianceInput = parseInt(document.getElementById('factory-variance').value, 10);
+        const variance = Number.isNaN(varianceInput) ? 20 : varianceInput;
 
         const sheetCanvas = this.#planterInstance.generateBatch({ rows, cols, padding, variance });
 
