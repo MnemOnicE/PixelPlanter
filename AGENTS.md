@@ -31,3 +31,9 @@ When using an AI tool for any development task (e.g., code generation, documenta
     - Updated `ROADMAP.md`.
 
 ---
+### **Jules (AI Agent)**
+- **Date:** 2026-06-09
+- **Task:**
+    - Resolved Layer Delete button UI bug in `LayerPanel.js` caused by a mismatched CSS class name.
+    - Patched NaN handling within `UIManager.js` configuration parsing by defaulting size values back to standard.
+    - Updated `SettingsPanel.js` config gathering to properly account for numeric parsing and defaulting.

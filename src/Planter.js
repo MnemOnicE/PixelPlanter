@@ -417,7 +417,9 @@ export class Planter {
      * @returns {Layer} The created layer instance.
      */
     addLayer(config) {
-        const fullConfig = { ...this.#globalConfig, ...config };
+        // Fallback size to global if missing or NaN
+        const size = (config.size === undefined || isNaN(config.size)) ? this.#globalConfig.size : config.size;
+        const fullConfig = { ...this.#globalConfig, ...config, size };
         const newLayer = new Layer(fullConfig);
         this.#layerStack.push(newLayer);
         return newLayer;

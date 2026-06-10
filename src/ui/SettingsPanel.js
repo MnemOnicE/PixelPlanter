@@ -78,8 +78,9 @@ export class SettingsPanel {
          const genParamsInputs = this.#generatorParamsContainer.querySelectorAll('[data-param-name]');
          genParamsInputs.forEach((input) => {
              const key = input.dataset.paramName;
-             const value = input.type === 'range' ? parseFloat(input.value) : input.value;
-             config[key] = isNaN(value) ? input.value : value;
+             const isNumeric = input.type === 'number' || input.type === 'range';
+             const value = isNumeric ? parseFloat(input.value) : input.value;
+             config[key] = isNaN(value) ? (isNumeric ? 0 : input.value) : value;
          });
          return config;
     }
@@ -89,8 +90,9 @@ export class SettingsPanel {
         const modParamsInputs = this.#modifierParamsContainer.querySelectorAll(`[data-param-owner="${modName}"]`);
         modParamsInputs.forEach((input) => {
             const key = input.dataset.paramName;
-            const value = input.type === 'range' ? parseFloat(input.value) : input.value;
-            modConfig[key] = isNaN(value) ? input.value : value;
+            const isNumeric = input.type === 'number' || input.type === 'range';
+             const value = isNumeric ? parseFloat(input.value) : input.value;
+            modConfig[key] = isNaN(value) ? (isNumeric ? 0 : input.value) : value;
         });
         return modConfig;
     }

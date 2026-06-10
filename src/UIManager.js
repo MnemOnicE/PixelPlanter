@@ -184,8 +184,8 @@ export class UIManager {
         this.#bindDOM();
 
         const globalConfig = {
-            size: parseInt(this.#controls.sizeInput.value, 10),
-            pixelSize: parseInt(this.#controls.pixelSizeInput.value, 10),
+            size: parseInt(this.#controls.sizeInput.value, 10) || 32,
+            pixelSize: parseInt(this.#controls.pixelSizeInput.value, 10) || 20,
         };
         this.#planterInstance = new Planter(globalConfig);
 
@@ -375,7 +375,7 @@ export class UIManager {
             });
         });
         this.#controls.brushSize.addEventListener('input', (e) => {
-            this.#activeBrushSize = parseInt(e.target.value);
+            this.#activeBrushSize = parseInt(e.target.value, 10) || 1;
             this.#controls.brushSizeVal.textContent = this.#activeBrushSize;
             this.#canvasInput.setBrushSize(this.#activeBrushSize);
         });
@@ -815,6 +815,8 @@ export class UIManager {
     #getConfigFromMainControls() {
         // Base config from main controls
         const config = {
+            size: parseInt(this.#controls.sizeInput.value, 10) || 32,
+            pixelSize: parseInt(this.#controls.pixelSizeInput.value, 10) || 20,
             generator: this.#controls.generatorSelect.value,
             palette: this.#controls.paletteSelect.value,
             seed: this.#controls.seedInput.value || Date.now().toString(),
@@ -1138,10 +1140,10 @@ export class UIManager {
      * @private
      */
     #handleGenerateBatch() {
-        const rows = parseInt(document.getElementById('factory-rows').value, 10);
-        const cols = parseInt(document.getElementById('factory-cols').value, 10);
-        const padding = parseInt(document.getElementById('factory-padding').value, 10);
-        const variance = parseInt(document.getElementById('factory-variance').value, 10);
+        const rows = parseInt(document.getElementById('factory-rows').value, 10) || 4;
+        const cols = parseInt(document.getElementById('factory-cols').value, 10) || 4;
+        const padding = parseInt(document.getElementById('factory-padding').value, 10) || 0;
+        const variance = parseInt(document.getElementById('factory-variance').value, 10) || 0;
 
         const sheetCanvas = this.#planterInstance.generateBatch({ rows, cols, padding, variance });
 

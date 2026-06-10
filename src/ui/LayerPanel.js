@@ -128,7 +128,7 @@ export class LayerPanel {
             actionsDiv.appendChild(btnPaste);
 
             const btnDel = document.createElement('button');
-            btnDel.className = 'icon-btn delete-layer';
+            btnDel.className = 'icon-btn layer-delete-btn';
             btnDel.title = 'Delete Layer';
             btnDel.textContent = '🗑️';
             actionsDiv.appendChild(btnDel);
