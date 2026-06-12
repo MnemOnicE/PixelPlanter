@@ -241,7 +241,7 @@ export class UIManager {
                     },
                 },
                 {
-                    element: '#edit-patterns-btn',
+                    element: '#add-layer-btn',
                     popover: {
                         title: 'Unlock More Power',
                         description:
