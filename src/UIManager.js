@@ -243,9 +243,9 @@ export class UIManager {
                 {
                     element: '#add-layer-btn',
                     popover: {
-                        title: 'Unlock More Power',
+                        title: 'Use Layers',
                         description:
-                            'When you\'re ready, switch to "Advanced" mode to unlock layers, modifiers, and more!',
+                            'Click here to add more layers and build complex art!',
                     },
                 },
             ],
@@ -353,13 +353,6 @@ export class UIManager {
         this.#controls.undoBtn.addEventListener('click', () => this.#handleUndo());
         this.#controls.redoBtn.addEventListener('click', () => this.#handleRedo());
         this.#controls.shareBtn.addEventListener('click', () => this.#handleShare());
-        document.getElementById('mode-toggle').addEventListener('change', (e) => {
-            if (e.target.checked) {
-                document.body.classList.remove('simple-mode');
-            } else {
-                document.body.classList.add('simple-mode');
-            }
-        });
 
         this.#controls.symmetrySelect.addEventListener('change', (e) => {
              this.#activeSymmetryMode = e.target.value;
