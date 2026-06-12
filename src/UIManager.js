@@ -184,8 +184,8 @@ export class UIManager {
         this.#bindDOM();
 
         const globalConfig = {
-            size: parseInt(this.#controls.sizeInput.value, 10),
-            pixelSize: parseInt(this.#controls.pixelSizeInput.value, 10),
+            size: (() => { const val = parseInt(this.#controls.sizeInput.value, 10); return Number.isNaN(val) ? 32 : val; })(),
+            pixelSize: (() => { const val = parseInt(this.#controls.pixelSizeInput.value, 10); return Number.isNaN(val) ? 20 : val; })(),
         };
         this.#planterInstance = new Planter(globalConfig);
 
@@ -323,7 +323,7 @@ export class UIManager {
             this.#planterInstance,
             this.#generatorParamsContainer,
             this.#modifierParamsContainer,
-            (type, data) => {
+            () => {
                  // Future: handle real-time updates
             }
         );
@@ -375,7 +375,7 @@ export class UIManager {
             });
         });
         this.#controls.brushSize.addEventListener('input', (e) => {
-            this.#activeBrushSize = parseInt(e.target.value);
+            this.#activeBrushSize = parseInt(e.target.value, 10) || 1;
             this.#controls.brushSizeVal.textContent = this.#activeBrushSize;
             this.#canvasInput.setBrushSize(this.#activeBrushSize);
         });
@@ -452,7 +452,7 @@ export class UIManager {
 
         // Close sidebars when clicking on stage (mobile UX)
         if (this.#controls.stage) {
-            this.#controls.stage.addEventListener('click', (e) => {
+            this.#controls.stage.addEventListener('click', () => {
                 // Only if not interacting with canvas (though canvas is in stage)
                 // Actually, if we are painting, we probably want to see the canvas, so closing sidebars is good.
                 // But we don't want to close if we are just clicking a zoom button (if we had one).
@@ -815,6 +815,8 @@ export class UIManager {
     #getConfigFromMainControls() {
         // Base config from main controls
         const config = {
+            size: (() => { const val = parseInt(this.#controls.sizeInput.value, 10); return Number.isNaN(val) ? 32 : val; })(),
+            pixelSize: (() => { const val = parseInt(this.#controls.pixelSizeInput.value, 10); return Number.isNaN(val) ? 20 : val; })(),
             generator: this.#controls.generatorSelect.value,
             palette: this.#controls.paletteSelect.value,
             seed: this.#controls.seedInput.value || Date.now().toString(),
@@ -1138,10 +1140,14 @@ export class UIManager {
      * @private
      */
     #handleGenerateBatch() {
-        const rows = parseInt(document.getElementById('factory-rows').value, 10);
-        const cols = parseInt(document.getElementById('factory-cols').value, 10);
-        const padding = parseInt(document.getElementById('factory-padding').value, 10);
-        const variance = parseInt(document.getElementById('factory-variance').value, 10);
+        const rowsInput = parseInt(document.getElementById('factory-rows').value, 10);
+        const rows = Number.isNaN(rowsInput) ? 4 : rowsInput;
+        const colsInput = parseInt(document.getElementById('factory-cols').value, 10);
+        const cols = Number.isNaN(colsInput) ? 4 : colsInput;
+        const paddingInput = parseInt(document.getElementById('factory-padding').value, 10);
+        const padding = Number.isNaN(paddingInput) ? 0 : paddingInput;
+        const varianceInput = parseInt(document.getElementById('factory-variance').value, 10);
+        const variance = Number.isNaN(varianceInput) ? 20 : varianceInput;
 
         const sheetCanvas = this.#planterInstance.generateBatch({ rows, cols, padding, variance });
 
