@@ -8,6 +8,7 @@ import { HistoryManager } from './HistoryManager.js';
 import { Layer } from './Layer.js';
 import { LayerPanel } from './ui/LayerPanel.js';
 import { SettingsPanel } from './ui/SettingsPanel.js';
+import { TutorialManager } from './ui/TutorialManager.js';
 import { CanvasInput } from './ui/CanvasInput.js';
 
 /**
@@ -153,6 +154,9 @@ export class UIManager {
      * @private
      */
     #presetGallery;
+    #tutorialsModal;
+    #tutorialGallery;
+    #closeTutorialsBtn;
 
     /**
      * Button to close the presets modal.
@@ -196,63 +200,6 @@ export class UIManager {
         if (!loadedFromURL) {
             this.#handleAddLayer();
         }
-        this.#startOnboardingTour();
-    }
-
-    /**
-     * Starts the guided onboarding tour for new users using `driver.js`.
-     * Checks localStorage to prevent showing it repeatedly.
-     * @private
-     */
-    #startOnboardingTour() {
-        const hasBeenOnboarded = localStorage.getItem('pixelPlanterOnboarded');
-        if (hasBeenOnboarded) {
-            return;
-        }
-
-        const driverObj = driver({
-            showProgress: true,
-            steps: [
-                {
-                    element: '#generator-select',
-                    popover: {
-                        title: '1. Pick a Generator',
-                        description:
-                            'This is the main algorithm used to create your art. Try "noise" or "cellular" to start.',
-                    },
-                },
-                {
-                    element: '#palette-select',
-                    popover: { title: '2. Pick a Palette', description: 'Choose a color scheme for your creation.' },
-                },
-                {
-                    element: '#generate-btn',
-                    popover: {
-                        title: '3. Generate!',
-                        description:
-                            'Click here to create your artwork. You can click it again to get a new variation with the same settings.',
-                    },
-                },
-                {
-                    element: '#randomize-btn',
-                    popover: {
-                        title: 'Roll the Dice',
-                        description: 'This button will randomize all settings for a surprise result.',
-                    },
-                },
-                {
-                    element: '#mode-toggle-container',
-                    popover: {
-                        title: 'Unlock More Power',
-                        description:
-                            'When you\'re ready, switch to "Advanced" mode to unlock layers, modifiers, and more!',
-                    },
-                },
-            ],
-        });
-
-        driverObj.drive();
-        localStorage.setItem('pixelPlanterOnboarded', 'true');
     }
 
     /**
@@ -283,6 +230,10 @@ export class UIManager {
         this.#controls.redoBtn = document.getElementById('redo-btn');
         this.#controls.shareBtn = document.getElementById('share-btn');
         this.#controls.showPresetsBtn = document.getElementById('show-presets-btn');
+        this.#controls.showTutorialsBtn = document.getElementById('show-tutorials-btn');
+        this.#tutorialsModal = document.getElementById('tutorials-modal');
+        this.#tutorialGallery = document.getElementById('tutorial-gallery');
+        this.#closeTutorialsBtn = this.#tutorialsModal.querySelector('.close-button');
         this.#presetsModal = document.getElementById('presets-modal');
         this.#presetGallery = document.getElementById('preset-gallery');
         this.#closePresetsBtn = this.#presetsModal.querySelector('.close-button');
@@ -381,6 +332,23 @@ export class UIManager {
         });
 
         this.#controls.showPresetsBtn.addEventListener('click', () => this.#handleShowPresets());
+
+        this.#controls.showTutorialsBtn.addEventListener('click', () => this.#handleShowTutorials());
+        this.#closeTutorialsBtn.addEventListener('click', () => (this.#tutorialsModal.style.display = 'none'));
+        window.addEventListener('click', (event) => {
+            if (event.target == this.#tutorialsModal) {
+                this.#tutorialsModal.style.display = 'none';
+            }
+        });
+
+        this.#tutorialGallery.addEventListener('click', (event) => {
+            const tutorialItem = event.target.closest('.tutorial-item');
+            if (tutorialItem) {
+                const tutorialId = tutorialItem.dataset.id;
+                this.#tutorialsModal.style.display = 'none';
+                TutorialManager.startTutorial(tutorialId);
+            }
+        });
         this.#closePresetsBtn.addEventListener('click', () => (this.#presetsModal.style.display = 'none'));
         window.addEventListener('click', (event) => {
             if (event.target == this.#presetsModal) {
@@ -735,6 +703,61 @@ export class UIManager {
      * Fetches presets from `src/presets.json` if not already loaded.
      * @private
      */
+    /**
+     * Loads and displays the tutorials modal.
+     * Fetches tutorials from `src/tutorials.json` if not already loaded.
+     * @private
+     */
+    async #handleShowTutorials() {
+        if (this.#tutorialGallery.children.length === 0) {
+            try {
+                const response = await fetch('./src/tutorials.json');
+                const tutorials = await response.json();
+                this.#populateTutorialGallery(tutorials);
+            } catch (error) {
+                console.error('Failed to load tutorials:', error);
+                this.#tutorialGallery.textContent = '';
+                const p = document.createElement('p');
+                p.textContent = 'Could not load tutorials.';
+                this.#tutorialGallery.appendChild(p);
+            }
+        }
+        this.#tutorialsModal.style.display = 'block';
+    }
+
+    /**
+     * Populates the tutorial gallery with items.
+     * @param {object[]} tutorials - List of tutorial objects.
+     * @private
+     */
+    #populateTutorialGallery(tutorials) {
+        this.#tutorialGallery.innerHTML = '';
+        tutorials.forEach((tutorial) => {
+            const div = document.createElement('div');
+            div.className = 'tutorial-item';
+            div.dataset.id = tutorial.id;
+            div.style.cssText = `
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 10px;
+                cursor: pointer;
+                background-color: var(--surface);
+                text-align: center;
+                transition: transform 0.2s;
+            `;
+
+            div.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 5px;">${tutorial.title}</div>
+                <div style="font-size: 0.8em; color: var(--text-muted);">${tutorial.description}</div>
+            `;
+
+            div.addEventListener('mouseover', () => (div.style.transform = 'scale(1.05)'));
+            div.addEventListener('mouseout', () => (div.style.transform = 'scale(1)'));
+
+            this.#tutorialGallery.appendChild(div);
+        });
+    }
+
     async #handleShowPresets() {
         if (this.#presetGallery.children.length === 0) {
             try {

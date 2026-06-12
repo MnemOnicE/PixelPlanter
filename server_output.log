@@ -2,9 +2,15 @@
 > pixel-planter@0.1.0 dev
 > vite
 
-Port 5173 is in use, trying another one...
 
-  VITE v7.3.1  ready in 242 ms
+  VITE v7.3.3  ready in 234 ms
 
-  ➜  Local:   http://localhost:5174/
+  ➜  Local:   http://localhost:5173/
   ➜  Network: use --host to expose
+11:17:40 PM [vite] (client) page reload verification/debug.html
+11:21:23 PM [vite] (client) page reload verification/debug.html
+11:24:24 PM [vite] (client) page reload index.html
+11:25:40 PM [vite] (client) page reload verification/debug.html
+11:27:51 PM [vite] (client) page reload src/UIManager.js
+11:28:10 PM [vite] (client) page reload src/UIManager.js
+11:29:18 PM [vite] (client) page reload verification/debug.html

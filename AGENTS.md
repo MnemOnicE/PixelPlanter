@@ -31,3 +31,12 @@ When using an AI tool for any development task (e.g., code generation, documenta
     - Updated `ROADMAP.md`.
 
 ---
+
+### **Jules (AI Agent)**
+
+- **Date:** 2026-06-12
+- **Task:**
+    - Improved the demos and crafted interactive tutorials that the user can go through.
+    - Replaced the initial `driver.js` onboarding sequence with an interactive tutorial modal via `src/ui/TutorialManager.js`.
+    - Integrated `src/tutorials.json` to configure the available interactive tutorials.
+    - Implemented a temporary Playwright test to verify the functionality of the `driver.js` interactive tutorials.

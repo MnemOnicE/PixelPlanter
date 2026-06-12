@@ -1,0 +1,201 @@
+<!DOCTYPE html><html lang="en"><head>
+      <script type="module" src="/@vite/client"></script>
+
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Pixel Planter Studio</title>
+        <!-- Onboarding Driver -->
+        <link rel="stylesheet" href="/node_modules/driver.js/dist/driver.css">
+        <!-- FontAwesome for Icons (using CDN for simplicity/standard) -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <!-- Main Studio Styles -->
+        <link rel="stylesheet" href="src/style.css">
+    </head>
+    <body>
+        <div id="app-container">
+            <!-- LEFT SIDEBAR: GENERATORS & TOOLS -->
+            <aside id="sidebar-left">
+                <h3 class="collapsible"><i class="fa-solid fa-seedling"></i> Generator</h3>
+                <div class="section-content">
+                <div class="control-group">
+                    <label for="generator-select" class="tooltip">Algorithm<span class="tooltip-text">The core algorithm used to create the pattern.</span></label>
+                    <select id="generator-select"><option value="simple-symmetry">simple-symmetry</option><option value="advanced-symmetry">advanced-symmetry</option><option value="recursive-growth">recursive-growth</option><option value="pattern">pattern</option><option value="noise">noise</option><option value="cellular-automata">cellular-automata</option><option value="maze">maze</option></select>
+                </div>
+
+                <div id="generator-params"><div><label>Scale</label><input type="range" min="1" max="50" step="1" data-param-owner="noise" data-param-name="noiseScale" style=""></div><div><label>Threshold</label><input type="range" min="0.1" max="0.9" step="0.05" data-param-owner="noise" data-param-name="noiseThreshold" style=""></div></div>
+
+                <div class="control-group">
+                    <label for="symmetry-select">Symmetry</label>
+                    <select id="symmetry-select">
+                        <option value="none">None</option>
+                        <option value="vertical">Vertical</option>
+                        <option value="horizontal">Horizontal</option>
+                        <option value="quad">Quad</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="seed-input" class="tooltip">Seed<span class="tooltip-text">A number or string that determines the random pattern. The same seed will always produce the same image.</span></label>
+                    <div style="display: flex; gap: 5px">
+                        <input type="text" id="seed-input" placeholder="Random" style="">
+                        <button id="randomize-btn" class="secondary" title="Roll Dice">
+                            <i class="fa-solid fa-dice"></i>
+                        </button>
+                    </div>
+                </div>
+                </div>
+
+                <hr>
+
+                <h3 class="collapsible"><i class="fa-solid fa-palette"></i> Style</h3>
+                <div class="section-content">
+                <div class="control-group">
+                    <label for="palette-select" class="tooltip">Palette<span class="tooltip-text">The set of colors used in the artwork.</span></label>
+                    <select id="palette-select"><option value="monochrome">monochrome</option><option value="vaporwave">vaporwave</option><option value="forest">forest</option></select>
+                    <div id="palette-swatches" class="palette-swatches" style="display:flex; gap:2px; margin-top:5px; flex-wrap:wrap;"><div class="swatch" title="#FFFFFF" style="background-color: rgb(255, 255, 255);"></div><div class="swatch" title="#000000" style="background-color: rgb(0, 0, 0);"></div></div>
+                </div>
+
+                <div class="control-group">
+                    <label for="size-input" class="tooltip">Grid Size<span class="tooltip-text">The number of cells in the grid (e.g., 32x32).</span></label>
+                    <input type="number" id="size-input" value="32" min="8" max="128" style="">
+                </div>
+
+                <div class="control-group">
+                    <label for="pixel-size-input" class="tooltip">Pixel Scale<span class="tooltip-text">The size of each 'pixel' in the final image.</span></label>
+                    <input type="number" id="pixel-size-input" value="10" min="1" max="50" style="">
+                </div>
+                </div>
+
+                <hr>
+
+                <h3 class="collapsible"><i class="fa-solid fa-paintbrush"></i> Tools</h3>
+                <div class="section-content">
+                <div class="control-group">
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap">
+                        <!-- Tool Radios hidden visually, styled via labels if needed, but here we keep standard inputs for functionality -->
+                        <label class="radio-btn"><input type="radio" id="tool-brush" name="tool" value="brush" checked="" style=""> Brush</label>
+                        <label class="radio-btn"><input type="radio" id="tool-eraser" name="tool" value="eraser" style=""> Eraser</label>
+                        <label class="radio-btn"><input type="radio" id="tool-fill" name="tool" value="fill" style=""> Fill</label>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="brush-size">Size: <span id="brush-size-val">1</span></label>
+                    <input type="range" id="brush-size" min="1" max="5" value="1" style="">
+                </div>
+                </div>
+
+                <button id="generate-btn" style="margin-top: auto">REGENERATE (Space)</button>
+            </aside>
+
+            <!-- MAIN STAGE: CANVAS -->
+            <main id="stage">
+                <div id="canvas-container">
+                    <!-- Canvas injected here -->
+                <canvas width="320" height="320"></canvas></div>
+            </main>
+
+            <!-- RIGHT SIDEBAR: LAYERS & MODIFIERS -->
+            <aside id="sidebar-right">
+                <h3 class="collapsible"><i class="fa-solid fa-layer-group"></i> Layers</h3>
+                <div class="section-content">
+                <div id="layer-panel">
+                    <div id="layer-list"><div class="layer-item active" draggable="true" data-layer-id="1781306956094.3313"><div class="layer-drag-handle">≡</div><div class="layer-content"><input type="text" class="layer-name-input" style=""><div class="layer-controls"><button class="icon-btn toggle-visibility" title="Toggle Visibility">👁️</button><select class="layer-type-select" title="Layer Type"><option value="normal">Normal</option><option value="zone">Zone</option></select><input type="range" class="layer-opacity" min="0" max="1" step="0.1" title="Opacity" style=""><select class="layer-blend-mode" title="Blend Mode"><option value="source-over">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option></select><select class="layer-mask-select" title="Mask Layer"><option value="">No Mask</option></select></div></div><div class="layer-actions"><button class="icon-btn copy-mods" title="Copy Modifiers">📄</button><button class="icon-btn paste-mods" title="Paste Modifiers">📋</button><button class="icon-btn delete-layer" title="Delete Layer">🗑️</button></div></div></div>
+                    <button id="add-layer-btn" class="secondary" style="margin-top: 10px">+ New Layer</button>
+                </div>
+                </div>
+
+                <hr>
+
+                <h3 class="collapsible"><i class="fa-solid fa-wand-magic-sparkles"></i> Modifiers</h3>
+                <div class="section-content">
+                <div id="modifiers-container" style="
+                        max-height: 150px;
+                        overflow-y: auto;
+                        border: 1px solid var(--border);
+                        padding: 5px;
+                        margin-bottom: 10px;
+                    "><label class="modifier-checkbox"><input type="checkbox" data-modifier-name="outline" style=""> outline</label><label class="modifier-checkbox"><input type="checkbox" data-modifier-name="density-mask" style=""> density-mask</label><label class="modifier-checkbox"><input type="checkbox" data-modifier-name="pathfinder" style=""> pathfinder</label><label class="modifier-checkbox"><input type="checkbox" data-modifier-name="particle-deposition" style=""> particle-deposition</label><label class="modifier-checkbox"><input type="checkbox" data-modifier-name="filter" style=""> filter</label></div>
+                <div id="modifier-params"></div>
+                </div>
+
+                <hr>
+
+                <h3 class="collapsible">Actions</h3>
+                <div class="section-content">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px">
+                    <button id="undo-btn" class="secondary"><i class="fa-solid fa-rotate-left"></i> Undo</button>
+                    <button id="redo-btn" class="secondary"><i class="fa-solid fa-rotate-right"></i> Redo</button>
+                </div>
+
+                <button id="save-btn"><i class="fa-solid fa-download"></i> Save Image</button>
+                <button id="export-json-btn" class="secondary" style="margin-top: 5px">Export JSON</button>
+                <button id="export-svg-btn" class="secondary" style="margin-top: 5px">Export SVG</button>
+                <button id="share-btn" class="secondary" style="margin-top: 5px">Share Link</button>
+
+                <div style="display: flex; gap: 5px; margin-top: 10px">
+                    <button id="show-presets-btn" class="secondary">Presets</button>
+                    <button id="show-factory-btn" class="secondary">Factory</button>
+                    <button id="show-tutorials-btn" class="secondary">Tutorials</button>
+                </div>
+                </div>
+
+                <!-- Elements hidden in Studio mode but kept for compatibility or specific tools -->
+                <button id="edit-patterns-btn" class="hidden">Edit Patterns</button>
+                <input type="checkbox" id="mode-toggle" class="hidden" checked="" style="">
+                <!-- Force "Advanced" mode logically -->
+            </aside>
+
+            <!-- MOBILE BOTTOM TOOLBAR -->
+            <nav id="mobile-toolbar">
+                <button class="toolbar-btn" id="toggle-left-sidebar">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Settings</span>
+                </button>
+                <button class="toolbar-btn" id="generate-btn-mobile" style="color: var(--accent)">
+                    <i class="fa-solid fa-play"></i>
+                    <span>Run</span>
+                </button>
+                <button class="toolbar-btn" id="toggle-right-sidebar">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span>Layers</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- MODALS -->
+        <div id="presets-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" style="float: right; cursor: pointer; font-size: 1.5em">×</span>
+                <h2>Presets</h2>
+                <div id="preset-gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px"></div>
+            </div>
+        </div>
+
+        <div id="tutorials-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" style="float: right; cursor: pointer; font-size: 1.5em">×</span>
+                <h2>Tutorials</h2>
+                <div id="tutorial-gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px"></div>
+            </div>
+        </div>
+
+        <div id="factory-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" style="float: right; cursor: pointer; font-size: 1.5em">×</span>
+                <h2>Asset Factory</h2>
+                <div class="control-group"><label>Rows</label><input type="number" id="factory-rows" value="4" style=""></div>
+                <div class="control-group"><label>Cols</label><input type="number" id="factory-cols" value="4" style=""></div>
+                <div class="control-group">
+                    <label>Padding</label><input type="number" id="factory-padding" value="2" style="">
+                </div>
+                <div class="control-group">
+                    <label>Variance</label><input type="range" id="factory-variance" min="0" max="100" value="20" style="">
+                </div>
+                <button id="factory-generate-btn">Download Sheet</button>
+            </div>
+        </div>
+
+        <script type="module" src="main.js?t=1781306890995"></script>
+
+
+</body></html>
