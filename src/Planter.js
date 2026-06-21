@@ -264,18 +264,26 @@ export class Planter {
      * @private
      */
     #generateAllLayers() {
+        // Create a map of layer IDs to their indices to avoid O(N^2) findIndex calls
+        const layerIndices = new Map();
+        for (let i = 0; i < this.#layerStack.length; i++) {
+            layerIndices.set(this.#layerStack[i].id, i);
+        }
+
         // First pass: Generate all data grids
-        for (const layer of this.#layerStack) {
-            const currentIndex = this.#layerStack.findIndex((l) => l.id === layer.id);
+        for (let currentIndex = 0; currentIndex < this.#layerStack.length; currentIndex++) {
+            const layer = this.#layerStack[currentIndex];
             const readBelowGrid = this.#createCompositeGridForLayers(this.#layerStack.slice(0, currentIndex));
 
             let inputMask = null;
             if (layer.maskLayerId) {
-                const maskLayer = this.getLayerById(layer.maskLayerId);
+                const maskIndex = layerIndices.get(layer.maskLayerId);
                 // STRICT CONSTRAINT: Mask layer must be BELOW the current layer (lower index)
-                const maskIndex = this.#layerStack.findIndex((l) => l.id === layer.maskLayerId);
-                if (maskLayer && maskIndex < currentIndex && maskLayer.dataGrid && maskLayer.dataGrid.length > 0) {
-                    inputMask = maskLayer.dataGrid;
+                if (maskIndex !== undefined && maskIndex < currentIndex) {
+                    const maskLayer = this.#layerStack[maskIndex];
+                    if (maskLayer && maskLayer.dataGrid && maskLayer.dataGrid.length > 0) {
+                        inputMask = maskLayer.dataGrid;
+                    }
                 }
             }
 
@@ -284,18 +292,20 @@ export class Planter {
         // Second pass: Apply masks (Post-process clip)
         // We keep this for generators that don't support smart masking yet,
         // and to ensure hard edges even if the generator was "smart".
-        for (const layer of this.#layerStack) {
+        for (let currentIndex = 0; currentIndex < this.#layerStack.length; currentIndex++) {
+            const layer = this.#layerStack[currentIndex];
             if (layer.maskLayerId) {
-                const maskLayer = this.getLayerById(layer.maskLayerId);
-                // Ensure the mask layer has its data grid generated and is not the layer itself
-                if (maskLayer && maskLayer.dataGrid && maskLayer.dataGrid.length > 0 && maskLayer.id !== layer.id) {
-                    this.#applyMask(layer.dataGrid, maskLayer.dataGrid);
+                const maskIndex = layerIndices.get(layer.maskLayerId);
+                if (maskIndex !== undefined && maskIndex !== currentIndex) {
+                    const maskLayer = this.#layerStack[maskIndex];
+                    // Ensure the mask layer has its data grid generated and is not the layer itself
+                    if (maskLayer && maskLayer.dataGrid && maskLayer.dataGrid.length > 0) {
+                        this.#applyMask(layer.dataGrid, maskLayer.dataGrid);
+                    }
                 }
             }
         }
     }
-
-
 
     /**
      * Applies a mask to a target grid.
@@ -418,7 +428,7 @@ export class Planter {
      */
     addLayer(config) {
         // Fallback size to global if missing or NaN
-        const size = (config.size === undefined || Number.isNaN(config.size)) ? this.#globalConfig.size : config.size;
+        const size = config.size === undefined || Number.isNaN(config.size) ? this.#globalConfig.size : config.size;
         const fullConfig = { ...this.#globalConfig, ...config, size };
         const newLayer = new Layer(fullConfig);
         this.#layerStack.push(newLayer);
