@@ -23,7 +23,7 @@ export class ParticleModifier {
      * @param {number[][]} readBelowGrid - The composite grid of all layers below this one.
      * @returns {number[][]} A new grid with the particles dropped.
      */
-    apply(dataGrid, _config, _prng, readBelowGrid) {
+    apply(dataGrid, config, prng, readBelowGrid) {
         // Create a deep copy to avoid modifying the original grid during iteration.
         const outputGrid = JSON.parse(JSON.stringify(dataGrid));
         const size = dataGrid.length;

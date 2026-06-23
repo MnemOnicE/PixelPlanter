@@ -8,7 +8,16 @@ export class MazeGenerator {
      * Parameter definitions for the UI.
      * @type {object}
      */
-    static params = {};
+    static params = {
+        complexity: {
+            label: 'Complexity',
+            type: 'slider',
+            min: 1,
+            max: 10,
+            step: 1,
+            defaultValue: 5,
+        },
+    };
 
     /**
      * Identifies this generator as producing solid structural shapes rather than noisy patterns.
@@ -23,12 +32,13 @@ export class MazeGenerator {
      *
      * @param {object} config - The configuration object.
      * @param {number} config.size - The grid size.
+     * @param {number} [config.complexity=5] - Unused directly in standard perfect maze, but keeps API consistent.
      * @param {SeededRandom} prng - The pseudo-random number generator.
      * @param {number[][]} [inputMask] - Optional mask.
      * @returns {number[][]} A 2D array representing the generated maze.
      */
 
-    run({ size }, prng, inputMask = null) {
+    run({ size, complexity = 5 }, prng, inputMask = null) {
         const dim = Math.round(size);
         if (dim < 5) return Array(dim).fill(0).map(() => Array(dim).fill(1));
 
@@ -63,6 +73,13 @@ export class MazeGenerator {
                     if (inputMask[r][c] === 0) gridData[r][c] = 0;
                 }
             }
+        }
+
+        const loops = Math.floor((complexity / 10) * (dim * dim * 0.05));
+        for (let k = 0; k < loops; k++) {
+            const rx = Math.floor(prng.next() * (dim - 2)) + 1;
+            const ry = Math.floor(prng.next() * (dim - 2)) + 1;
+            if (gridData[ry][rx] === 1) gridData[ry][rx] = 0;
         }
 
         return gridData;

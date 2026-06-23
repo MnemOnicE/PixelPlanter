@@ -265,9 +265,12 @@ export class Planter {
      */
     #generateAllLayers() {
         // Create a map of layer IDs to their indices to avoid O(N^2) findIndex calls
+        // Store both numeric and stringified IDs to handle loose type lookups
         const layerIndices = new Map();
         for (let i = 0; i < this.#layerStack.length; i++) {
-            layerIndices.set(this.#layerStack[i].id, i);
+            const id = this.#layerStack[i].id;
+            layerIndices.set(id, i);
+            layerIndices.set(String(id), i);
         }
 
         // First pass: Generate all data grids

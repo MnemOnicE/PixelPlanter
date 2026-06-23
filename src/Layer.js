@@ -77,10 +77,7 @@ export class Layer {
      * @param {number|string} [initialConfig.seed] - Seed for PRNG.
      */
     constructor(initialConfig) {
-        const array = new Uint32Array(1);
-        this.id = typeof crypto !== 'undefined' && crypto.getRandomValues
-            ? crypto.getRandomValues(array)[0]
-            : Math.floor(Math.random() * 0x100000000);
+        this.id = Date.now() + Math.random(); // Add random to avoid collision
         this.name = initialConfig.name || `Layer ${Math.floor(this.id)}`;
         this.config = initialConfig;
         this.dataGrid = [];
