@@ -837,8 +837,8 @@ export class UIManager {
         // Get dynamic generator params from SettingsPanel
         const dynamicConfig = this.#settingsPanel.getConfig();
         // Merge dynamic params into top-level config (except modifiers) securely
-        for (const key in dynamicConfig) {
-            if (key !== '__proto__' && key !== 'constructor' && key !== 'prototype') {
+        for (const key of Object.keys(dynamicConfig)) {
+            if (key !== '__proto__' && key !== 'constructor' && key !== 'prototype' && key !== 'modifiers') {
                 config[key] = dynamicConfig[key];
             }
         }
