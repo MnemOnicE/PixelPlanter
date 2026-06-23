@@ -78,10 +78,9 @@ export class Layer {
      */
     constructor(initialConfig) {
         const array = new Uint32Array(1);
-        const randomFloat = typeof crypto !== 'undefined' && crypto.getRandomValues
-            ? crypto.getRandomValues(array)[0] / (0xffffffff + 1)
-            : 0; // Fallback removed to satisfy SonarCloud, crypto is universally available in modern environments
-        this.id = Date.now() + randomFloat; // Add random to avoid collision
+        this.id = typeof crypto !== 'undefined' && crypto.getRandomValues
+            ? crypto.getRandomValues(array)[0]
+            : Math.floor(Math.random() * 0x100000000);
         this.name = initialConfig.name || `Layer ${Math.floor(this.id)}`;
         this.config = initialConfig;
         this.dataGrid = [];
