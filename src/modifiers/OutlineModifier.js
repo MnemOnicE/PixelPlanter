@@ -13,15 +13,13 @@ export class OutlineModifier {
      *
      * @param {number[][]} dataGrid - The incoming 2D array from the generator or a previous modifier.
      * @param {object} [config={}] - An object for modifier-specific settings (unused here but standard signature).
+     * @param {SeededRandom} [prng] - Unused, required by strict interface.
+     * @param {number[][]} [readBelowGrid] - Unused, required by strict interface.
+     * @param {number[][]} activeMask - Optional mask array.
      * @returns {number[][]} A new, modified 2D array with outlines applied.
      */
+    // eslint-disable-next-line no-unused-vars
     apply(dataGrid, config = {}, prng = null, readBelowGrid = null, activeMask = null) {
-        // eslint-disable-next-line no-unused-vars
-        const _c = config;
-        // eslint-disable-next-line no-unused-vars
-        const _p = prng;
-        // eslint-disable-next-line no-unused-vars
-        const _r = readBelowGrid;
         const height = dataGrid.length;
         if (height === 0) return [];
         const width = dataGrid[0].length;
