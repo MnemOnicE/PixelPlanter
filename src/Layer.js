@@ -77,10 +77,10 @@ export class Layer {
      * @param {number|string} [initialConfig.seed] - Seed for PRNG.
      */
     constructor(initialConfig) {
-        const array = new Uint32Array(1);
-        this.id = typeof crypto !== 'undefined' && crypto.getRandomValues
-            ? crypto.getRandomValues(array)[0]
-            : Math.floor(Math.random() * 0x100000000);
+        this.id =
+            typeof crypto !== 'undefined' && crypto.randomUUID
+                ? crypto.randomUUID()
+                : Date.now().toString() + Math.random().toString(); // Add random to avoid collision
         this.name = initialConfig.name || `Layer ${Math.floor(this.id)}`;
         this.config = initialConfig;
         this.dataGrid = [];
@@ -142,7 +142,14 @@ export class Layer {
 
                 // If it has children, apply them recursively but only using the newly generated mask
                 if (modConfig.children && modConfig.children.length > 0) {
-                     grid = this.#applyModifiersTree(modConfig.children, grid, planterInstance, prng, readBelowGrid, newMask);
+                    grid = this.#applyModifiersTree(
+                        modConfig.children,
+                        grid,
+                        planterInstance,
+                        prng,
+                        readBelowGrid,
+                        newMask,
+                    );
                 }
             } else {
                 // It's a standard modifier, pass the active mask to limit its scope
@@ -150,7 +157,14 @@ export class Layer {
 
                 // If standard modifier happens to have children (less common), apply them normally
                 if (modConfig.children && modConfig.children.length > 0) {
-                     grid = this.#applyModifiersTree(modConfig.children, grid, planterInstance, prng, readBelowGrid, activeMask);
+                    grid = this.#applyModifiersTree(
+                        modConfig.children,
+                        grid,
+                        planterInstance,
+                        prng,
+                        readBelowGrid,
+                        activeMask,
+                    );
                 }
             }
         }

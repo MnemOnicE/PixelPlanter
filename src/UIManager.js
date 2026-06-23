@@ -184,14 +184,8 @@ export class UIManager {
         this.#bindDOM();
 
         const globalConfig = {
-            size: (() => {
-                const val = parseInt(this.#controls.sizeInput.value, 10);
-                return Number.isNaN(val) ? 32 : val;
-            })(),
-            pixelSize: (() => {
-                const val = parseInt(this.#controls.pixelSizeInput.value, 10);
-                return Number.isNaN(val) ? 20 : val;
-            })(),
+            size: parseInt(this.#controls.sizeInput.value, 10) || 32,
+            pixelSize: parseInt(this.#controls.pixelSizeInput.value, 10) || 20,
         };
         this.#planterInstance = new Planter(globalConfig);
 
@@ -820,14 +814,8 @@ export class UIManager {
     #getConfigFromMainControls() {
         // Base config from main controls
         const config = {
-            size: (() => {
-                const val = parseInt(this.#controls.sizeInput.value, 10);
-                return Number.isNaN(val) ? 32 : val;
-            })(),
-            pixelSize: (() => {
-                const val = parseInt(this.#controls.pixelSizeInput.value, 10);
-                return Number.isNaN(val) ? 20 : val;
-            })(),
+            size: parseInt(this.#controls.sizeInput.value, 10) || 32,
+            pixelSize: parseInt(this.#controls.pixelSizeInput.value, 10) || 20,
             generator: this.#controls.generatorSelect.value,
             palette: this.#controls.paletteSelect.value,
             seed: this.#controls.seedInput.value || Date.now().toString(),
@@ -836,12 +824,7 @@ export class UIManager {
 
         // Get dynamic generator params from SettingsPanel
         const dynamicConfig = this.#settingsPanel.getConfig();
-        // Merge dynamic params into top-level config (except modifiers) securely
-        for (const key of Object.keys(dynamicConfig)) {
-            if (key !== '__proto__' && key !== 'constructor' && key !== 'prototype' && key !== 'modifiers') {
-                config[key] = dynamicConfig[key];
-            }
-        }
+        Object.assign(config, dynamicConfig); // Merge dynamic params into top-level config (except modifiers)
 
         // Get modifier params
         const modifierCheckboxes = this.#modifiersContainer.querySelectorAll('input[type="checkbox"]:checked');
