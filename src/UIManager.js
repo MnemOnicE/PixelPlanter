@@ -184,8 +184,14 @@ export class UIManager {
         this.#bindDOM();
 
         const globalConfig = {
-            size: (() => { const val = parseInt(this.#controls.sizeInput.value, 10); return Number.isNaN(val) ? 32 : val; })(),
-            pixelSize: (() => { const val = parseInt(this.#controls.pixelSizeInput.value, 10); return Number.isNaN(val) ? 20 : val; })(),
+            size: (() => {
+                const val = parseInt(this.#controls.sizeInput.value, 10);
+                return Number.isNaN(val) ? 32 : val;
+            })(),
+            pixelSize: (() => {
+                const val = parseInt(this.#controls.pixelSizeInput.value, 10);
+                return Number.isNaN(val) ? 20 : val;
+            })(),
         };
         this.#planterInstance = new Planter(globalConfig);
 
@@ -316,7 +322,7 @@ export class UIManager {
         this.#layerPanel = new LayerPanel(
             this.#planterInstance,
             document.getElementById('layer-list'),
-            (action, ...args) => this.#handleLayerPanelAction(action, ...args)
+            (action, ...args) => this.#handleLayerPanelAction(action, ...args),
         );
 
         this.#settingsPanel = new SettingsPanel(
@@ -324,15 +330,15 @@ export class UIManager {
             this.#generatorParamsContainer,
             this.#modifierParamsContainer,
             () => {
-                 // Future: handle real-time updates
-            }
+                // Future: handle real-time updates
+            },
         );
 
         this.#canvasInput = new CanvasInput(
-             this.#planterInstance,
-             this.#canvasContainer,
-             (data) => this.#handleBrushStrokeCallback(data),
-             (data) => this.#handleFloodFillCallback(data)
+            this.#planterInstance,
+            this.#canvasContainer,
+            (data) => this.#handleBrushStrokeCallback(data),
+            (data) => this.#handleFloodFillCallback(data),
         );
 
         const canvas = this.#planterInstance.getCanvas();
@@ -362,8 +368,8 @@ export class UIManager {
         });
 
         this.#controls.symmetrySelect.addEventListener('change', (e) => {
-             this.#activeSymmetryMode = e.target.value;
-             this.#canvasInput.setSymmetryMode(this.#activeSymmetryMode);
+            this.#activeSymmetryMode = e.target.value;
+            this.#canvasInput.setSymmetryMode(this.#activeSymmetryMode);
         });
 
         this.#controls.paletteSelect.addEventListener('change', () => this.#updatePaletteSwatches());
@@ -406,9 +412,8 @@ export class UIManager {
         });
         this.#controls.factoryGenerateBtn.addEventListener('click', () => this.#handleGenerateBatch());
 
-
         // Collapsible sections
-        document.querySelectorAll('.collapsible').forEach(header => {
+        document.querySelectorAll('.collapsible').forEach((header) => {
             header.addEventListener('click', () => {
                 header.classList.toggle('collapsed');
                 const content = header.nextElementSibling;
@@ -763,7 +768,7 @@ export class UIManager {
             const item = document.createElement('div');
             item.className = 'preset-item';
             item.dataset.config = preset.config;
-                        const nameDiv = document.createElement('div');
+            const nameDiv = document.createElement('div');
             nameDiv.className = 'preset-name';
             nameDiv.textContent = preset.name;
 
@@ -815,8 +820,14 @@ export class UIManager {
     #getConfigFromMainControls() {
         // Base config from main controls
         const config = {
-            size: (() => { const val = parseInt(this.#controls.sizeInput.value, 10); return Number.isNaN(val) ? 32 : val; })(),
-            pixelSize: (() => { const val = parseInt(this.#controls.pixelSizeInput.value, 10); return Number.isNaN(val) ? 20 : val; })(),
+            size: (() => {
+                const val = parseInt(this.#controls.sizeInput.value, 10);
+                return Number.isNaN(val) ? 32 : val;
+            })(),
+            pixelSize: (() => {
+                const val = parseInt(this.#controls.pixelSizeInput.value, 10);
+                return Number.isNaN(val) ? 20 : val;
+            })(),
             generator: this.#controls.generatorSelect.value,
             palette: this.#controls.paletteSelect.value,
             seed: this.#controls.seedInput.value || Date.now().toString(),
@@ -825,7 +836,12 @@ export class UIManager {
 
         // Get dynamic generator params from SettingsPanel
         const dynamicConfig = this.#settingsPanel.getConfig();
-        Object.assign(config, dynamicConfig); // Merge dynamic params into top-level config (except modifiers)
+        // Merge dynamic params into top-level config (except modifiers) securely
+        for (const key of Object.keys(dynamicConfig)) {
+            if (key !== '__proto__' && key !== 'constructor' && key !== 'prototype' && key !== 'modifiers') {
+                config[key] = dynamicConfig[key];
+            }
+        }
 
         // Get modifier params
         const modifierCheckboxes = this.#modifiersContainer.querySelectorAll('input[type="checkbox"]:checked');
@@ -891,8 +907,8 @@ export class UIManager {
      */
     #populateGeneratorOptions() {
         const names = this.#planterInstance.getGeneratorNames();
-                this.#controls.generatorSelect.textContent = '';
-        names.forEach(name => {
+        this.#controls.generatorSelect.textContent = '';
+        names.forEach((name) => {
             const opt = document.createElement('option');
             opt.value = name;
             opt.textContent = name;
@@ -916,7 +932,7 @@ export class UIManager {
         const paletteInstance = this.#planterInstance.getPaletteInstance(selectedPaletteName);
 
         if (paletteInstance && paletteInstance.colors) {
-            paletteInstance.colors.forEach(colorHex => {
+            paletteInstance.colors.forEach((colorHex) => {
                 const swatch = document.createElement('div');
                 swatch.className = 'swatch';
                 swatch.style.backgroundColor = colorHex;
@@ -928,8 +944,8 @@ export class UIManager {
 
     #populatePaletteOptions() {
         const names = this.#planterInstance.getPaletteNames();
-                this.#controls.paletteSelect.textContent = '';
-        names.forEach(name => {
+        this.#controls.paletteSelect.textContent = '';
+        names.forEach((name) => {
             const opt = document.createElement('option');
             opt.value = name;
             opt.textContent = name;
@@ -944,8 +960,8 @@ export class UIManager {
      */
     #populateModifierOptions() {
         const names = this.#planterInstance.getModifierNames();
-                this.#modifiersContainer.textContent = '';
-        names.forEach(name => {
+        this.#modifiersContainer.textContent = '';
+        names.forEach((name) => {
             const label = document.createElement('label');
             label.className = 'modifier-checkbox';
 
@@ -999,13 +1015,17 @@ export class UIManager {
         for (let idx = 0; idx < data.length; idx += 4) {
             const alpha = data[idx + 3] / 255;
             if (alpha > 0) {
-                rects.push(`<rect x="${(idx / 4) % w}" y="${Math.floor((idx / 4) / w)}" width="1" height="1" fill="rgba(${data[idx]},${data[idx+1]},${data[idx+2]},${alpha})" />`);
+                rects.push(
+                    `<rect x="${(idx / 4) % w}" y="${Math.floor(idx / 4 / w)}" width="1" height="1" fill="rgba(${data[idx]},${data[idx + 1]},${data[idx + 2]},${alpha})" />`,
+                );
             }
         }
 
         this.#triggerFileDownload(
-            new Blob([`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">\n`, ...rects, '\n</svg>'], { type: 'image/svg+xml' }),
-            'pixel-planter-export.svg'
+            new Blob([`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">\n`, ...rects, '\n</svg>'], {
+                type: 'image/svg+xml',
+            }),
+            'pixel-planter-export.svg',
         );
     }
 
