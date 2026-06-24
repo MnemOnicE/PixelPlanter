@@ -31,11 +31,11 @@ export class PatternGenerator {
      * @param {number[][]} [config.patternData] - The 2D array data of the pattern to stamp.
      * @param {number} [config.x=50] - X offset percentage (0-100).
      * @param {number} [config.y=50] - Y offset percentage (0-100).
-     * @param {SeededRandom} prng - The pseudo-random number generator (unused but part of signature).
+     * @param {SeededRandom} _prng - The pseudo-random number generator (unused but part of signature).
      * @param {number[][]} [inputMask] - Optional mask. If provided, generation is restricted to non-zero pixels in this mask.
      * @returns {number[][]} The generated grid.
      */
-    run({ size, patternData, x, y }, prng, inputMask = null) {
+    run({ size, patternData, x, y }, _prng, inputMask = null) {
         const dataGrid = Array.from({ length: size }, () => Array(size).fill(0));
 
         if (!patternData) {
