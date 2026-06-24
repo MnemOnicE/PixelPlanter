@@ -40,3 +40,9 @@ When using an AI tool for any development task (e.g., code generation, documenta
     - Replaced the initial `driver.js` onboarding sequence with an interactive tutorial modal via `src/ui/TutorialManager.js`.
     - Integrated `src/tutorials.json` to configure the available interactive tutorials.
     - Implemented a temporary Playwright test to verify the functionality of the `driver.js` interactive tutorials.
+### **Jules (AI Agent)**
+- **Date:** 2026-06-09
+- **Task:**
+    - Resolved Layer Delete button UI bug in `LayerPanel.js` caused by a mismatched CSS class name.
+    - Patched NaN handling within `UIManager.js` configuration parsing by defaulting size values back to standard.
+    - Updated `SettingsPanel.js` config gathering to properly account for numeric parsing and defaulting.

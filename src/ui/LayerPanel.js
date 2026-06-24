@@ -128,7 +128,7 @@ export class LayerPanel {
             actionsDiv.appendChild(btnPaste);
 
             const btnDel = document.createElement('button');
-            btnDel.className = 'icon-btn delete-layer';
+            btnDel.className = 'icon-btn layer-delete-btn';
             btnDel.title = 'Delete Layer';
             btnDel.textContent = '🗑️';
             actionsDiv.appendChild(btnDel);
@@ -226,7 +226,7 @@ export class LayerPanel {
             // Adjust index because Planter's stack is opposite of UI order
             // UI shows Top layer (index N-1) at UI index 0.
             const totalLayers = items.length;
-            let targetStackIndex = totalLayers - insertIndexUI;
+
 
             // If we are moving it up in the UI (down in the stack), the splice will shift things.
             // We'll let the reorderLayer method handle the exact placement since it removes then inserts.
@@ -242,11 +242,7 @@ export class LayerPanel {
             // If we drag A and drop above C (insertIndexUI = 0). Target stack index = 3 (which will become 2 after removal of A, so just pass 2 or 3, splice handles it).
             // Actually, if we pass the target element's stack index, we can just say "put it at this index".
             // Let's find the stack index of the target.
-            let stackIndex = totalLayers - 1 - targetIndexUI;
-            if (e.clientY < midPoint) {
-                // Dropped above in UI -> means it goes to a HIGHER stack index
-                stackIndex = stackIndex + 1;
-            }
+
             // reorderLayer handles the offset caused by removing the item first.
 
             // However, since reorderLayer uses splice, if we remove an item from below (lower index)
