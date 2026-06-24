@@ -9,6 +9,7 @@ import { Layer } from './Layer.js';
 import { LayerPanel } from './ui/LayerPanel.js';
 import { SettingsPanel } from './ui/SettingsPanel.js';
 import { TutorialManager } from './ui/TutorialManager.js';
+import tutorialsData from './tutorials.json';
 import { CanvasInput } from './ui/CanvasInput.js';
 
 /**
