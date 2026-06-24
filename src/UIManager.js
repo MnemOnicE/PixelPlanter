@@ -9,7 +9,6 @@ import { Layer } from './Layer.js';
 import { LayerPanel } from './ui/LayerPanel.js';
 import { SettingsPanel } from './ui/SettingsPanel.js';
 import { TutorialManager } from './ui/TutorialManager.js';
-import tutorialsData from './tutorials.json';
 import { CanvasInput } from './ui/CanvasInput.js';
 
 /**
@@ -189,8 +188,8 @@ export class UIManager {
         this.#bindDOM();
 
         const globalConfig = {
-            size: parseInt(this.#controls.sizeInput.value, 10) || 32,
-            pixelSize: parseInt(this.#controls.pixelSizeInput.value, 10) || 20,
+            size: parseInt(this.#controls.sizeInput.value, 10),
+            pixelSize: parseInt(this.#controls.pixelSizeInput.value, 10),
         };
         this.#planterInstance = new Planter(globalConfig);
 
@@ -201,63 +200,6 @@ export class UIManager {
         if (!loadedFromURL) {
             this.#handleAddLayer();
         }
-        this.#startOnboardingTour();
-    }
-
-    /**
-     * Starts the guided onboarding tour for new users using `driver.js`.
-     * Checks localStorage to prevent showing it repeatedly.
-     * @private
-     */
-    #startOnboardingTour() {
-        const hasBeenOnboarded = localStorage.getItem('pixelPlanterOnboarded');
-        if (hasBeenOnboarded) {
-            return;
-        }
-
-        const driverObj = driver({
-            showProgress: true,
-            steps: [
-                {
-                    element: '#generator-select',
-                    popover: {
-                        title: '1. Pick a Generator',
-                        description:
-                            'This is the main algorithm used to create your art. Try "noise" or "cellular" to start.',
-                    },
-                },
-                {
-                    element: '#palette-select',
-                    popover: { title: '2. Pick a Palette', description: 'Choose a color scheme for your creation.' },
-                },
-                {
-                    element: '#generate-btn',
-                    popover: {
-                        title: '3. Generate!',
-                        description:
-                            'Click here to create your artwork. You can click it again to get a new variation with the same settings.',
-                    },
-                },
-                {
-                    element: '#randomize-btn',
-                    popover: {
-                        title: 'Roll the Dice',
-                        description: 'This button will randomize all settings for a surprise result.',
-                    },
-                },
-                {
-                    element: '#add-layer-btn',
-                    popover: {
-                        title: 'Unlock More Power',
-                        description:
-                            'When you\'re ready, switch to "Advanced" mode to unlock layers, modifiers, and more!',
-                    },
-                },
-            ],
-        });
-
-        driverObj.drive();
-        localStorage.setItem('pixelPlanterOnboarded', 'true');
     }
 
     /**
@@ -325,23 +267,23 @@ export class UIManager {
         this.#layerPanel = new LayerPanel(
             this.#planterInstance,
             document.getElementById('layer-list'),
-            (action, ...args) => this.#handleLayerPanelAction(action, ...args),
+            (action, ...args) => this.#handleLayerPanelAction(action, ...args)
         );
 
         this.#settingsPanel = new SettingsPanel(
             this.#planterInstance,
             this.#generatorParamsContainer,
             this.#modifierParamsContainer,
-            () => {
-                // Future: handle real-time updates
-            },
+            (type, data) => {
+                 // Future: handle real-time updates
+            }
         );
 
         this.#canvasInput = new CanvasInput(
-            this.#planterInstance,
-            this.#canvasContainer,
-            (data) => this.#handleBrushStrokeCallback(data),
-            (data) => this.#handleFloodFillCallback(data),
+             this.#planterInstance,
+             this.#canvasContainer,
+             (data) => this.#handleBrushStrokeCallback(data),
+             (data) => this.#handleFloodFillCallback(data)
         );
 
         const canvas = this.#planterInstance.getCanvas();
@@ -371,8 +313,8 @@ export class UIManager {
         });
 
         this.#controls.symmetrySelect.addEventListener('change', (e) => {
-            this.#activeSymmetryMode = e.target.value;
-            this.#canvasInput.setSymmetryMode(this.#activeSymmetryMode);
+             this.#activeSymmetryMode = e.target.value;
+             this.#canvasInput.setSymmetryMode(this.#activeSymmetryMode);
         });
 
         this.#controls.paletteSelect.addEventListener('change', () => this.#updatePaletteSwatches());
@@ -384,7 +326,7 @@ export class UIManager {
             });
         });
         this.#controls.brushSize.addEventListener('input', (e) => {
-            this.#activeBrushSize = parseInt(e.target.value, 10) || 1;
+            this.#activeBrushSize = parseInt(e.target.value);
             this.#controls.brushSizeVal.textContent = this.#activeBrushSize;
             this.#canvasInput.setBrushSize(this.#activeBrushSize);
         });
@@ -432,8 +374,9 @@ export class UIManager {
         });
         this.#controls.factoryGenerateBtn.addEventListener('click', () => this.#handleGenerateBatch());
 
+
         // Collapsible sections
-        document.querySelectorAll('.collapsible').forEach((header) => {
+        document.querySelectorAll('.collapsible').forEach(header => {
             header.addEventListener('click', () => {
                 header.classList.toggle('collapsed');
                 const content = header.nextElementSibling;
@@ -477,7 +420,7 @@ export class UIManager {
 
         // Close sidebars when clicking on stage (mobile UX)
         if (this.#controls.stage) {
-            this.#controls.stage.addEventListener('click', () => {
+            this.#controls.stage.addEventListener('click', (e) => {
                 // Only if not interacting with canvas (though canvas is in stage)
                 // Actually, if we are painting, we probably want to see the canvas, so closing sidebars is good.
                 // But we don't want to close if we are just clicking a zoom button (if we had one).
@@ -843,7 +786,7 @@ export class UIManager {
             const item = document.createElement('div');
             item.className = 'preset-item';
             item.dataset.config = preset.config;
-            const nameDiv = document.createElement('div');
+                        const nameDiv = document.createElement('div');
             nameDiv.className = 'preset-name';
             nameDiv.textContent = preset.name;
 
@@ -895,8 +838,6 @@ export class UIManager {
     #getConfigFromMainControls() {
         // Base config from main controls
         const config = {
-            size: parseInt(this.#controls.sizeInput.value, 10) || 32,
-            pixelSize: parseInt(this.#controls.pixelSizeInput.value, 10) || 20,
             generator: this.#controls.generatorSelect.value,
             palette: this.#controls.paletteSelect.value,
             seed: this.#controls.seedInput.value || Date.now().toString(),
@@ -971,8 +912,8 @@ export class UIManager {
      */
     #populateGeneratorOptions() {
         const names = this.#planterInstance.getGeneratorNames();
-        this.#controls.generatorSelect.textContent = '';
-        names.forEach((name) => {
+                this.#controls.generatorSelect.textContent = '';
+        names.forEach(name => {
             const opt = document.createElement('option');
             opt.value = name;
             opt.textContent = name;
@@ -996,7 +937,7 @@ export class UIManager {
         const paletteInstance = this.#planterInstance.getPaletteInstance(selectedPaletteName);
 
         if (paletteInstance && paletteInstance.colors) {
-            paletteInstance.colors.forEach((colorHex) => {
+            paletteInstance.colors.forEach(colorHex => {
                 const swatch = document.createElement('div');
                 swatch.className = 'swatch';
                 swatch.style.backgroundColor = colorHex;
@@ -1008,8 +949,8 @@ export class UIManager {
 
     #populatePaletteOptions() {
         const names = this.#planterInstance.getPaletteNames();
-        this.#controls.paletteSelect.textContent = '';
-        names.forEach((name) => {
+                this.#controls.paletteSelect.textContent = '';
+        names.forEach(name => {
             const opt = document.createElement('option');
             opt.value = name;
             opt.textContent = name;
@@ -1024,8 +965,8 @@ export class UIManager {
      */
     #populateModifierOptions() {
         const names = this.#planterInstance.getModifierNames();
-        this.#modifiersContainer.textContent = '';
-        names.forEach((name) => {
+                this.#modifiersContainer.textContent = '';
+        names.forEach(name => {
             const label = document.createElement('label');
             label.className = 'modifier-checkbox';
 
@@ -1079,17 +1020,13 @@ export class UIManager {
         for (let idx = 0; idx < data.length; idx += 4) {
             const alpha = data[idx + 3] / 255;
             if (alpha > 0) {
-                rects.push(
-                    `<rect x="${(idx / 4) % w}" y="${Math.floor(idx / 4 / w)}" width="1" height="1" fill="rgba(${data[idx]},${data[idx + 1]},${data[idx + 2]},${alpha})" />`,
-                );
+                rects.push(`<rect x="${(idx / 4) % w}" y="${Math.floor((idx / 4) / w)}" width="1" height="1" fill="rgba(${data[idx]},${data[idx+1]},${data[idx+2]},${alpha})" />`);
             }
         }
 
         this.#triggerFileDownload(
-            new Blob([`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">\n`, ...rects, '\n</svg>'], {
-                type: 'image/svg+xml',
-            }),
-            'pixel-planter-export.svg',
+            new Blob([`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">\n`, ...rects, '\n</svg>'], { type: 'image/svg+xml' }),
+            'pixel-planter-export.svg'
         );
     }
 
@@ -1224,14 +1161,10 @@ export class UIManager {
      * @private
      */
     #handleGenerateBatch() {
-        const rowsInput = parseInt(document.getElementById('factory-rows').value, 10);
-        const rows = Number.isNaN(rowsInput) ? 4 : rowsInput;
-        const colsInput = parseInt(document.getElementById('factory-cols').value, 10);
-        const cols = Number.isNaN(colsInput) ? 4 : colsInput;
-        const paddingInput = parseInt(document.getElementById('factory-padding').value, 10);
-        const padding = Number.isNaN(paddingInput) ? 0 : paddingInput;
-        const varianceInput = parseInt(document.getElementById('factory-variance').value, 10);
-        const variance = Number.isNaN(varianceInput) ? 20 : varianceInput;
+        const rows = parseInt(document.getElementById('factory-rows').value, 10);
+        const cols = parseInt(document.getElementById('factory-cols').value, 10);
+        const padding = parseInt(document.getElementById('factory-padding').value, 10);
+        const variance = parseInt(document.getElementById('factory-variance').value, 10);
 
         const sheetCanvas = this.#planterInstance.generateBatch({ rows, cols, padding, variance });
 
