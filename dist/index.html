@@ -8,7 +8,7 @@
         <!-- FontAwesome for Icons (using CDN for simplicity/standard) -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
         <!-- Main Studio Styles -->
-      <script type="module" crossorigin src="/assets/index-D4zxfVxy.js"></script>
+      <script type="module" crossorigin src="/assets/index-BpFLSOX1.js"></script>
       <link rel="stylesheet" crossorigin href="/assets/index-Cgg0URiM.css">
     </head>
     <body>
@@ -150,6 +150,7 @@
                 <div style="display: flex; gap: 5px; margin-top: 10px">
                     <button id="show-presets-btn" class="secondary">Presets</button>
                     <button id="show-factory-btn" class="secondary">Factory</button>
+                    <button id="show-tutorials-btn" class="secondary">Tutorials</button>
                 </div>
                 </div>
 
@@ -183,6 +184,17 @@
                 <h2>Presets</h2>
                 <div
                     id="preset-gallery"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px"
+                ></div>
+            </div>
+        </div>
+
+        <div id="tutorials-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" style="float: right; cursor: pointer; font-size: 1.5em">&times;</span>
+                <h2>Tutorials</h2>
+                <div
+                    id="tutorial-gallery"
                     style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px"
                 ></div>
             </div>
